@@ -1,3 +1,9 @@
+### [2026-11-24 17:49] 把中文 Canvas 放進倉庫，方便公司電腦 clone
+
+- **修改的文件**：`docs/yue2-research-map.canvas.tsx`
+- **核心邏輯**：Canvas 原本只在本機 Cursor 目錄，git 裡只有兩份 markdown。把同一份中文報告放進 `docs/`，公司電腦 checkout `agent-auto-draft` 後複製到該機的 Cursor canvases 目錄才能當畫布打開。
+- **AI 備註**：遠端是 `git@github.com:luyou00001/YuE2.git` 的 `agent-auto-draft`。直接打開倉庫裡的 `.canvas.tsx` 只會看到源碼，Cursor 只渲染 `~/.cursor/projects/<工作區>/canvases/` 裡的那一份。
+
 ### [2026-11-24 17:22] 中文研究地圖，以及現有代碼能不能開訓
 
 - **修改的文件**：無倉庫源碼改動。分析畫布 `yue2-research-map.canvas.tsx` 已改為中文。
