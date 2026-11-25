@@ -1,13 +1,15 @@
-(muse) (base) senhochoi@ubuntu20-04:~$ VENV=/disk_1/projects/jzhao/RL_main/yue2
+(muse) (base) senhochoi@ubuntu20-04:~$ VENV=/disk_1/projects/jzhao/RL_main/yue2/.venv-yue2
 (muse) (base) senhochoi@ubuntu20-04:~$ sed -n '1,40p' "$VENV/pyvenv.cfg"
-sed: can't read /disk_1/projects/jzhao/RL_main/yue2/pyvenv.cfg: No such file or directory
+home = /disk_1/projects/jzhao/RL_main/yue2/runtime/yue2/python/cpython-3.12.11-linux-x86_64-gnu/bin
+implementation = CPython
+uv = 0.8.22
+version_info = 3.12.11
+include-system-site-packages = false
 (muse) (base) senhochoi@ubuntu20-04:~$ ls -l "$VENV/bin/python" "$VENV/bin/python3"
-ls: cannot access '/disk_1/projects/jzhao/RL_main/yue2/bin/python': No such file or directory
-ls: cannot access '/disk_1/projects/jzhao/RL_main/yue2/bin/python3': No such file or directory
+lrwxrwxrwx 1 audiotest audiotest 103 Oct 12 16:49 /disk_1/projects/jzhao/RL_main/yue2/.venv-yue2/bin/python -> /disk_1/projects/jzhao/RL_main/yue2/runtime/yue2/python/cpython-3.12.11-linux-x86_64-gnu/bin/python3.12
+lrwxrwxrwx 1 audiotest audiotest   6 Oct 12 16:49 /disk_1/projects/jzhao/RL_main/yue2/.venv-yue2/bin/python3 -> python
 (muse) (base) senhochoi@ubuntu20-04:~$ find "$VENV/lib" -path '*torch-*.dist-info/METADATA' -print
-find: ‘/disk_1/projects/jzhao/RL_main/yue2/lib’: No such file or directory
+/disk_1/projects/jzhao/RL_main/yue2/.venv-yue2/lib/python3.12/site-packages/torch-2.10.0+cu128.dist-info/METADATA
 (muse) (base) senhochoi@ubuntu20-04:~$ find "$VENV/lib" -path '*/torch/version.py' -print
-find: ‘/disk_1/projects/jzhao/RL_main/yue2/lib’: No such file or directory
+/disk_1/projects/jzhao/RL_main/yue2/.venv-yue2/lib/python3.12/site-packages/torch/version.py
 (muse) (base) senhochoi@ubuntu20-04:~$
-
-以上是輸出Log，我同事說環境具體路徑是/disk_1/projects/jzhao/RL_main/yue2/.venv-yue2
