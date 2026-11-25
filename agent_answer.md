@@ -1,3 +1,9 @@
+### [2026-11-25 14:29] V100 能否推理，以及權重下載地址
+
+- **修改的文件**：無源碼改動。
+- **核心邏輯**：現有推理把模型固定成 BF16，V100（計算能力 7.0）沒有 BF16 Tensor Core。啟動檢查在模擬模式下可能放行，但 FlashAttention、vLLM、FP8 都不適用，官方也沒有 V100 整首歌曲驗收。權重是公開的 Hugging Face 倉庫，推理需要 YuE2-3B 和 YuE2-Vae。
+- **AI 備註**：單卡先確認 `is_bf16_supported(including_emulation=False)` 為 False。32GB 才有機會試；16GB 顯存緊。64 張 V100 現在沒有切模型的推理實現，代碼是單卡單請求。公司使用權重仍受 CC BY-NC 約束。
+
 ### [2026-11-24 17:49] 把中文 Canvas 放進倉庫，方便公司電腦 clone
 
 - **修改的文件**：`docs/yue2-research-map.canvas.tsx`
