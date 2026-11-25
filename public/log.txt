@@ -1,65 +1,13 @@
-(PyTorch-2.0.0) [ma-user YuE2]$conda config --show-sources
-==> /home/ma-user/.condarc <==
-ssl_verify: False
-proxy_servers:
-  http: http://w00800320:kyf120asd123%21%40%23@10.155.168.114:8080
-  https: http://w00800320:kyf120asd123%21%40%23@10.155.168.114:8080
-channels:
-  - conda-forge
-  - defaults
-  - pytorch
-show_channel_urls: True
+(muse) (base) senhochoi@ubuntu20-04:~$ VENV=/disk_1/projects/jzhao/RL_main/yue2
+(muse) (base) senhochoi@ubuntu20-04:~$ sed -n '1,40p' "$VENV/pyvenv.cfg"
+sed: can't read /disk_1/projects/jzhao/RL_main/yue2/pyvenv.cfg: No such file or directory
+(muse) (base) senhochoi@ubuntu20-04:~$ ls -l "$VENV/bin/python" "$VENV/bin/python3"
+ls: cannot access '/disk_1/projects/jzhao/RL_main/yue2/bin/python': No such file or directory
+ls: cannot access '/disk_1/projects/jzhao/RL_main/yue2/bin/python3': No such file or directory
+(muse) (base) senhochoi@ubuntu20-04:~$ find "$VENV/lib" -path '*torch-*.dist-info/METADATA' -print
+find: ‘/disk_1/projects/jzhao/RL_main/yue2/lib’: No such file or directory
+(muse) (base) senhochoi@ubuntu20-04:~$ find "$VENV/lib" -path '*/torch/version.py' -print
+find: ‘/disk_1/projects/jzhao/RL_main/yue2/lib’: No such file or directory
+(muse) (base) senhochoi@ubuntu20-04:~$
 
-(PyTorch-2.0.0) [ma-user YuE2]$conda config --show proxy_servers
-proxy_servers:
-  http: http://w00800320:kyf120asd123%21%40%23@10.155.168.114:8080
-  https: http://w00800320:kyf120asd123%21%40%23@10.155.168.114:8080
-(PyTorch-2.0.0) [ma-user YuE2]$ls -l ~/.condarc ~/.netrc
-ls: cannot access '/home/ma-user/.netrc': No such file or directory
--rw-r----- 1 ma-user ma-group 261 Oct 29  2024 /home/ma-user/.condarc
-(PyTorch-2.0.0) [ma-user YuE2]$python -c "import urllib.request; r=urllib.request.urlopen('https://pypi.org/simple/pip/', timeout=30); print('pypi', r.status)"
-Traceback (most recent call last):
-  File "/home/ma-user/anaconda3/envs/PyTorch-2.0.0/lib/python3.9/urllib/request.py", line 1346, in do_open
-    h.request(req.get_method(), req.selector, req.data, headers,
-  File "/home/ma-user/anaconda3/envs/PyTorch-2.0.0/lib/python3.9/http/client.py", line 1285, in request
-    self._send_request(method, url, body, headers, encode_chunked)
-  File "/home/ma-user/anaconda3/envs/PyTorch-2.0.0/lib/python3.9/http/client.py", line 1331, in _send_request
-    self.endheaders(body, encode_chunked=encode_chunked)
-  File "/home/ma-user/anaconda3/envs/PyTorch-2.0.0/lib/python3.9/http/client.py", line 1280, in endheaders
-    self._send_output(message_body, encode_chunked=encode_chunked)
-  File "/home/ma-user/anaconda3/envs/PyTorch-2.0.0/lib/python3.9/http/client.py", line 1040, in _send_output
-    self.send(msg)
-  File "/home/ma-user/anaconda3/envs/PyTorch-2.0.0/lib/python3.9/http/client.py", line 980, in send
-    self.connect()
-  File "/home/ma-user/anaconda3/envs/PyTorch-2.0.0/lib/python3.9/http/client.py", line 1447, in connect
-    super().connect()
-  File "/home/ma-user/anaconda3/envs/PyTorch-2.0.0/lib/python3.9/http/client.py", line 946, in connect
-    self.sock = self._create_connection(
-  File "/home/ma-user/anaconda3/envs/PyTorch-2.0.0/lib/python3.9/socket.py", line 844, in create_connection
-    raise err
-  File "/home/ma-user/anaconda3/envs/PyTorch-2.0.0/lib/python3.9/socket.py", line 832, in create_connection
-    sock.connect(sa)
-OSError: [Errno 99] Cannot assign requested address
-
-During handling of the above exception, another exception occurred:
-
-Traceback (most recent call last):
-  File "<string>", line 1, in <module>
-  File "/home/ma-user/anaconda3/envs/PyTorch-2.0.0/lib/python3.9/urllib/request.py", line 214, in urlopen
-    return opener.open(url, data, timeout)
-  File "/home/ma-user/anaconda3/envs/PyTorch-2.0.0/lib/python3.9/urllib/request.py", line 517, in open
-    response = self._open(req, data)
-  File "/home/ma-user/anaconda3/envs/PyTorch-2.0.0/lib/python3.9/urllib/request.py", line 534, in _open
-    result = self._call_chain(self.handle_open, protocol, protocol +
-  File "/home/ma-user/anaconda3/envs/PyTorch-2.0.0/lib/python3.9/urllib/request.py", line 494, in _call_chain
-    result = func(*args)
-  File "/home/ma-user/anaconda3/envs/PyTorch-2.0.0/lib/python3.9/urllib/request.py", line 1389, in https_open
-    return self.do_open(http.client.HTTPSConnection, req,
-  File "/home/ma-user/anaconda3/envs/PyTorch-2.0.0/lib/python3.9/urllib/request.py", line 1349, in do_open
-    raise URLError(err)
-urllib.error.URLError: <urlopen error [Errno 99] Cannot assign requested address>
-(PyTorch-2.0.0) [ma-user YuE2]$
-
-
-====
-目前的輸出是這樣。另外我在A100服務器上有一個能跑通YuE2的venv環境，路徑為/disk_1/projects/jzhao/RL_main/yue2，請問這個venv可以直接複製下來用嗎？目前A100服務器不能用只能檢視文件，需不需要我提供這個venv的信息給你，看看要複製些什麼？
+以上是輸出Log，我同事說環境具體路徑是/disk_1/projects/jzhao/RL_main/yue2/.venv-yue2
