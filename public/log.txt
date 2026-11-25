@@ -1,15 +1,43 @@
-(muse) (base) senhochoi@ubuntu20-04:~$ VENV=/disk_1/projects/jzhao/RL_main/yue2/.venv-yue2
-(muse) (base) senhochoi@ubuntu20-04:~$ sed -n '1,40p' "$VENV/pyvenv.cfg"
-home = /disk_1/projects/jzhao/RL_main/yue2/runtime/yue2/python/cpython-3.12.11-linux-x86_64-gnu/bin
-implementation = CPython
-uv = 0.8.22
-version_info = 3.12.11
-include-system-site-packages = false
-(muse) (base) senhochoi@ubuntu20-04:~$ ls -l "$VENV/bin/python" "$VENV/bin/python3"
-lrwxrwxrwx 1 audiotest audiotest 103 Oct 12 16:49 /disk_1/projects/jzhao/RL_main/yue2/.venv-yue2/bin/python -> /disk_1/projects/jzhao/RL_main/yue2/runtime/yue2/python/cpython-3.12.11-linux-x86_64-gnu/bin/python3.12
-lrwxrwxrwx 1 audiotest audiotest   6 Oct 12 16:49 /disk_1/projects/jzhao/RL_main/yue2/.venv-yue2/bin/python3 -> python
-(muse) (base) senhochoi@ubuntu20-04:~$ find "$VENV/lib" -path '*torch-*.dist-info/METADATA' -print
-/disk_1/projects/jzhao/RL_main/yue2/.venv-yue2/lib/python3.12/site-packages/torch-2.10.0+cu128.dist-info/METADATA
-(muse) (base) senhochoi@ubuntu20-04:~$ find "$VENV/lib" -path '*/torch/version.py' -print
-/disk_1/projects/jzhao/RL_main/yue2/.venv-yue2/lib/python3.12/site-packages/torch/version.py
-(muse) (base) senhochoi@ubuntu20-04:~$
+(PyTorch-2.0.0) [ma-user YuE2]$CUDA_VISIBLE_DEVICES=0 python public/probe_existing_env.py
+python: 3.9.11 (main, Mar 29 2022, 19:08:29)  [GCC 7.5.0]
+torch: 2.3.1+cu121 cuda: 12.1 available: True
+gpu: Tesla V100-PCIE-32GB (7, 0)
+mem_gib: 31.7
+transformers: 4.57.6
+safetensors: 0.4.3
+numpy: 1.23.5
+loading /cache/yue2_files/YuE2-3B
+`torch_dtype` is deprecated! Use `dtype` instead!
+Traceback (most recent call last):
+  File "/home/ma-user/work/YuE2/public/probe_existing_env.py", line 53, in <module>
+    main()
+  File "/home/ma-user/work/YuE2/public/probe_existing_env.py", line 47, in main
+    logits = model(ids).logits
+  File "/home/ma-user/anaconda3/envs/PyTorch-2.0.0/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/ma-user/anaconda3/envs/PyTorch-2.0.0/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/ma-user/work/YuE2/src/yue2/modeling_yue2.py", line 597, in forward
+    hidden_states, past_key_values = self.model(
+  File "/home/ma-user/anaconda3/envs/PyTorch-2.0.0/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/ma-user/anaconda3/envs/PyTorch-2.0.0/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/ma-user/work/YuE2/src/yue2/modeling_yue2.py", line 484, in forward
+    x = layer(x, cos, sin, past_key_values if use_cache else None,
+  File "/home/ma-user/anaconda3/envs/PyTorch-2.0.0/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/ma-user/anaconda3/envs/PyTorch-2.0.0/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/ma-user/work/YuE2/src/yue2/modeling_yue2.py", line 330, in forward
+    h = self.self_attn(self.input_layernorm(x), cos, sin, past_key_value, layer_idx,
+  File "/home/ma-user/anaconda3/envs/PyTorch-2.0.0/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/ma-user/anaconda3/envs/PyTorch-2.0.0/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/ma-user/work/YuE2/src/yue2/modeling_yue2.py", line 242, in forward
+    out = sdpa(q, k, v, is_causal=True)
+  File "/home/ma-user/work/YuE2/src/yue2/modeling_yue2.py", line 41, in sdpa
+    and not torch.backends.cuda.is_flash_attention_available())
+AttributeError: module 'torch.backends.cuda' has no attribute 'is_flash_attention_available'
+(PyTorch-2.0.0) [ma-user YuE2]$
