@@ -24,9 +24,10 @@ def attention_capabilities(model):
     params = torch.backends.cuda.SDPAParams(q, kv, kv, None, 0.0, False,
                                            config.num_attention_heads != config.num_key_value_heads)
     op = getattr(torch.ops.aten, "_flash_attention_forward", None)
+    flash_available = getattr(torch.backends.cuda, "is_flash_attention_available", None)
     result["flash"] = bool(config.head_dim <= 256 and op is not None
         and "seqused_k" in str(op.default._schema)
-        and torch.backends.cuda.is_flash_attention_available()
+        and flash_available is not None and flash_available()
         and torch.backends.cuda.can_use_flash_attention(params))
     if torch.backends.cudnn.is_available():
         # cuDNN rejects a single key; every graph has prefix + generation capacity >= 2.
@@ -176,9 +177,19 @@ class GraphAR:
                     h = F.scaled_dot_product_attention(q.transpose(1, 2), k, v,
                             attn_mask=visible, is_causal=False).transpose(1, 2)
             else:
-                h = F.scaled_dot_product_attention(q.transpose(1, 2), keys.transpose(1, 2), values.transpose(1, 2),
-                            attn_mask=visible, is_causal=False,
-                            enable_gqa=config.num_attention_heads != config.num_key_value_heads).transpose(1, 2)
+                from .modeling_yue2 import _sdpa_supports_gqa
+                grouped = config.num_attention_heads != config.num_key_value_heads
+                query = q.transpose(1, 2)
+                key = keys.transpose(1, 2)
+                value = values.transpose(1, 2)
+                if grouped and not _sdpa_supports_gqa():
+                    groups = config.num_attention_heads // config.num_key_value_heads
+                    key = key.repeat_interleave(groups, dim=1)
+                    value = value.repeat_interleave(groups, dim=1)
+                    grouped = False
+                extra = {"enable_gqa": grouped} if _sdpa_supports_gqa() else {}
+                h = F.scaled_dot_product_attention(
+                    query, key, value, attn_mask=visible, is_causal=False, **extra).transpose(1, 2)
             x = x + layer.self_attn.o_proj(h.reshape(self.branches, 1, -1))
             normalized = layer.post_attention_layernorm(x)
             if self.fused_weights:

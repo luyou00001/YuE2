@@ -1,3 +1,9 @@
+### [2026-11-25 17:54] V100 已載入權重，補上 torch 2.3 的注意力相容
+
+- **修改的文件**：`src/yue2/modeling_yue2.py`、`src/yue2/cuda_graph.py`
+- **核心邏輯**：探測證明 Python 3.9.11 和 torch 2.3.1+cu121 能把 YuE2-3B 載入 32GB V100。前向失敗是因為 torch 2.3 沒有 `is_flash_attention_available`，也沒有 `enable_gqa`。缺少時改為展開 KV 頭並使用普通 SDPA。
+- **AI 備註**：請在 V100 上 git pull 後重跑 `public/probe_existing_env.py`。不要升級 torch。
+
 ### [2026-11-25 17:45] 用現有 PyTorch-2.0.0 做一次載入探測
 
 - **修改的文件**：`public/probe_existing_env.py`

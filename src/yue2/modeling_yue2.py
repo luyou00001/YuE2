@@ -6,6 +6,7 @@ It imports no CUDA extension and implements the released model architecture.
 """
 from __future__ import annotations
 
+import inspect
 import math
 from typing import List, Optional, Tuple, Union
 
@@ -28,9 +29,28 @@ def _folded_gqa(query, key, value, attn_mask=None):
     return output.reshape(batch, heads, rows, dim)
 
 
+def _flash_attention_available():
+    """Torch 2.3 has no flash-availability query; treat that as unavailable."""
+    query = getattr(torch.backends.cuda, "is_flash_attention_available", None)
+    if query is None:
+        return False
+    try:
+        return bool(query())
+    except Exception:
+        return False
+
+
+def _sdpa_supports_gqa():
+    try:
+        return "enable_gqa" in inspect.signature(F.scaled_dot_product_attention).parameters
+    except (TypeError, ValueError):
+        return False
+
+
 def sdpa(query, key, value, *, attn_mask=None, is_causal=False):
     """Use native GQA with portable fallbacks for MPS and CUDA builds."""
     grouped = query.shape[1] != key.shape[1]
+    supports_gqa = _sdpa_supports_gqa()
     if grouped and query.device.type == "mps":
         if (not is_causal and query.shape[1] * query.shape[2] <= 8 * key.shape[1]
                 and (attn_mask is None or (attn_mask.ndim == 4 and attn_mask.shape[1] == 1
@@ -38,16 +58,18 @@ def sdpa(query, key, value, *, attn_mask=None, is_causal=False):
             return _folded_gqa(query, key, value, attn_mask)
     expand_kv = query.device.type == "mps" or (
         query.device.type == "cuda" and torch.version.hip is None
-        and not torch.backends.cuda.is_flash_attention_available())
+        and not _flash_attention_available())
+    if grouped and not supports_gqa:
+        expand_kv = True
     if grouped and expand_kv:
         # Memory-efficient CUDA SDPA needs matching heads on builds without FlashAttention.
         groups = query.shape[1] // key.shape[1]
         key = key.repeat_interleave(groups, dim=1)
         value = value.repeat_interleave(groups, dim=1)
         grouped = False
+    extra = {"enable_gqa": grouped} if supports_gqa else {}
     return F.scaled_dot_product_attention(
-        query, key, value, attn_mask=attn_mask, is_causal=is_causal,
-        enable_gqa=grouped,
+        query, key, value, attn_mask=attn_mask, is_causal=is_causal, **extra,
     )
 
 
