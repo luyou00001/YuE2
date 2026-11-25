@@ -1,22 +1,28 @@
-# 目前這份 log 說明了什麼
+# 這份 log，以及 A100 的 venv 能不能拷過來
 
-現有的 `PyTorch-2.0.0` 環境可以看見 GPU：Python 3.9.11，`torch 2.3.1+cu121`，CUDA 12.1，`torch.cuda.is_available()` 是 `True`。這和驅動 535、CUDA 12.2 是匹配的。機器上沒有 Python 3.10、3.11 或 3.12。另外兩個環境 `base` 和 `python-3.9.11` 也是 Python 3.9。
+V100 現在沒有能用的下載通道。`~/.condarc` 裡有一個指向內網 `10.155.168.114:8080` 的代理，而且帶著帳號密碼；上次 `conda create` 已經因為這個代理失敗。直接訪問 PyPI 也失敗，錯誤是 `Errno 99: Cannot assign requested address`。shell 裡的 `http_proxy` 是空的，所以 pip 不會自動走那個代理。這台機器目前既不能 conda 下載，也不能直接 pip 下載。
 
-shell 裡的 `http_proxy` 和 `https_proxy` 都是空的。上次 `conda create` 的 `ProxyError` 不是這四個環境變數造成的，代理設定更可能在 conda 自己的配置或 `~/.netrc`。
+`public/log.txt` 裡有這組代理密碼。不要把這個文件提交到 git，並盡快更換該密碼。
 
-YuE2 這個包要求 Python 3.10 以上，並固定 `torch==2.10.0`。所以現在這個能用 CUDA 的環境還不能安裝專案。也不要在這裡執行 `pip install torch==2.10.0`：默認輪子是 CUDA 12.8，驅動 535 載入不了。
+A100 上 `/disk_1/projects/jzhao/RL_main/yue2` 這個 venv 不要整份複製到 V100 來運行。venv 裡的 Python 路徑是絕對路徑，複製後解釋器通常對不上。能跑通 YuE2 的環境使用的是專案固定的 torch 2.10，默認 CUDA 12.8 輪子需要大約 570 的驅動；V100 的驅動是 535.183.01，只支援到 CUDA 12.2。文件拷過來之後，`import torch` 仍然會報驅動太舊。
 
-請再跑下面這段，仍然不要安裝 torch，也不要 `conda create`：
+需要看的是版本，不是把整個目錄搬過來。A100 只能看文件的話，把下面這些內容貼回來：
 
 ```bash
-conda config --show-sources
-conda config --show proxy_servers
-ls -l ~/.condarc ~/.netrc
-python -c "import urllib.request; r=urllib.request.urlopen('https://pypi.org/simple/pip/', timeout=30); print('pypi', r.status)"
+VENV=/disk_1/projects/jzhao/RL_main/yue2
+sed -n '1,40p' "$VENV/pyvenv.cfg"
+ls -l "$VENV/bin/python" "$VENV/bin/python3"
+find "$VENV/lib" -path '*torch-*.dist-info/METADATA' -print
+find "$VENV/lib" -path '*/torch/version.py' -print
 ```
 
-把完整輸出貼回來，包括 `conda config` 印出的文件內容。
+找到 `METADATA` 和 `version.py` 之後，再各看開頭：
 
-若 `pypi` 印出 `200`，pip 可以下載，卡住的是 conda 的源設定；那時還需要一個 Python 3.10 以上的解釋器，單靠現在的 3.9 環境裝不上這個包。若連 pypi 也連不上，這台機器目前沒有可用的安裝通道，要先修網絡或代理。驅動維持 535 時，官方 torch 2.10 的 CUDA 12.8 輪子仍然不能用；要跑官方版本，需要把 NVIDIA 驅動升到 570 或更新。
+```bash
+sed -n '1,20p' 這裡換成上一步印出的METADATA路徑
+grep -E 'cuda|__version__' 這裡換成上一步印出的version.py路徑
+```
+
+這些文字足以判斷那個環境的 Python 和 CUDA 版本。在 V100 驅動升到 570 或更新之前，不複製這個 venv，也不在 V100 上安裝 torch 2.10。
 
 本次沒有更新任何文件。
