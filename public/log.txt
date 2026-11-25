@@ -1,22 +1,62 @@
-所需權重文件已放在：
-/cache/yue2_files/YuE2-3B
-/cache/yue2_files/YuE2-Vae
-/cache/yue2_files/YuE2-Vae-legacy
+(PyTorch-2.0.0) [ma-user YuE2]$conda deactivate
+(base) [ma-user YuE2]$nvidia-smi
+Wed Nov 25 16:39:57 2026       
++---------------------------------------------------------------------------------------+
+| NVIDIA-SMI 535.183.01             Driver Version: 535.183.01   CUDA Version: 12.2     |
+|-----------------------------------------+----------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |
+|                                         |                      |               MIG M. |
+|=========================================+======================+======================|
+|   0  Tesla V100-PCIE-32GB           On  | 00000000:5A:00.0 Off |                    0 |
+| N/A   32C    P0              24W / 250W |      0MiB / 32768MiB |      0%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+|   1  Tesla V100-PCIE-32GB           On  | 00000000:5E:00.0 Off |                    0 |
+| N/A   32C    P0              24W / 250W |      0MiB / 32768MiB |      0%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+|   2  Tesla V100-PCIE-32GB           On  | 00000000:62:00.0 Off |                    0 |
+| N/A   32C    P0              25W / 250W |      0MiB / 32768MiB |      0%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+|   3  Tesla V100-PCIE-32GB           On  | 00000000:66:00.0 Off |                    0 |
+| N/A   33C    P0              24W / 250W |      0MiB / 32768MiB |      0%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+|   4  Tesla V100-PCIE-32GB           On  | 00000000:B5:00.0 Off |                    0 |
+| N/A   32C    P0              25W / 250W |      0MiB / 32768MiB |      0%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+|   5  Tesla V100-PCIE-32GB           On  | 00000000:B9:00.0 Off |                    0 |
+| N/A   33C    P0              24W / 250W |      0MiB / 32768MiB |      0%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+|   6  Tesla V100-PCIE-32GB           On  | 00000000:BD:00.0 Off |                    0 |
+| N/A   34C    P0              26W / 250W |      0MiB / 32768MiB |      0%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+|   7  Tesla V100-PCIE-32GB           On  | 00000000:C1:00.0 Off |                    0 |
+| N/A   33C    P0              24W / 250W |      0MiB / 32768MiB |      0%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+                                                                                         
++---------------------------------------------------------------------------------------+
+| Processes:                                                                            |
+|  GPU   GI   CI        PID   Type   Process name                            GPU Memory |
+|        ID   ID                                                             Usage      |
+|=======================================================================================|
+|  No running processes found                                                           |
++---------------------------------------------------------------------------------------+
+(base) [ma-user YuE2]$conda create -n yue2 python=3.12 -y
+/home/ma-user/anaconda3/lib/python3.9/site-packages/requests/__init__.py:89: RequestsDependencyWarning: urllib3 (2.0.4) or chardet (3.0.4) doesn't match a supported version!
+  warnings.warn("urllib3 ({}) or chardet ({}) doesn't match a supported "
+Collecting package metadata (current_repodata.json): failed
 
-然後跑測試腳本：
-(PyTorch-2.0.0) [ma-user YuE2]$python - << 'PY'
-> import torch
-> print("capability", torch.cuda.get_device_capability())
-> print("bf16_check_default", torch.cuda.is_bf16_supported())
-> print("bf16_native", torch.cuda.is_bf16_supported(including_emulation=False))
-> print("name", torch.cuda.get_device_name())
-> print("mem_gib", torch.cuda.get_device_properties(0).total_memory / 2**30)
-> PY
-capability (7, 0)
-bf16_check_default True
-Traceback (most recent call last):
-  File "<stdin>", line 4, in <module>
-TypeError: is_bf16_supported() got an unexpected keyword argument 'including_emulation'
-(PyTorch-2.0.0) [ma-user YuE2]$
+ProxyError: Conda cannot proceed due to an error in your proxy configuration.
+Check for typos and other configuration errors in any '.netrc' file in your home directory,
+any environment variables ending in '_PROXY', and any other system-wide proxy
+configuration settings.
 
-請看看怎麼解決。先不用管商用授權問題，我們只是開發探索。
+
+(base) [ma-user YuE2]$
