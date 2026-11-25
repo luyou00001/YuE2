@@ -1,0 +1,22 @@
+所需權重文件已放在：
+/cache/yue2_files/YuE2-3B
+/cache/yue2_files/YuE2-Vae
+/cache/yue2_files/YuE2-Vae-legacy
+
+然後跑測試腳本：
+(PyTorch-2.0.0) [ma-user YuE2]$python - << 'PY'
+> import torch
+> print("capability", torch.cuda.get_device_capability())
+> print("bf16_check_default", torch.cuda.is_bf16_supported())
+> print("bf16_native", torch.cuda.is_bf16_supported(including_emulation=False))
+> print("name", torch.cuda.get_device_name())
+> print("mem_gib", torch.cuda.get_device_properties(0).total_memory / 2**30)
+> PY
+capability (7, 0)
+bf16_check_default True
+Traceback (most recent call last):
+  File "<stdin>", line 4, in <module>
+TypeError: is_bf16_supported() got an unexpected keyword argument 'including_emulation'
+(PyTorch-2.0.0) [ma-user YuE2]$
+
+請看看怎麼解決。先不用管商用授權問題，我們只是開發探索。
