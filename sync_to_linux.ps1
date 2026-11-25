@@ -1,4 +1,4 @@
-# Sync music_generation_rl -> Linux server via git-over-SSH (incremental).
+# Sync YuE2 -> Linux server via git-over-SSH (incremental).
 #
 # Usage:
 #   .\sync_to_linux.ps1                  pull from GitHub + push to Linux (default: skip commit, NO prompts)
@@ -8,7 +8,7 @@
 #
 # Notes:
 #   - Requires: git + OpenSSH (both already installed on this Windows box).
-#   - The server folder /home/ma-user/work/music_generation_rl is created on
+#   - The server folder /home/ma-user/work/YuE2 is created on
 #     first run and becomes a git repo checked out on branch `main`, so pushed
 #     code lands directly at that path (receive.denyCurrentBranch=updateInstead).
 #   - Files ignored by .gitignore (audio, outputs, checkpoints, venv...) are NOT
@@ -25,11 +25,11 @@ param(
 $ErrorActionPreference = "Stop"
 
 $RepoDir     = $PSScriptRoot
-$SshKey      = "C:/Users/c00871154/.ssh/hk-develop.pem"
-$SshPort     = "39404"
-$SshUserHost = "ma-user@10.155.175.163"
-$RemoteDir   = "/home/ma-user/work/music_generation_rl"
-$RemoteUrl   = "ssh://ma-user@10.155.175.163:39404/home/ma-user/work/music_generation_rl"
+$SshKey      = "C:/Users/c00871154/.ssh/hk-develop-sh.pem"
+$SshPort     = "32138"
+$SshUserHost = "ma-user@7.216.161.45"
+$RemoteDir   = "/home/ma-user/work/YuE2"
+$RemoteUrl   = "ssh://ma-user@7.216.161.45:32138/home/ma-user/work/YuE2"
 $RemoteName  = "rl-node"
 
 $env:GIT_SSH_COMMAND = "ssh -i `"$SshKey`" -o StrictHostKeyChecking=no"
