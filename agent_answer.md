@@ -1,3 +1,9 @@
+### [2026-11-25 16:35] V100 改為 conda 環境和默認 pip
+
+- **修改的文件**：無源碼改動。`agent_instructions.md` 換成完整安裝命令。
+- **核心邏輯**：用 `conda create -n yue2 python=3.12`，然後 `pip install torch==2.10.0` 和 `pip install .`。Linux 上這個默認輪子是 CUDA 12.8，包含 V100 的 sm_70，所以不加 `--index-url`。
+- **AI 備註**：之後仍先做 BF16 矩陣乘法，再 `yue2 doctor` 和 `--backend torch-eager --low-vram` 生成。權重路徑維持 `/cache/yue2_files/`。
+
 ### [2026-11-25 16:32] 把 V100 完整操作步驟寫進 agent_instructions.md
 
 - **修改的文件**：無源碼改動。`agent_instructions.md` 改為上一則完整回覆，含可直接貼上 V100 的命令。
