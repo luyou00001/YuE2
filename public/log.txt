@@ -1,62 +1,26 @@
-(PyTorch-2.0.0) [ma-user YuE2]$conda deactivate
-(base) [ma-user YuE2]$nvidia-smi
-Wed Nov 25 16:39:57 2026       
-+---------------------------------------------------------------------------------------+
-| NVIDIA-SMI 535.183.01             Driver Version: 535.183.01   CUDA Version: 12.2     |
-|-----------------------------------------+----------------------+----------------------+
-| GPU  Name                 Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |
-| Fan  Temp   Perf          Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |
-|                                         |                      |               MIG M. |
-|=========================================+======================+======================|
-|   0  Tesla V100-PCIE-32GB           On  | 00000000:5A:00.0 Off |                    0 |
-| N/A   32C    P0              24W / 250W |      0MiB / 32768MiB |      0%      Default |
-|                                         |                      |                  N/A |
-+-----------------------------------------+----------------------+----------------------+
-|   1  Tesla V100-PCIE-32GB           On  | 00000000:5E:00.0 Off |                    0 |
-| N/A   32C    P0              24W / 250W |      0MiB / 32768MiB |      0%      Default |
-|                                         |                      |                  N/A |
-+-----------------------------------------+----------------------+----------------------+
-|   2  Tesla V100-PCIE-32GB           On  | 00000000:62:00.0 Off |                    0 |
-| N/A   32C    P0              25W / 250W |      0MiB / 32768MiB |      0%      Default |
-|                                         |                      |                  N/A |
-+-----------------------------------------+----------------------+----------------------+
-|   3  Tesla V100-PCIE-32GB           On  | 00000000:66:00.0 Off |                    0 |
-| N/A   33C    P0              24W / 250W |      0MiB / 32768MiB |      0%      Default |
-|                                         |                      |                  N/A |
-+-----------------------------------------+----------------------+----------------------+
-|   4  Tesla V100-PCIE-32GB           On  | 00000000:B5:00.0 Off |                    0 |
-| N/A   32C    P0              25W / 250W |      0MiB / 32768MiB |      0%      Default |
-|                                         |                      |                  N/A |
-+-----------------------------------------+----------------------+----------------------+
-|   5  Tesla V100-PCIE-32GB           On  | 00000000:B9:00.0 Off |                    0 |
-| N/A   33C    P0              24W / 250W |      0MiB / 32768MiB |      0%      Default |
-|                                         |                      |                  N/A |
-+-----------------------------------------+----------------------+----------------------+
-|   6  Tesla V100-PCIE-32GB           On  | 00000000:BD:00.0 Off |                    0 |
-| N/A   34C    P0              26W / 250W |      0MiB / 32768MiB |      0%      Default |
-|                                         |                      |                  N/A |
-+-----------------------------------------+----------------------+----------------------+
-|   7  Tesla V100-PCIE-32GB           On  | 00000000:C1:00.0 Off |                    0 |
-| N/A   33C    P0              24W / 250W |      0MiB / 32768MiB |      0%      Default |
-|                                         |                      |                  N/A |
-+-----------------------------------------+----------------------+----------------------+
-                                                                                         
-+---------------------------------------------------------------------------------------+
-| Processes:                                                                            |
-|  GPU   GI   CI        PID   Type   Process name                            GPU Memory |
-|        ID   ID                                                             Usage      |
-|=======================================================================================|
-|  No running processes found                                                           |
-+---------------------------------------------------------------------------------------+
-(base) [ma-user YuE2]$conda create -n yue2 python=3.12 -y
+(base) [ma-user YuE2]$echo "http_proxy=$http_proxy"
+http_proxy=
+(base) [ma-user YuE2]$echo "https_proxy=$https_proxy"
+https_proxy=
+(base) [ma-user YuE2]$echo "HTTP_PROXY=$HTTP_PROXY"
+HTTP_PROXY=
+(base) [ma-user YuE2]$echo "HTTPS_PROXY=$HTTPS_PROXY"
+HTTPS_PROXY=
+(base) [ma-user YuE2]$conda env list
 /home/ma-user/anaconda3/lib/python3.9/site-packages/requests/__init__.py:89: RequestsDependencyWarning: urllib3 (2.0.4) or chardet (3.0.4) doesn't match a supported version!
   warnings.warn("urllib3 ({}) or chardet ({}) doesn't match a supported "
-Collecting package metadata (current_repodata.json): failed
+# conda environments:
+#
+base                  *  /home/ma-user/anaconda3
+PyTorch-2.0.0            /home/ma-user/anaconda3/envs/PyTorch-2.0.0
+python-3.9.11            /home/ma-user/anaconda3/envs/python-3.9.11
 
-ProxyError: Conda cannot proceed due to an error in your proxy configuration.
-Check for typos and other configuration errors in any '.netrc' file in your home directory,
-any environment variables ending in '_PROXY', and any other system-wide proxy
-configuration settings.
-
-
-(base) [ma-user YuE2]$
+(base) [ma-user YuE2]$python3 --version
+Python 3.9.1
+(base) [ma-user YuE2]$command -v python3.10; command -v python3.11; command -v python3.12
+(base) [ma-user YuE2]$conda activate PyTorch-2.0.0
+(PyTorch-2.0.0) [ma-user YuE2]$python -V
+Python 3.9.11
+(PyTorch-2.0.0) [ma-user YuE2]$python -c "import torch; print(torch.__version__, torch.version.cuda, torch.cuda.is_available())"
+2.3.1+cu121 12.1 True
+(PyTorch-2.0.0) [ma-user YuE2]$
