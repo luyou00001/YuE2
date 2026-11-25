@@ -1,47 +1,30 @@
-# 用 conda 和默認 pip 在 V100 上安裝並試推理
+# 目前這份 log 說明了什麼
 
-用 conda 新建環境，套件只用默認的 `pip install`，不要加 `--index-url`。Linux 上 `pip install torch==2.10.0` 拿到的就是 CUDA 12.8 輪子，編譯範圍包含 V100 的計算能力 7.0。權重已經在伺服器上，不用再下載。
+機器本身可以用來做單卡推理：8 張 Tesla V100-PCIE-32GB，都空閒，每張 32768 MiB。顯存夠，`--budget 30` 適合，第一首歌只用第 0 張卡。
 
-先離開現在的 `(PyTorch-2.0.0)`，再建環境：
+現在還不能安裝 torch 2.10，也不能繼續 `conda create`。
 
-```bash
-conda deactivate
-nvidia-smi
-conda create -n yue2 python=3.12 -y
-conda activate yue2
-cd /home/ma-user/work/YuE2
-python -m pip install --upgrade pip
-python -m pip install torch==2.10.0
-python -m pip install .
-```
+驅動是 `535.183.01`，`nvidia-smi` 顯示的 CUDA 版本是 12.2。默認 `pip install torch==2.10.0` 裝的是 CUDA 12.8 輪子，這個輪子需要大約 570 的驅動。在 535 上裝完後，`import torch` 會報驅動太舊，CUDA 用不起來。所以先不要執行上一份說明裡的 `pip install torch==2.10.0` 和 `pip install .`。
 
-安裝後先做一次 BF16 矩陣乘法。第二個 `bf16` 值在 V100 上會是 `False`，這表示沒有原生 BF16。只要最後印出 `torch.bfloat16` 和一個有限數字，就繼續。
+`conda create -n yue2 python=3.12 -y` 失敗是代理錯誤 `ProxyError`，不是顯卡問題。base 環境是 Python 3.9，低於 YuE2 要求的 3.10，不能拿來裝這個專案。
+
+請在同一台機器上只收集下面這些資訊，先不要裝 torch：
 
 ```bash
-python - << 'PY'
-import torch
-print(torch.__version__, torch.version.cuda)
-print(torch.cuda.get_device_name(), torch.cuda.get_device_capability())
-print("mem_gib", round(torch.cuda.get_device_properties(0).total_memory / 2**30, 1))
-print("arch", torch.cuda.get_arch_list())
-print("bf16", torch.cuda.is_bf16_supported(), torch.cuda.is_bf16_supported(including_emulation=False))
-x = torch.randn(256, 256, device="cuda", dtype=torch.bfloat16)
-y = x @ x
-print(y.dtype, float(y.float().abs().mean()))
-PY
+echo "http_proxy=$http_proxy"
+echo "https_proxy=$https_proxy"
+echo "HTTP_PROXY=$HTTP_PROXY"
+echo "HTTPS_PROXY=$HTTPS_PROXY"
+conda env list
+python3 --version
+command -v python3.10; command -v python3.11; command -v python3.12
+conda activate PyTorch-2.0.0
+python -V
+python -c "import torch; print(torch.__version__, torch.version.cuda, torch.cuda.is_available())"
 ```
 
-矩陣乘法通過之後，檢查依賴並生成第一首歌。用 eager 路徑，避開 CUDA graph、vLLM 和 FP8。顯存如果是 16 GB，把 `--budget` 改成 `16`。
+把完整輸出貼回來。
 
-```bash
-yue2 doctor --model /cache/yue2_files/YuE2-3B --vae /cache/yue2_files/YuE2-Vae --offline --device cuda
-yue2 generate --request examples/song.json \
-  --model /cache/yue2_files/YuE2-3B \
-  --vae /cache/yue2_files/YuE2-Vae \
-  --offline --device cuda --backend torch-eager --low-vram --budget 30 \
-  --output outputs/first-song
-```
-
-成功的話，聽 `outputs/first-song/audio.flac`。這一步仍是 BF16 在 V100 上的模擬計算，用來確認整條推理能走完。把 `nvidia-smi`、矩陣乘法輸出、`doctor` 和生成時的報錯或耗時貼回來。
+若管理員能把 NVIDIA 驅動升到 570 或更新，升完再回到 conda 或 pip 安裝，那是和專案固定的 torch 2.10 匹配的路。驅動不能升的話，官方這個版本的輪子在這台機器上跑不起 CUDA，下一步才是改用驅動 535 能載入的舊版 CUDA 輪子，並檢查代碼能不能在那個 torch 上運行。
 
 本次沒有更新任何文件。
