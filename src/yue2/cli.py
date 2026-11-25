@@ -207,6 +207,15 @@ def doctor(args):
     return 0 if report["dependencies_ready"] else 1
 
 
+def generation_output_root(value):
+    """Songs go under /cache/yue2_outputs on the V100 cache disk when --output is omitted."""
+    if value:
+        return Path(value)
+    if Path("/cache").is_dir():
+        return Path("/cache/yue2_outputs")
+    return Path("runs/default")
+
+
 def generate(args):
     if args.request:
         path = Path(args.request)
@@ -231,7 +240,7 @@ def generate(args):
     kwargs = request_kwargs(data, base)
     request = preflight(kwargs, generation_config(args))
     with closing(get_pipe(args)) as pipe:
-        directory = Path(args.output or "runs/default") / kwargs.get("id", "song")
+        directory = generation_output_root(args.output) / kwargs.get("id", "song")
         if args.resume and (directory / "result.json").exists():
             config = pipe.effective_config(request, kwargs.get("abc_sampling"), kwargs.get("semantic_sampling"))
             expected = identity({"request": request.to_dict(), "config": config, "weights": pipe.weights})
@@ -249,8 +258,11 @@ def generate(args):
                 print(json.dumps({"stage": "plan", "output": str(directory), "truncated": plan.truncated}))
             else:
                 result = pipe(**kwargs)
-                result.save_artifacts(directory)
-                print(json.dumps({"status": "complete", "output": str(directory), "truncated": result.truncated,
+                receipt = result.save_artifacts(directory)
+                print(json.dumps({"status": "complete", "output": str(directory),
+                                  "flac": str(directory / "audio.flac"),
+                                  "mp3": str(directory / receipt["preview_mp3"]) if receipt.get("preview_mp3") else None,
+                                  "truncated": result.truncated,
                                   "seconds": result.timing["e2e_seconds"]}))
             return 0
         except BaseException as exc:

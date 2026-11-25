@@ -1,3 +1,9 @@
+### [2026-11-25 18:17] 輸出改到 /cache/yue2_outputs 並加 MP3
+
+- **修改的文件**：`src/yue2/pipeline.py`、`src/yue2/cli.py`
+- **核心邏輯**：V100 整首歌已跑通且聽感正常。省略 `--output` 時寫到 `/cache/yue2_outputs/<id>/`，FLAC 仍是主文件；有 ffmpeg 時另存 `audio.mp3`。
+- **AI 備註**：固定 PyTorch-2.0.0 與 torch 2.3.1+cu121，不要升級 torch。下一步做 cot 和改譜的聽感對照，先不做訓練。
+
 ### [2026-11-25 18:04] V100 兩個 token 的前向已成功
 
 - **修改的文件**：無源碼改動。

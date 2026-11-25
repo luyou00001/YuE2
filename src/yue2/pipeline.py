@@ -103,6 +103,23 @@ class SongResult:
         sf.write(path, self.audio, self.sample_rate, subtype="PCM_24" if path.suffix.lower() == ".flac" else "FLOAT")
         return str(path)
 
+    def _write_preview_mp3(self, directory):
+        """Write a small listening copy beside the FLAC master. FLAC stays canonical."""
+        import shutil
+        import subprocess
+        ffmpeg = shutil.which("ffmpeg")
+        if ffmpeg is None:
+            return None
+        source = directory / "audio.flac"
+        target = directory / "audio.mp3"
+        completed = subprocess.run(
+            [ffmpeg, "-y", "-i", str(source), "-codec:a", "libmp3lame", "-q:a", "2", str(target)],
+            stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, check=False)
+        if completed.returncode != 0 or not target.is_file():
+            target.unlink(missing_ok=True)
+            return None
+        return "audio.mp3"
+
     @classmethod
     def load(cls, directory, *, expected_identity=None):
         """Restore artifacts written by save_artifacts without loading models.
@@ -129,6 +146,7 @@ class SongResult:
         directory.mkdir(parents=True, exist_ok=True)
         self.semantic.plan.save(directory)
         self.save(directory / "audio.flac")
+        preview = self._write_preview_mp3(directory)
         np.save(directory / "semantic.npy", np.asarray(self.semantic.tokens, dtype=np.int32))
         np.save(directory / "latent.npy", self.latents.astype(np.float32))
         write_json(directory / "request.json", self.semantic.plan.request.to_dict())
@@ -136,6 +154,7 @@ class SongResult:
         result = {"status": "complete", "identity": self.request_identity,
                   "truncated": self.truncated, "sample_rate": self.sample_rate,
                   "audio_seconds": len(self.audio) / self.sample_rate,
+                  "preview_mp3": preview,
                   "weights": self.weights, "timing": self.timing,
                   "artifacts": collect_hashes(directory)}
         write_json(directory / "result.json", result)
