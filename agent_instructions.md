@@ -1,15 +1,22 @@
-# A100 環境版本已經確認
+# 先用 PyTorch-2.0.0 做一次真實載入
 
-`.venv-yue2` 的內容是：
+可以，而且應該先用 V100 上現有的 `PyTorch-2.0.0` 環境試。這個環境已經確認是 Python 3.9.11 和 `torch 2.3.1+cu121`，CUDA 可用。不要在這個環境執行 `pip install .` 或 `pip install torch`。那兩條會把現在能用的 CUDA 12.1 版 torch 換成 CUDA 12.8 的 torch 2.10，驅動 535 載入不了。
 
-- Python 3.12.11，解釋器在 `/disk_1/projects/jzhao/RL_main/yue2/runtime/yue2/python/cpython-3.12.11-linux-x86_64-gnu/bin/python3.12`
-- 由 uv 0.8.22 建立
-- PyTorch 目錄名是 `torch-2.10.0+cu128.dist-info`，也就是 torch 2.10.0 的 CUDA 12.8 輪子
+倉庫裡加了 `public/probe_existing_env.py`。它不安裝任何套件，只把本地權重載進 GPU，並對兩個 token 做一次前向。在 V100 上先更新代碼，再執行：
 
-這和 YuE2 專案固定的版本一致，也解釋了它為什麼能在 A100 上跑。CUDA 12.8 需要大約 570 的 NVIDIA 驅動。V100 的驅動是 535.183.01，`nvidia-smi` 顯示只支援到 CUDA 12.2。把 `.venv-yue2` 和旁邊的 `cpython-3.12.11` 複製到 V100 之後，Python 也許能啟動，但 `import torch` 使用 CUDA 時會報驅動太舊。所以現在不要複製。
+```bash
+conda activate PyTorch-2.0.0
+cd /home/ma-user/work/YuE2
+git pull
+CUDA_VISIBLE_DEVICES=0 python public/probe_existing_env.py
+```
 
-`METADATA` 和 `version.py` 不用再看，目錄名已經寫明 `2.10.0+cu128`。
+把終端完整輸出貼回來。三種結果的含義不同：
 
-下一步只有一件事：請管理員把 V100 的 NVIDIA 驅動升到 570 或更新。升完之後在 V100 上重新執行 `nvidia-smi`，把驅動版本和其中的 CUDA Version 貼回來。驅動還沒升之前，不在 V100 上安裝 torch 2.10，也不複製這個虛擬環境。
+- 印出某個套件 `MISSING`：這個環境還沒有 transformers、safetensors 或 numpy。先停在這裡，不要自行安裝 torch。
+- 載入權重後在 `scaled_dot_product_attention` 或 `enable_gqa` 報錯：torch 2.3.1 的注意力介面和這份代碼不一致。這是代碼要改的點，不是驅動問題。
+- 印出 `forward_ok`：這張 V100 用現有 torch 已經能算一小步。下一步才是接上整首歌的生成流程。
 
-本次沒有更新任何文件。
+這次只改了探測腳本，沒有改模型。
+
+本次更新的文件：`public/probe_existing_env.py`
