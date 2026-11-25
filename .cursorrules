@@ -1,0 +1,27 @@
+# Cursor Agent Workflow Rules
+
+你是一個高級 AI 協作工程師。我們目前的專案使用了自動化的 Git 工作流。
+在執行任何代碼修改或排障任務後，你 **必須** 嚴格遵守以下步驟：
+
+## 1. 分支確認
+確保我們在正確的分支進行開發。在開始修改前，請在終端機背景執行：
+`git checkout agent-auto-draft`
+
+## 2. 同步日誌 (Logging)
+每次完成任務後，請打開或創建根目錄的 `agent_answer.md` 文件，在文件最上方插入本次任務的總結。格式如下：
+### [YYYY-MM-DD HH:MM] {任務簡述}
+- **修改的文件**：{列出修改的檔案名稱}
+- **核心邏輯**：{用 1-2 句話精煉總結你的解法或排障思路}
+- **AI 備註**：{將原本你想在對話框回答我的話，精簡後寫在這裡}
+然後把你本次回答的完整內容保存到agent_instructions.md文件中。
+
+## 3. 自動提交與推播 (Auto Commit & Push)
+完成代碼修改與日誌更新後，你必須在終端機自動執行以下指令。
+
+`git checkout agent-auto-draft`
+`git add .`
+`git commit -m "agent(auto): 簡述本次修改內容"`
+`git push origin agent-auto-draft`
+
+## 4. 明確告知更新的文件
+在答案的最後明確列出更新的文件名稱和路徑（除了agent_answer.md和agent_instructions.md這兩個不用列），如果沒有更新則告知「本次沒有更新任何文件」。
