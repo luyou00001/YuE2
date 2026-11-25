@@ -1,30 +1,22 @@
 # 目前這份 log 說明了什麼
 
-機器本身可以用來做單卡推理：8 張 Tesla V100-PCIE-32GB，都空閒，每張 32768 MiB。顯存夠，`--budget 30` 適合，第一首歌只用第 0 張卡。
+現有的 `PyTorch-2.0.0` 環境可以看見 GPU：Python 3.9.11，`torch 2.3.1+cu121`，CUDA 12.1，`torch.cuda.is_available()` 是 `True`。這和驅動 535、CUDA 12.2 是匹配的。機器上沒有 Python 3.10、3.11 或 3.12。另外兩個環境 `base` 和 `python-3.9.11` 也是 Python 3.9。
 
-現在還不能安裝 torch 2.10，也不能繼續 `conda create`。
+shell 裡的 `http_proxy` 和 `https_proxy` 都是空的。上次 `conda create` 的 `ProxyError` 不是這四個環境變數造成的，代理設定更可能在 conda 自己的配置或 `~/.netrc`。
 
-驅動是 `535.183.01`，`nvidia-smi` 顯示的 CUDA 版本是 12.2。默認 `pip install torch==2.10.0` 裝的是 CUDA 12.8 輪子，這個輪子需要大約 570 的驅動。在 535 上裝完後，`import torch` 會報驅動太舊，CUDA 用不起來。所以先不要執行上一份說明裡的 `pip install torch==2.10.0` 和 `pip install .`。
+YuE2 這個包要求 Python 3.10 以上，並固定 `torch==2.10.0`。所以現在這個能用 CUDA 的環境還不能安裝專案。也不要在這裡執行 `pip install torch==2.10.0`：默認輪子是 CUDA 12.8，驅動 535 載入不了。
 
-`conda create -n yue2 python=3.12 -y` 失敗是代理錯誤 `ProxyError`，不是顯卡問題。base 環境是 Python 3.9，低於 YuE2 要求的 3.10，不能拿來裝這個專案。
-
-請在同一台機器上只收集下面這些資訊，先不要裝 torch：
+請再跑下面這段，仍然不要安裝 torch，也不要 `conda create`：
 
 ```bash
-echo "http_proxy=$http_proxy"
-echo "https_proxy=$https_proxy"
-echo "HTTP_PROXY=$HTTP_PROXY"
-echo "HTTPS_PROXY=$HTTPS_PROXY"
-conda env list
-python3 --version
-command -v python3.10; command -v python3.11; command -v python3.12
-conda activate PyTorch-2.0.0
-python -V
-python -c "import torch; print(torch.__version__, torch.version.cuda, torch.cuda.is_available())"
+conda config --show-sources
+conda config --show proxy_servers
+ls -l ~/.condarc ~/.netrc
+python -c "import urllib.request; r=urllib.request.urlopen('https://pypi.org/simple/pip/', timeout=30); print('pypi', r.status)"
 ```
 
-把完整輸出貼回來。
+把完整輸出貼回來，包括 `conda config` 印出的文件內容。
 
-若管理員能把 NVIDIA 驅動升到 570 或更新，升完再回到 conda 或 pip 安裝，那是和專案固定的 torch 2.10 匹配的路。驅動不能升的話，官方這個版本的輪子在這台機器上跑不起 CUDA，下一步才是改用驅動 535 能載入的舊版 CUDA 輪子，並檢查代碼能不能在那個 torch 上運行。
+若 `pypi` 印出 `200`，pip 可以下載，卡住的是 conda 的源設定；那時還需要一個 Python 3.10 以上的解釋器，單靠現在的 3.9 環境裝不上這個包。若連 pypi 也連不上，這台機器目前沒有可用的安裝通道，要先修網絡或代理。驅動維持 535 時，官方 torch 2.10 的 CUDA 12.8 輪子仍然不能用；要跑官方版本，需要把 NVIDIA 驅動升到 570 或更新。
 
 本次沒有更新任何文件。
