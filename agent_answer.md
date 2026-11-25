@@ -1,3 +1,9 @@
+### [2026-11-25 16:27] V100 探測記錄的下一步
+
+- **修改的文件**：無源碼改動。
+- **核心邏輯**：`including_emulation` 在 PyTorch 2.0.0 不存在，所以探測在印出計算能力 7.0 和 `is_bf16_supported()==True` 之後中斷。權重已在 `/cache/yue2_files/`。下一步離開這個 conda 環境，用 Python 3.12 安裝 torch 2.10，先做一次 BF16 矩陣乘法，再跑 `yue2 doctor` 和 eager 推理。
+- **AI 備註**：不要用 vLLM 或 FP8。默認 CUDA graph 先關掉，用 `--backend torch-eager --low-vram`。cu128 輪子若沒有 sm_70，改裝 cu126。
+
 ### [2026-11-25 15:07] 把同步腳本改到 YuE2 的 V100 機器
 
 - **修改的文件**：`sync_to_linux.ps1`
