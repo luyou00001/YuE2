@@ -1,3 +1,9 @@
+### [2026-11-25 18:04] V100 兩個 token 的前向已成功
+
+- **修改的文件**：無源碼改動。
+- **核心邏輯**：探測印出 `forward_ok (1, 2, 184704) torch.bfloat16 True`。Python 3.9.11 和 torch 2.3.1+cu121 已能在 32GB V100 上載入 YuE2-3B 並完成一次 BF16 前向。
+- **AI 備註**：下一步用 `PYTHONPATH=src python -m yue2.cli generate`，backend 用 torch-eager，權重指向 `/cache/yue2_files`。不要升級 torch。BF16 在 V100 上是模擬，整首歌會慢。
+
 ### [2026-11-25 17:54] V100 已載入權重，補上 torch 2.3 的注意力相容
 
 - **修改的文件**：`src/yue2/modeling_yue2.py`、`src/yue2/cuda_graph.py`
