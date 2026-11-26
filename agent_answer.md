@@ -1,3 +1,9 @@
+### [2026-11-26 14:56] 180 萬音頻在 S3，索引副本沒有 mp3
+
+- **修改的文件**：無源碼改動。
+- **核心邏輯**：`mix_path` 指向 `s3:/ttsingnorth/AI_Music_Data_vUltra/5sing/track_5_mp3/5_track_inst`，所以本地 `exists=False`。要先確認 V100 有 S3 客戶端，再試讀一首 mp3。
+- **AI 備註**：`watch_git_pull.sh` 不能把 log 送進目前這個對話。自動提問要用 Cursor SDK 另開一輪，並需要 API key。尚未改腳本。
+
 ### [2026-11-26 14:51] SSH 同步連線加上 15 秒逾時
 
 - **修改的文件**：`sync_to_linux.ps1`
