@@ -1,3 +1,9 @@
+### [2026-11-26 17:26] 列出 SheetSage2 和 MERT-v2-FullSong 的下載地址
+
+- **修改的文件**：無源碼改動。
+- **核心邏輯**：手動下載只需 SheetSage2 revision `eab522a` 和 MERT-v2-FullSong revision `d8ba1c7` 的完整倉庫。MERT-v2-30s、語義 tokenizer 和 MuCodec 都不要下。
+- **AI 備註**：YuE2-3B 和 YuE2-Vae 已經在伺服器上。歌詞路徑仍等同事提供。
+
 ### [2026-11-26 17:22] 列出歌詞對照和 SheetSage2 部署
 
 - **修改的文件**：無源碼改動。
