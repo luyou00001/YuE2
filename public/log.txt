@@ -1,12 +1,10 @@
-(base) PS D:\linux_output\AI_MUSIC\YuE2> .\sync_to_linux.ps1
--> (1/5) Testing SSH connectivity...
-ma-user@10.155.175.163: Permission denied (publickey).
-SSH command failed: echo ok > /dev/null
-At D:\linux_output\AI_MUSIC\YuE2\sync_to_linux.ps1:39 char:32
-+     if ($LASTEXITCODE -ne 0) { throw "SSH command failed: $Command" }
-+                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    + CategoryInfo          : OperationStopped: (SSH command failed: echo ok > /dev/null:String) [], RuntimeExcept
-   ion
-    + FullyQualifiedErrorId : SSH command failed: echo ok > /dev/null
-
-(base) PS D:\linux_output\AI_MUSIC\YuE2>
+(PyTorch-2.0.0) [ma-user YuE2]$CUDA_VISIBLE_DEVICES=0 PYTHONPATH=src python public/fetch_one_vae_latent.py
+lyric_chars=7
+INFO:root:Using MoXing-v2.2.3.2c7f2141-2c7f2141
+INFO:root:Using OBS-Python-SDK-3.20.9.1
+INFO:root:Using OBS-C-SDK-2.23.1
+/home/ma-user/anaconda3/envs/PyTorch-2.0.0/lib/python3.9/site-packages/torch/nn/utils/weight_norm.py:28: UserWarning: torch.nn.utils.weight_norm is deprecated in favor of torch.nn.utils.parametrizations.weight_norm.
+  warnings.warn("torch.nn.utils.weight_norm is deprecated in favor of torch.nn.utils.parametrizations.weight_norm.")
+latent_shape=(1, 64, 250) finite=True
+saved=/cache/yue2_outputs/vae_one/latent.npy
+(PyTorch-2.0.0) [ma-user YuE2]$
