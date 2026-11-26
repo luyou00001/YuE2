@@ -1,3 +1,8 @@
-(PyTorch-2.0.0) [ma-user YuE2]$CUDA_VISIBLE_DEVICES=0 PYTHONPATH=src python public/fetch_vae_batch.py --count 8
-no records with lyric_chars>=20 in the first 20000
+(PyTorch-2.0.0) [ma-user YuE2]$PYTHONPATH=src python public/lyric_length_stats.py --max-scan 5000
+scanned=5000 longest=7
+0: 0
+1-7: 5000
+8-19: 0
+20-49: 0
+50+: 0
 (PyTorch-2.0.0) [ma-user YuE2]$
