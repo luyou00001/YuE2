@@ -1,3 +1,9 @@
+### [2026-11-26 15:55] 新機器下一步只抽一首 VAE latent
+
+- **修改的文件**：無源碼改動。
+- **核心邏輯**：代碼、權重和 datasets 已在新伺服器。下一步跑 `fetch_one_vae_latent.py`，確認能讀 `ttsingnorth` 並寫出 10 秒 latent。
+- **AI 備註**：先不訓練。成功標準是 `latent_shape=(1, 64, T)` 且 `finite=True`。
+
 ### [2026-11-26 15:49] 同步密鑰改為 Saxphone.pem
 
 - **修改的文件**：`sync_to_linux.ps1`

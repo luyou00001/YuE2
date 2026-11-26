@@ -1,7 +1,11 @@
-# 同步密鑰已改成 Saxphone.pem
+# 下一步只抽一首 VAE latent
 
-`sync_to_linux.ps1` 現在使用 `C:/Users/c00871154/.ssh/Saxphone.pem`。主機仍是 `ma-user@10.155.175.163`，端口 `34456`，遠端目錄仍是 `/home/ma-user/work/YuE2`。
+新機器上的代碼、`/cache` 權重和 datasets 已經就位。先不要訓練，也不要重跑整首歌。跑這條，確認這台伺服器看得到桶 `ttsingnorth`，並能把第一首人聲加伴奏編成 YuE2 latent：
 
-正在跑的 `watch_sync_to_linux.ps1` 要重新啟動一次，才會用到這把密鑰。然後再執行 `.\sync_to_linux.ps1`。若仍是 `Permission denied (publickey)`，就是這台機器的 `authorized_keys` 裡也沒有 `Saxphone.pem` 的公鑰。
+```bash
+CUDA_VISIBLE_DEVICES=0 PYTHONPATH=src python public/fetch_one_vae_latent.py
+```
 
-本次更新的文件：`sync_to_linux.ps1`
+成功時輸出 `latent_shape=(1, 64, T)` 和 `finite=True`，文件在 `/cache/yue2_outputs/vae_one/latent.npy`。若仍是 `NoSuchBucket`，這台機器的 OBS 端點同樣沒有 `ttsingnorth`。把完整輸出貼回來。
+
+本次沒有更新任何文件。
