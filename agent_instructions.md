@@ -1,18 +1,13 @@
-# SSH 呼叫已改回最初的直接執行
+# 回到開發：先抽 8 首可聽的樣本
 
-`sync_to_linux_7.ps1` 也失敗，說明不是某一台服務器單獨的問題。兩支腳本共用後來加上的 `Start-Process` 逾時寫法，這段在 Windows PowerShell 裡會把 `ssh` 的結果弄亂。10 秒檢測已經去掉。
+同步腳本已恢復，7.216 那次能跑通，說明直接呼叫 `ssh` 是對的。開發繼續在現在這台能讀 `ttsingnorth` 的服務器上進行。
 
-現在兩支腳本都恢復成最初的寫法：直接呼叫 `ssh`，連線測試仍是 `echo ok > /dev/null`。目標沒有對調。
+10 秒的人聲加伴奏聽起來正常。下一步抽 8 首歌詞不少於 20 字的片段，每首 10 秒，保存 `latent.npy`、`mix.wav` 和 `mix.mp3`。終端只印歌詞字數。
 
-- `sync_to_linux.ps1`：`ma-user@10.155.175.163:34456`，`Saxphone.pem`
-- `sync_to_linux_7.ps1`：`ma-user@7.216.161.45:32138`，`hk-develop-sh.pem`
-
-先在公司電腦執行：
-
-```powershell
-.\sync_to_linux_7.ps1
+```bash
+CUDA_VISIBLE_DEVICES=0 PYTHONPATH=src python public/fetch_vae_batch.py --count 8
 ```
 
-若這次出現 `SSH OK`，腳本已恢復，再試 `.\sync_to_linux.ps1`。若 7 這支仍失敗，把 `ssh` 印出的那一行原文貼回來。
+聽 `/cache/yue2_outputs/vae_batch/000` 到 `007` 裡的 `mix.mp3`。若某一首 `mp3=False`，WAV 仍在。8 首都像正常歌曲之後，再把這個抽取接到 `YuE2-3B` 的 finetune。不從頭訓練。現在用這台 8 張 V100 開發，大規模訓練再使用 8 個節點共 64 張 V100。樂譜和 32768 類語義 token 仍後做。
 
-本次更新的文件：`sync_to_linux.ps1`、`sync_to_linux_7.ps1`
+本次沒有更新任何文件。
