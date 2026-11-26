@@ -1,3 +1,9 @@
+### [2026-11-26 15:03] 接上 NAR 的 mox 讀檔並抽一首 VAE latent
+
+- **修改的文件**：`public/fetch_one_vae_latent.py`
+- **核心邏輯**：不再確認 mox。用 `mox.file.copy` 抓第一條的人聲和伴奏，相加後用 YuE2-Vae 編前 10 秒 latent。不用 MuCodec。
+- **AI 備註**：成功標準是 `latent_shape=(1, 64, T)` 且數值有限。樂譜和語義 token 仍未接上。
+
 ### [2026-11-26 15:02] NAR 的 mox 讀檔可以接，MuCodec token 不能接
 
 - **修改的文件**：無源碼改動。
