@@ -1,13 +1,9 @@
-# 歌詞欄位最長只有 7 個字
+# 8 首音頻正常，lyric 欄位是 unknown
 
-前 5000 條全部落在 1–7 字，`longest=7`。沒有 0 字，也沒有 8 字以上。這個 `lyric` 不是 YuE2 要的完整歌詞，不能用 20 字門檻篩選。抽樣腳本的下限已改成 1。
+8 首都保存成功，每首 latent 是 `(1, 64, 250)`，MP3 也都寫出了。`scanned=8` 是因為現在的下限是 1 個字，前 8 條都剛好是 7 個字，所以沒有跳過。你看到的 `lyric.txt` 全是一行 `unknown`，和之前 5000 條最長只有 7 個字一致。這不是腳本把歌詞截斷，而是索引裡的 `lyric` 就是這個佔位字。
 
-重新抽 8 首 10 秒音頻，每首仍保存 latent、WAV 和 MP3：
+因此這 180 萬條現在可以提供的是混合後的 48 kHz 音頻和對應的 YuE2 VAE latent。它不能提供歌詞、風格句子、ABC 樂譜，也不能提供 32768 類語義 token。`clamp3_path` 仍是向量。`codec_path` 仍是 MuCodec。
 
-```bash
-CUDA_VISIBLE_DEVICES=0 PYTHONPATH=src python public/fetch_vae_batch.py --count 8
-```
+音頻這一步可以停在這 8 首，先不要掃 183 萬首。下一步要補的是文字條件：對 `mix.wav` 做語音識別得到歌詞，或者在沒有歌詞時按論文的文字丟棄方式訓練。樂譜用 SheetSage2 再從這 8 首混合音頻上試。在這兩項有結果之前，不開始 finetune。
 
-聽 `/cache/yue2_outputs/vae_batch/` 裡的 `mix.mp3`。歌詞原文仍寫在各目錄的 `lyric.txt`，終端只印字數。這 8 首用來確認不同歌曲的混合音頻是否穩定。完整歌詞、風格句子、樂譜和語義 token 都還要另外做。
-
-本次更新的文件：`public/fetch_vae_batch.py`
+本次沒有更新任何文件。
