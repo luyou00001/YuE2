@@ -1,3 +1,9 @@
+### [2026-11-26 14:43] 180 萬記錄含歌詞與三條路徑
+
+- **修改的文件**：`public/check_180w_index.sh`
+- **核心邏輯**：內層有 `lyric`、`mix_path`、`clamp3_path`、`codec_path`。歌詞可用於文字條件；codec 仍是 MuCodec，不是 YuE2 語義 token。腳本改為只報告字數、後綴和文件是否存在。
+- **AI 備註**：下一步確認 `mix_path` 在這台 V100 上是否真的有文件。沒有音頻就不能抽 VAE latent。
+
 ### [2026-11-26 14:40] 180 萬索引有 183 萬行，記錄包在 v 裡
 
 - **修改的文件**：`public/check_180w_index.sh`
