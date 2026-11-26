@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>YuE2 在 V100 上的推理適配與訓練驗證</title>
+<style>
+  :root { color-scheme: light; }
+  body { margin: 0; font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Songti SC", serif; color: #1c1915; background: #f6f3ec; }
+  main { max-width: 880px; margin: 0 auto; padding: 48px 28px 72px; }
+  h1 { font-size: 32px; line-height: 1.25; font-weight: 650; margin: 0 0 8px; }
+  h2 { font-size: 20px; margin: 36px 0 10px; border-top: 1px solid #d9d2c5; padding-top: 18px; }
+  p, li { font-size: 16px; line-height: 1.55; }
+  .meta { color: #5e584f; font-family: "Avenir Next", "Segoe UI", sans-serif; font-size: 13px; letter-spacing: 0.02em; }
+  .lead { font-size: 18px; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 8px; font-family: "Avenir Next", "Segoe UI", sans-serif; font-size: 14px; }
+  th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid #e4ddd1; }
+  th { color: #5e584f; font-weight: 600; }
+  code { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.92em; }
+  .note { background: #fff; border: 1px solid #e4ddd1; padding: 12px 14px; }
+  @media print { body { background: #fff; } main { padding: 0; } }
+</style>
+</head>
+<body>
+<main>
+  <p class="meta">YuE2 · V100 進度匯報 · 2026-11-26</p>
+  <h1>YuE2 在 V100 上的推理適配與訓練驗證</h1>
+  <p class="lead">原模型已在單張 V100 上生成完整歌曲，聽感和 A100 上的結果接近。訓練迴圈也已驗證可以計算損失、反傳、另存權重並重新生成。這 5 步權重更新聽不出明顯差別，因此不把它當作新基模。</p>
+
+  <h2>結論</h2>
+  <ul>
+    <li>基模是 <code>/cache/yue2_files/YuE2-3B</code>，解碼器是 <code>/cache/yue2_files/YuE2-Vae</code>。續訓從這份 checkpoint 開始，不從頭訓練。</li>
+    <li>可用環境是現有的 PyTorch-2.0.0：Python 3.9.11、<code>torch 2.3.1+cu121</code>。不要升級到 torch 2.10 的 CUDA 12.8 輪子。</li>
+    <li>機器是 8 張 Tesla V100-PCIE-32GB，驅動 535.183.01，最高 CUDA 12.2。官方 torch 2.10 需要約 570 的驅動，目前載入不了。</li>
+    <li>官方語義 tokenizer 沒有發布。現在不能用新錄音做論文裡那套完整監督。</li>
+  </ul>
+
+  <h2>已完成的工作</h2>
+  <table>
+    <thead><tr><th>項目</th><th>結果</th></tr></thead>
+    <tbody>
+      <tr><td>硬件確認</td><td>8 張空閒的 V100 32GB。驅動 535 只支援到 CUDA 12.2。</td></tr>
+      <tr><td>環境選擇</td><td>conda 建新環境被代理擋住，直接連 PyPI 失敗。改用已能看見 GPU 的 PyTorch-2.0.0，沒有更換 torch。</td></tr>
+      <tr><td>V100 代碼適配</td><td>torch 2.3 沒有 <code>is_flash_attention_available</code> 和 <code>enable_gqa</code>。缺少時展開 KV 頭，改走普通注意力。新版 torch 的原行為保持不變。</td></tr>
+      <tr><td>推理跑通</td><td>同一套 eager 路徑生成 58.9 秒音頻，耗時 125.8 秒。樂譜 513 token，語義 1474 token。聽感和 A100 接近。</td></tr>
+      <tr><td>輸出位置</td><td>省略輸出參數時寫到 <code>/cache/yue2_outputs/&lt;歌曲 id&gt;/</code>。保留 FLAC，並在有 ffmpeg 時另存 MP3。</td></tr>
+      <tr><td>損失與反傳</td><td>用已生成歌曲的 token 計算自迴歸損失。707 token 中 65 個被監督，<code>ar_loss=3.6250</code>，梯度有限。權重未改。</td></tr>
+      <tr><td>小步續訓與再生成</td><td>只更新輸出層 5 步，另存到 <code>/cache/yue2_ckpts/lmhead-city-lights</code>。損失降到 3.6094 後停住。用新權重又生成 60.8 秒音頻和 MP3。聽起來與原版差異不大。</td></tr>
+    </tbody>
+  </table>
+
+  <h2>目前固定的推理配方</h2>
+  <div class="note">
+    <p>單卡、eager、不升級 torch。權重與 VAE 用本地目錄。BF16 在 V100 上由 FP32 模擬，一首約一分鐘的歌大約兩分鐘算完。</p>
+    <p><code>CUDA_VISIBLE_DEVICES=0 PYTHONPATH=src python -m yue2.cli generate --request examples/song.json --model /cache/yue2_files/YuE2-3B --vae /cache/yue2_files/YuE2-Vae --offline --device cuda --backend torch-eager --budget 30</code></p>
+  </div>
+
+  <h2>訓練驗證說明了什麼</h2>
+  <p>3.625 的交叉熵是原模型在自己生成的 token 上的分數。184704 類完全隨機時約為 12.1，所以它只說明原模型認得這些 token，不是音質指標。5 步輸出層更新只讓損失下降 0.016，聽感也幾乎不變。這證明存檔、重新載入和再生成是通的，不證明模型變好。</p>
+  <p><code>/cache/yue2_ckpts/lmhead-city-lights</code> 只記住了 65 個 token，到此停止。以後續訓仍從 <code>/cache/yue2_files/YuE2-3B</code> 開始，結果另存。全參 Adam 狀態放不進 32GB。</p>
+
+  <h2>下一步</h2>
+  <ol>
+    <li>不再給這份輸出層權重加步數，也不把它當新基模。</li>
+    <li>用 4 到 8 條固定提示詞和 seed，在原模型上做聽感對照。每張 V100 跑一個獨立進程。各次結果放進 <code>/cache/yue2_outputs/</code> 的不同子目錄。</li>
+    <li>對照內容先選推理可控的設定：<code>cot=full</code>、<code>cot=off</code>，以及改 ABC 之後再渲染。先不增加訓練步數。</li>
+    <li>有新的歌曲數據之後，再從 YuE2-3B 做小範圍 AR 續訓。每次只改一種設定，並和原模型的同一批歌對聽。訓練後若變差，就停。</li>
+    <li>語義 tokenizer 出現之前，不用新錄音冒充完整的樂譜、語義 token 和 latent 監督。VAE 繼續凍結。</li>
+  </ol>
+
+  <h2>現在不做的事</h2>
+  <ul>
+    <li>不把 NVIDIA 驅動未升級前的 torch 2.10 CUDA 12.8 裝進這台 V100。</li>
+    <li>不把 A100 上的 <code>.venv-yue2</code> 整份複製過來運行。那是 Python 3.12.11 加 torch 2.10.0+cu128。</li>
+    <li>不用 8 張 V100 從頭復現論文的 64 張 H800 訓練。</li>
+  </ul>
+</main>
+</body>
+</html>
