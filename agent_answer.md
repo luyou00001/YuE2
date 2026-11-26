@@ -1,3 +1,9 @@
+### [2026-11-26 14:49] 180 萬索引在，音頻路徑不存在
+
+- **修改的文件**：`public/inspect_180w_record.py`
+- **核心邏輯**：1,833,083 條索引已就緒，但第一條的 `mix_path`、`clamp3_path`、`codec_path` 都 `exists=False`。這份副本只有目錄，沒有音頻。腳本改為再印父目錄。
+- **AI 備註**：先不要抽 VAE latent。下一步看 parent，確定還要複製哪一層音頻。
+
 ### [2026-11-26 14:45] 修正 180 萬欄位檢查的引號錯誤
 
 - **修改的文件**：`public/check_180w_index.sh`、`public/inspect_180w_record.py`

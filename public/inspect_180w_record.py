@@ -20,7 +20,7 @@ def main():
         if key.endswith("path"):
             path = Path(value)
             suffix = path.suffix if path.suffix else "none"
-            print(f"{key}: suffix={suffix} exists={path.is_file()}")
+            print(f"{key}: suffix={suffix} exists={path.is_file()} parent={path.parent}")
         else:
             print(f"{key}: chars={len(value)}")
 
