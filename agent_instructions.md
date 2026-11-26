@@ -1,13 +1,12 @@
-# 聽感正常後，先抽 8 首帶歌詞的 10 秒樣本
+# 監視一直重試，是因為 SSH 在第一步失敗
 
-這 10 秒的人聲加伴奏可以當 YuE2 的聲學來源。訓練目標仍是在現有 `YuE2-3B` 上做 finetune、後訓練和新功能，不從頭訓練。現在這台 8 張 V100 用來開發。後面大規模訓練用 8 個節點、每節點 8 張，一共 64 張 V100。
+`watch_sync_to_linux.ps1` 看到本機是 `1d59096`，GitHub 是 `9625d68`，所以每 10 秒都去跑 `sync_to_linux.ps1`。同步腳本在測試 SSH 時失敗，後面的 `git pull` 和推送到 Linux 都沒有執行。本機提交不變，下一輪仍認為有更新，於是不停重試。
 
-下一批只抽 8 首，跳過歌詞短於 20 字的記錄。每首保存 `latent.npy`、`mix.wav` 和 `mix.mp3`。歌詞寫在該目錄的 `lyric.txt`，終端只印字數。下載仍走 NAR 的 `mox.file.copy`。
+失敗有兩種：
 
-```bash
-CUDA_VISIBLE_DEVICES=0 PYTHONPATH=src python public/fetch_vae_batch.py --count 8
-```
+- 大約 1 秒就出現 `SSH command failed`：SSH 已經得到結果並返回非 0。這和之前的 `Permission denied (publickey)` 是同一類，伺服器沒有接受目前的 `Saxphone.pem`。現在的逾時寫法沒有把 `ssh` 自己的錯誤文字印出來，所以畫面上只剩這句。
+- `SSH timed out after 10s`：端口在 10 秒內沒有完成連線，腳本把該次 `ssh` 關掉了。這是逾時生效，不是卡住。
 
-結果在 `/cache/yue2_outputs/vae_batch/000` 到 `007`。先聽幾首 `mix.mp3`。若 `mp3=False`，這台機器沒有 `ffmpeg`，WAV 仍在。8 首都正常之後，再把這個抽取接到續訓，而不是一次掃完 183 萬首。樂譜和 32768 類語義 token 仍後做。
+所以公司電腦這段時間並沒有把新代碼同步到 `10.155.175.163`。要麼這台新實例的 `ma-user` 仍未授權 `Saxphone.pem` 的公鑰，要麼 `34456` 這條連線不穩定。在 SSH 測試印出 `SSH OK` 之前，不需要再看後面的推送步驟。
 
-本次更新的文件：`public/fetch_vae_batch.py`
+本次沒有更新任何文件。
