@@ -1,19 +1,9 @@
-# 索引在，音頻文件不在這台 V100 上
+# SSH 連線測試不再無限等待
 
-`pt_all_v1.txt` 有 1,833,083 行，人聲清單和時長文件也在。第一條記錄的歌詞只有 7 個字。三條路徑都打不開：
+`watch_sync_to_linux.ps1` 卡住的第一步在 `sync_to_linux.ps1`。原來的 `ssh` 沒有連線逾時，也沒有關掉密碼詢問，遠端沒回應時會一直停在 `Testing SSH connectivity`。
 
-- `mix_path` 是 `.mp3`，`exists=False`
-- `clamp3_path` 是 `.npy`，`exists=False`
-- `codec_path` 沒有後綴，`exists=False`
+現在 SSH 使用 `BatchMode=yes`、`ConnectTimeout=15`、`ConnectionAttempts=1`。15 秒內連不上就失敗並回到監視迴圈，下一輪再試。`git push` 走同一組選項。
 
-因此現在複製過來的是索引，不是音頻。`mix_path` 仍指向原來的位置，這台機器上沒有那些 mp3，不能抽 VAE latent，也不能把 MuCodec 文件拿來當 YuE2 的語義 token。
+監視視窗需要重新啟動一次，才會用到新的 `sync_to_linux.ps1`。
 
-檢查腳本已加上每條路徑的父目錄，仍然不印文件名和歌詞。
-
-```bash
-bash public/check_180w_index.sh
-```
-
-把三行 `parent=` 貼回來。那個目錄才是還需要複製或掛載的音頻位置。
-
-本次更新的文件：`public/inspect_180w_record.py`
+本次更新的文件：`sync_to_linux.ps1`

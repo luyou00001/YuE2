@@ -32,10 +32,10 @@ $RemoteDir   = "/home/ma-user/work/YuE2"
 $RemoteUrl   = "ssh://ma-user@7.216.161.45:32138/home/ma-user/work/YuE2"
 $RemoteName  = "rl-node"
 
-$env:GIT_SSH_COMMAND = "ssh -i `"$SshKey`" -o StrictHostKeyChecking=no"
+$env:GIT_SSH_COMMAND = "ssh -i `"$SshKey`" -o BatchMode=yes -o ConnectTimeout=15 -o ConnectionAttempts=1 -o ServerAliveInterval=5 -o ServerAliveCountMax=2 -o StrictHostKeyChecking=no"
 
 function Invoke-Ssh([string]$Command) {
-    ssh -i $SshKey -p $SshPort -o StrictHostKeyChecking=no $SshUserHost $Command
+    ssh -i $SshKey -p $SshPort -o BatchMode=yes -o ConnectTimeout=15 -o ConnectionAttempts=1 -o ServerAliveInterval=5 -o ServerAliveCountMax=2 -o StrictHostKeyChecking=no $SshUserHost $Command
     if ($LASTEXITCODE -ne 0) { throw "SSH command failed: $Command" }
 }
 

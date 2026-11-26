@@ -1,3 +1,9 @@
+### [2026-11-26 14:51] SSH 同步連線加上 15 秒逾時
+
+- **修改的文件**：`sync_to_linux.ps1`
+- **核心邏輯**：SSH 連線測試和 git push 都加上 BatchMode 與 ConnectTimeout=15。連不上就失敗並讓監視腳本下一輪再試，不再停在 Testing SSH connectivity。
+- **AI 備註**：正在跑的 watch 視窗要重開一次才會載入新腳本。
+
 ### [2026-11-26 14:49] 180 萬索引在，音頻路徑不存在
 
 - **修改的文件**：`public/inspect_180w_record.py`
