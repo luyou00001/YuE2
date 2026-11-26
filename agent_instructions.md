@@ -1,7 +1,7 @@
-# `echo ok > /dev/null` 不是失敗原因
+# 這次是腳本自己在空訊息上崩潰
 
-`SSH command failed: echo ok > /dev/null` 是腳本把當時交給遠端的命令原文貼進錯誤訊息。`ssh` 的退出碼不是 0，所以這句會出現。遠端的 `echo` 和 `/dev/null` 沒有語法問題。上一輪能看到的原文是 `Permission denied (publickey)`，也就是這把私鑰沒被 `ma-user` 接受。
+`You cannot call a method on a null-valued expression` 出在 `sync_to_linux.ps1` 第 53 行。SSH 結束後，錯誤輸出是空的，`$detail` 為空，腳本仍對它呼叫 `.Trim()`，所以真正的 `ssh` 退出碼和原文都沒印出來。這不是 `echo` 或 `true` 的語法問題，也不能從這一行判斷密鑰有沒有被接受。
 
-改了兩處，避免再被這行字誤導：連線測試改為遠端執行 `true`，失敗時把 `ssh` 自己的錯誤文字印出來。10 秒逾時仍在。監視視窗要重新啟動後再跑 `.\sync_to_linux.ps1`。若新錯誤裡仍有 `Permission denied (publickey)`，就是 `Saxphone.pem` 還沒被這台機器授權。
+已改成先等待程序完全結束，退出碼為空時不當成成功，只在有文字時才 Trim。失敗時會顯示 `SSH failed (退出碼): ssh 的原文`。監視視窗重新啟動後再跑 `.\sync_to_linux.ps1`。若看到 `Permission denied (publickey)`，才是 `Saxphone.pem` 仍未被授權；若看到 `SSH OK`，第一步就已經通過。
 
 本次更新的文件：`sync_to_linux.ps1`

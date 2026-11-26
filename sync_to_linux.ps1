@@ -43,14 +43,24 @@ function Invoke-Ssh([string]$Command, [int]$TimeoutSeconds = 10) {
         "-o", "StrictHostKeyChecking=no", $SshUserHost, $Command
     )
     $proc = Start-Process -FilePath "ssh" -ArgumentList $sshArgs -PassThru -WindowStyle Hidden -RedirectStandardError $errFile -RedirectStandardOutput $outFile
-    if (-not $proc.WaitForExit($TimeoutSeconds * 1000)) {
+    $exited = $proc.WaitForExit($TimeoutSeconds * 1000)
+    if (-not $exited) {
         Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+        Remove-Item $errFile, $outFile -ErrorAction SilentlyContinue
         throw "SSH timed out after ${TimeoutSeconds}s; retrying next loop"
     }
+    $null = $proc.WaitForExit()
     $detail = ""
-    if (Test-Path $errFile) { $detail = (Get-Content $errFile -Raw -ErrorAction SilentlyContinue) }
+    foreach ($path in @($errFile, $outFile)) {
+        if (Test-Path $path) {
+            $raw = Get-Content $path -Raw -ErrorAction SilentlyContinue
+            if ($raw) { $detail = ($detail + " " + $raw).Trim() }
+        }
+    }
     Remove-Item $errFile, $outFile -ErrorAction SilentlyContinue
-    if ($proc.ExitCode -ne 0) { throw ("SSH failed ({0}): {1}" -f $proc.ExitCode, $detail.Trim()) }
+    $code = $proc.ExitCode
+    if ($null -eq $code) { $code = -1 }
+    if ($code -ne 0) { throw ("SSH failed ({0}): {1}" -f $code, $detail) }
 }
 
 Set-Location $RepoDir
