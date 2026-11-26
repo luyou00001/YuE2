@@ -1,7 +1,15 @@
-# 這次是腳本自己在空訊息上崩潰
+# 用同一套腳本另測原來的 7.216 服務器
 
-`You cannot call a method on a null-valued expression` 出在 `sync_to_linux.ps1` 第 53 行。SSH 結束後，錯誤輸出是空的，`$detail` 為空，腳本仍對它呼叫 `.Trim()`，所以真正的 `ssh` 退出碼和原文都沒印出來。這不是 `echo` 或 `true` 的語法問題，也不能從這一行判斷密鑰有沒有被接受。
+`sync_to_linux.ps1` 沒有改，仍指向 `ma-user@10.155.175.163:34456` 和 `Saxphone.pem`。
 
-已改成先等待程序完全結束，退出碼為空時不當成成功，只在有文字時才 Trim。失敗時會顯示 `SSH failed (退出碼): ssh 的原文`。監視視窗重新啟動後再跑 `.\sync_to_linux.ps1`。若看到 `Permission denied (publickey)`，才是 `Saxphone.pem` 仍未被授權；若看到 `SSH OK`，第一步就已經通過。
+新文件是 `sync_to_linux_7.ps1`。它用同一套連線測試，目標改回 `ma-user@7.216.161.45`，端口 `32138`，密鑰 `C:/Users/c00871154/.ssh/hk-develop-sh.pem`。遠端目錄仍是 `/home/ma-user/work/YuE2`。git remote 用 `v100-7`，不會改掉目前的 `rl-node`。
 
-本次更新的文件：`sync_to_linux.ps1`
+在公司電腦的倉庫裡執行：
+
+```powershell
+.\sync_to_linux_7.ps1
+```
+
+若出現 `SSH OK` 並走到 `Done`，目前這套腳本可以連上舊服務器，問題在新服務器的 SSH 授權或端口。若這份也在第一步失敗，把完整輸出貼回來，那就是腳本本身的呼叫方式有問題。
+
+本次更新的文件：`sync_to_linux_7.ps1`
