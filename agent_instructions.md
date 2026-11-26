@@ -1,15 +1,18 @@
-# 用同一套腳本另測原來的 7.216 服務器
+# SSH 呼叫已改回最初的直接執行
 
-`sync_to_linux.ps1` 沒有改，仍指向 `ma-user@10.155.175.163:34456` 和 `Saxphone.pem`。
+`sync_to_linux_7.ps1` 也失敗，說明不是某一台服務器單獨的問題。兩支腳本共用後來加上的 `Start-Process` 逾時寫法，這段在 Windows PowerShell 裡會把 `ssh` 的結果弄亂。10 秒檢測已經去掉。
 
-新文件是 `sync_to_linux_7.ps1`。它用同一套連線測試，目標改回 `ma-user@7.216.161.45`，端口 `32138`，密鑰 `C:/Users/c00871154/.ssh/hk-develop-sh.pem`。遠端目錄仍是 `/home/ma-user/work/YuE2`。git remote 用 `v100-7`，不會改掉目前的 `rl-node`。
+現在兩支腳本都恢復成最初的寫法：直接呼叫 `ssh`，連線測試仍是 `echo ok > /dev/null`。目標沒有對調。
 
-在公司電腦的倉庫裡執行：
+- `sync_to_linux.ps1`：`ma-user@10.155.175.163:34456`，`Saxphone.pem`
+- `sync_to_linux_7.ps1`：`ma-user@7.216.161.45:32138`，`hk-develop-sh.pem`
+
+先在公司電腦執行：
 
 ```powershell
 .\sync_to_linux_7.ps1
 ```
 
-若出現 `SSH OK` 並走到 `Done`，目前這套腳本可以連上舊服務器，問題在新服務器的 SSH 授權或端口。若這份也在第一步失敗，把完整輸出貼回來，那就是腳本本身的呼叫方式有問題。
+若這次出現 `SSH OK`，腳本已恢復，再試 `.\sync_to_linux.ps1`。若 7 這支仍失敗，把 `ssh` 印出的那一行原文貼回來。
 
-本次更新的文件：`sync_to_linux_7.ps1`
+本次更新的文件：`sync_to_linux.ps1`、`sync_to_linux_7.ps1`

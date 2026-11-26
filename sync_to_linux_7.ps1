@@ -30,41 +30,17 @@ $RemoteDir   = "/home/ma-user/work/YuE2"
 $RemoteUrl   = "ssh://ma-user@7.216.161.45:32138/home/ma-user/work/YuE2"
 $RemoteName  = "v100-7"
 
-$env:GIT_SSH_COMMAND = "ssh -i `"$SshKey`" -o BatchMode=yes -o ConnectTimeout=15 -o ConnectionAttempts=1 -o ServerAliveInterval=5 -o ServerAliveCountMax=2 -o StrictHostKeyChecking=no"
+$env:GIT_SSH_COMMAND = "ssh -i `"$SshKey`" -o StrictHostKeyChecking=no"
 
-function Invoke-Ssh([string]$Command, [int]$TimeoutSeconds = 10) {
-    $errFile = Join-Path $env:TEMP ("yue2-ssh-" + [guid]::NewGuid().ToString() + ".err")
-    $outFile = Join-Path $env:TEMP ("yue2-ssh-" + [guid]::NewGuid().ToString() + ".out")
-    $sshArgs = @(
-        "-i", $SshKey, "-p", $SshPort,
-        "-o", "BatchMode=yes", "-o", "ConnectTimeout=8", "-o", "ConnectionAttempts=1",
-        "-o", "StrictHostKeyChecking=no", $SshUserHost, $Command
-    )
-    $proc = Start-Process -FilePath "ssh" -ArgumentList $sshArgs -PassThru -WindowStyle Hidden -RedirectStandardError $errFile -RedirectStandardOutput $outFile
-    $exited = $proc.WaitForExit($TimeoutSeconds * 1000)
-    if (-not $exited) {
-        Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
-        Remove-Item $errFile, $outFile -ErrorAction SilentlyContinue
-        throw "SSH timed out after ${TimeoutSeconds}s; retrying next loop"
-    }
-    $null = $proc.WaitForExit()
-    $detail = ""
-    foreach ($path in @($errFile, $outFile)) {
-        if (Test-Path $path) {
-            $raw = Get-Content $path -Raw -ErrorAction SilentlyContinue
-            if ($raw) { $detail = ($detail + " " + $raw).Trim() }
-        }
-    }
-    Remove-Item $errFile, $outFile -ErrorAction SilentlyContinue
-    $code = $proc.ExitCode
-    if ($null -eq $code) { $code = -1 }
-    if ($code -ne 0) { throw ("SSH failed ({0}): {1}" -f $code, $detail) }
+function Invoke-Ssh([string]$Command) {
+    ssh -i $SshKey -p $SshPort -o StrictHostKeyChecking=no $SshUserHost $Command
+    if ($LASTEXITCODE -ne 0) { throw "SSH command failed: $Command" }
 }
 
 Set-Location $RepoDir
 
 Write-Host "-> (1/5) Testing SSH connectivity..." -ForegroundColor Cyan
-Invoke-Ssh "true"
+Invoke-Ssh "echo ok > /dev/null"
 Write-Host "   SSH OK" -ForegroundColor Green
 
 Write-Host "-> (2/5) Pulling latest from origin (GitHub)..." -ForegroundColor Cyan
