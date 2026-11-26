@@ -25,11 +25,11 @@ param(
 $ErrorActionPreference = "Stop"
 
 $RepoDir     = $PSScriptRoot
-$SshKey      = "C:/Users/c00871154/.ssh/hk-develop-sh.pem"
-$SshPort     = "32138"
-$SshUserHost = "ma-user@7.216.161.45"
+$SshKey      = "C:/Users/c00871154/.ssh/hk-develop.pem"
+$SshPort     = "34456"
+$SshUserHost = "ma-user@10.155.175.163"
 $RemoteDir   = "/home/ma-user/work/YuE2"
-$RemoteUrl   = "ssh://ma-user@7.216.161.45:32138/home/ma-user/work/YuE2"
+$RemoteUrl   = "ssh://ma-user@10.155.175.163:34456/home/ma-user/work/YuE2"
 $RemoteName  = "rl-node"
 
 $env:GIT_SSH_COMMAND = "ssh -i `"$SshKey`" -o BatchMode=yes -o ConnectTimeout=15 -o ConnectionAttempts=1 -o ServerAliveInterval=5 -o ServerAliveCountMax=2 -o StrictHostKeyChecking=no"
