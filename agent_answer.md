@@ -1,3 +1,9 @@
+### [2026-11-26 15:02] NAR 的 mox 讀檔可以接，MuCodec token 不能接
+
+- **修改的文件**：無源碼改動。
+- **核心邏輯**：V100 已設定 `S3_ENDPOINT` 和 `OBS_ENDPOINT`。NAR 用 `mox.file.copy` 下載 `s3://` 波形。YuE2 可復用這段，再把人聲加伴奏送進 YuE2-Vae。MuCodec 的 16384 token 不是 YuE2 的語義碼。
+- **AI 備註**：下一步在目前 Python 裡 `import moxing`。沒有的話改用當時 NAR 的 Python 只負責下載。
+
 ### [2026-11-26 14:59] 180 萬伴奏是 S3 路徑，V100 沒有下載客戶端
 
 - **修改的文件**：無源碼改動。
