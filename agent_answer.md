@@ -1,3 +1,9 @@
+### [2026-11-26 15:08] OBS 連上了，但桶 ttsingnorth 不在這台 V100
+
+- **修改的文件**：無源碼改動。
+- **核心邏輯**：moxing 收到 `404 NoSuchBucket`，不是連線失敗。這台機器的 OBS 端點沒有桶 `ttsingnorth`。應改到曾經成功讀過這條 `s3://` 的 NAR 機器再跑同一個腳本。
+- **AI 備註**：那台需要 moxing、180 萬索引和 YuE2-Vae。索引路徑不同時改 `fetch_one_vae_latent.py` 的 `CFG`。
+
 ### [2026-11-26 15:03] 接上 NAR 的 mox 讀檔並抽一首 VAE latent
 
 - **修改的文件**：`public/fetch_one_vae_latent.py`
