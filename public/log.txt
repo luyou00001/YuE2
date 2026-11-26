@@ -1,20 +1,9 @@
-(PyTorch-2.0.0) [ma-user YuE2]$CUDA_VISIBLE_DEVICES=0 PYTHONPATH=src python -m yue2.cli generate \
->   --request examples/song.json \
->   --model /cache/yue2_files/YuE2-3B \
->   --vae /cache/yue2_files/YuE2-Vae \
->   --offline --device cuda --backend torch-eager --budget 30 \
->   --output outputs/first-song
-[YuE2] Completed Resolving model files: 0.0s
-[YuE2] Completed Verifying model files: 25.3s
-[YuE2] | Loading model: 4.0s`torch_dtype` is deprecated! Use `dtype` instead!
-[YuE2] Completed Loading model: 7.0s
-[YuE2] Completed Planning score: 513 tokens | 28.5 tokens/s | 18.0s
-[YuE2] Completed Generating song: 1474 tokens | 30.0 tokens/s | 49.2s
-[YuE2] Completed Synthesizing audio: [########] 32/32 steps (100%) | 42.9s
-[YuE2] \ Loading audio decoder: 4.8s/home/ma-user/anaconda3/envs/PyTorch-2.0.0/lib/python3.9/site-packages/torch/nn/utils/weight_norm.py:28: UserWarning: torch.nn.utils.weight_norm is deprecated in favor of torch.nn.utils.parametrizations.weight_norm.
-  warnings.warn("torch.nn.utils.weight_norm is deprecated in favor of torch.nn.utils.parametrizations.weight_norm.")
-[YuE2] Completed Loading audio decoder: 5.7s
-[YuE2] Completed Decoding audio: [########] 2/2 chunks (100%) | 2.8s
-[YuE2] Completed: 58.9s audio in 125.8s
-{"status": "complete", "output": "outputs/first-song/city_lights", "truncated": {"abc": false, "semantic": false}, "seconds": 125.79569394141436}
+(PyTorch-2.0.0) [ma-user YuE2]$CUDA_VISIBLE_DEVICES=0 PYTHONPATH=src python public/train_loss_check.py \
+>   --song outputs/first-song/city_lights \
+>   --model /cache/yue2_files/YuE2-3B
+tokens=707 prefix=642 supervised=65
+`torch_dtype` is deprecated! Use `dtype` instead!
+ar_loss=3.6250 weighted_0.25=0.9062
+lm_head_grad_finite=True grad_norm=5.3195
+no weights were updated or saved
 (PyTorch-2.0.0) [ma-user YuE2]$
