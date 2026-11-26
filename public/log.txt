@@ -6,7 +6,7 @@
 /cache/yue2_files/datasets/acctask-180w-acc-caption-cfgs/200w-001.txt
 song_key_chars 43
 lyric: chars=7
-mix_path: suffix=.mp3 exists=False
-clamp3_path: suffix=.npy exists=False
-codec_path: suffix=none exists=False
+mix_path: suffix=.mp3 exists=False parent=s3:/ttsingnorth/AI_Music_Data_vUltra/5sing/track_5_mp3/5_track_inst
+clamp3_path: suffix=.npy exists=False parent=s3:/ttsingnorth/AI_Music_Data_vUltra/Release/5sing/bpm_cleaned_prompt_muqmulan_text
+codec_path: suffix=none exists=False parent=.
 (PyTorch-2.0.0) [ma-user YuE2]$
