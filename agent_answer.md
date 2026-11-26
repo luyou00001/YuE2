@@ -1,3 +1,9 @@
+### [2026-11-26 11:11] 對照 180 萬 NAR 數據和 YuE2 訓練字段
+
+- **修改的文件**：無源碼改動。
+- **核心邏輯**：180 萬數據是 48 kHz 人聲/伴奏波形和 MuCodec 16384 token，可當音頻來源。YuE2 還要文字、ABC、32768 類語義 token 和 VAE latent。舊離散 token 不能直接續訓。
+- **AI 備註**：索引路徑沿用 NAR 配置 `/cache/l00956912/datasets/acctask-180w-acc-caption-cfgs`。先在 V100 核對文件和 jsonl 欄位，再考慮抽 VAE latent。
+
 ### [2026-11-26 11:06] 整理 V100 適配與訓練驗證匯報
 
 - **修改的文件**：`docs/v100-progress-report.html`
