@@ -4,7 +4,7 @@ INFO:root:Using MoXing-v2.2.3.2c7f2141-2c7f2141
 INFO:root:Using OBS-Python-SDK-3.20.9.1
 INFO:root:Using OBS-C-SDK-2.23.1
 ERROR:root:Failed to call:
-        func=<bound method ObsClientDecorated.getObject of <moxing.framework.file.file_io_obs_wrapper.ObsClientDecorated object at 0x7f089d7476a0>>
+        func=<bound method ObsClientDecorated.getObject of <moxing.framework.file.file_io_obs_wrapper.ObsClientDecorated object at 0x7efee8ab86a0>>
         args=('ttsingnorth', 'AI_Music_Data_vUltra/5sing/track_5_mp3/vocal/wsp_player_1780051412931_vocals.mp3')
         kwargs={loadStreamInMemory:False, cache:False, }
 ERROR:root:
@@ -12,7 +12,7 @@ ERROR:root:
         errorCode:NoSuchBucket
         errorMessage:The specified bucket does not exist
         reason:Not Found
-        request-id:000001A216AD3B8697CB548E60865B76
+        request-id:000001A216B365AA9907825DCC639265
         retry:0
 Traceback (most recent call last):
   File "/home/ma-user/work/YuE2/public/fetch_one_vae_latent.py", line 103, in <module>
@@ -33,5 +33,5 @@ Traceback (most recent call last):
     resp = _retryable_call('getObject', bucket_name, object_key, loadStreamInMemory=False,
   File "/home/ma-user/anaconda3/envs/PyTorch-2.0.0/lib/python3.9/site-packages/moxing/framework/file/file_io.py", line 854, in _retryable_call
     raise MoxFileNotExistsException(resp, 'file or directory or bucket not found.')
-moxing.framework.file.file_io.MoxFileNotExistsException: [Errno {'status': 404, 'reason': 'Not Found', 'errorCode': 'NoSuchBucket', 'errorMessage': 'The specified bucket does not exist', 'body': None, 'requestId': '000001A216AD3B8697CB548E60865B76', 'hostId': 'z3eLAAL8LNrrBYsgG0P/G1W3Yn883mIGo65JbHnvg4Oo9MxzPgmaBKvXBsByNDAC', 'header': [('date', 'Thu, 26 Nov 2026 07:06:21 GMT'), ('content-type', 'application/xml'), ('content-length', '321'), ('connection', 'close'), ('x-reserved', 'amazon, aws and amazon web services are trademarks or registered trademarks of Amazon Technologies, Inc'), ('request-id', '000001A216AD3B8697CB548E60865B76'), ('id-2', '36AAAQAAEAABAAAQAAEAABAAAQAAEAABAAAaI=AAAAAAAAAAAAAAAAAAAAAAAAAA')]}] file or directory or bucket not found.
+moxing.framework.file.file_io.MoxFileNotExistsException: [Errno {'status': 404, 'reason': 'Not Found', 'errorCode': 'NoSuchBucket', 'errorMessage': 'The specified bucket does not exist', 'body': None, 'requestId': '000001A216B365AA9907825DCC639265', 'hostId': 'OIZv35UZ42oFXhUYvRXXopzJC3we4Zv0xlF3m03hohtDD3hvyRZx1Kuj+orRgkVt', 'header': [('date', 'Thu, 26 Nov 2026 07:13:05 GMT'), ('content-type', 'application/xml'), ('content-length', '321'), ('connection', 'close'), ('x-reserved', 'amazon, aws and amazon web services are trademarks or registered trademarks of Amazon Technologies, Inc'), ('request-id', '000001A216B365AA9907825DCC639265'), ('id-2', '36AAAQAAEAABAAAQAAEAABAAAQAAEAABAAAaI=AAAAAAAAAAAAAAAAAAAAAAAAAA')]}] file or directory or bucket not found.
 (PyTorch-2.0.0) [ma-user YuE2]$
