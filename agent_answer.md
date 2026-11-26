@@ -1,3 +1,9 @@
+### [2026-11-26 09:28] 基模用 YuE2-3B 續訓，先做損失反傳檢查
+
+- **修改的文件**：`public/train_loss_check.py`
+- **核心邏輯**：基模是已跑通的 YuE2-3B，VAE 凍結。8 張 V100 不能從頭復現論文訓練。第一個訓練腳本只用已生成歌曲的 token 算一次 AR loss 和 backward，不更新權重。
+- **AI 備註**：效果好不好靠和原 checkpoint 的同提示詞聽感對照，不靠 loss 單獨判斷。官方語義 tokenizer 仍然沒有，新錄音還不能提供完整監督。
+
 ### [2026-11-25 18:17] 輸出改到 /cache/yue2_outputs 並加 MP3
 
 - **修改的文件**：`src/yue2/pipeline.py`、`src/yue2/cli.py`
