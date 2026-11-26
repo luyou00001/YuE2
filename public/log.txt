@@ -1,16 +1,20 @@
-(PyTorch-2.0.0) [ma-user YuE2]$CUDA_VISIBLE_DEVICES=0 PYTHONPATH=src python public/fetch_vae_batch.py --count 8
-/home/ma-user/anaconda3/envs/PyTorch-2.0.0/lib/python3.9/site-packages/torch/nn/utils/weight_norm.py:28: UserWarning: torch.nn.utils.weight_norm is deprecated in favor of torch.nn.utils.parametrizations.weight_norm.
-  warnings.warn("torch.nn.utils.weight_norm is deprecated in favor of torch.nn.utils.parametrizations.weight_norm.")
-INFO:root:Using MoXing-v2.2.3.2c7f2141-2c7f2141
-INFO:root:Using OBS-Python-SDK-3.20.9.1
-INFO:root:Using OBS-C-SDK-2.23.1
-000 latent=(1, 64, 250) lyric_chars=7 mp3=True
-001 latent=(1, 64, 250) lyric_chars=7 mp3=True
-002 latent=(1, 64, 250) lyric_chars=7 mp3=True
-003 latent=(1, 64, 250) lyric_chars=7 mp3=True
-004 latent=(1, 64, 250) lyric_chars=7 mp3=True
-005 latent=(1, 64, 250) lyric_chars=7 mp3=True
-006 latent=(1, 64, 250) lyric_chars=7 mp3=True
-007 latent=(1, 64, 250) lyric_chars=7 mp3=True
-saved=8 scanned=8 output=/cache/yue2_outputs/vae_batch
+(PyTorch-2.0.0) [ma-user YuE2]$PYTHONPATH=src python public/check_sheetsage_env.py
+python 3.9.11
+torch: 2.3.1+cu121
+torchaudio: 2.3.1+cu121
+transformers: 4.57.6
+numpy: 1.23.5
+sheetsage_dir=True weights=True infer=True requirements=True
+mert_dir=True weights=False config=True
+requirement torch==2.8.0: present
+requirement torchaudio==2.8.0: present
+requirement transformers==4.45.2: present
+requirement huggingface-hub==0.36.0: present
+requirement safetensors==0.5.3: present
+requirement numpy==1.24.3: present
+requirement scipy==1.13.1: present
+requirement mir_eval==0.8.2: MISSING
+requirement pretty_midi==0.2.10: MISSING
+requirement mido==1.3.3: present
+requirement setuptools==78.1.1: present
 (PyTorch-2.0.0) [ma-user YuE2]$
