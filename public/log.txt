@@ -1,14 +1,11 @@
 (PyTorch-2.0.0) [ma-user YuE2]$python - << 'PY'
-> import json
-> from pathlib import Path
-> p = Path("/cache/yue2_files/datasets/acctask-180w-acc-caption-cfgs/200w-001.txt")
-> rec = json.loads(p.read_text(encoding="utf-8").splitlines()[0])
-> inner = rec.get("v", rec)
-> if isinstance(inner, str):
->     inner = json.loads(inner)
-> print(inner.get("mix_path", ""))
+> import os
+> for key in ("AWS_ACCESS_KEY_ID","AWS_SECRET_ACCESS_KEY","AWS_ENDPOINT_URL","S3_ENDPOINT","OBS_ENDPOINT"):
+>     print(f"{key}={'set' if os.environ.get(key) else 'unset'}")
 > PY
-
-s3://ttsingnorth/AI_Music_Data_vUltra/5sing/track_5_mp3/5_track_inst/wsp_player_1780051412931.mp3
-(PyTorch-2.0.0) [ma-user YuE2]$which rclone aws s3cmd || true
+AWS_ACCESS_KEY_ID=unset
+AWS_SECRET_ACCESS_KEY=unset
+AWS_ENDPOINT_URL=unset
+S3_ENDPOINT=set
+OBS_ENDPOINT=set
 (PyTorch-2.0.0) [ma-user YuE2]$
