@@ -1,3 +1,9 @@
+### [2026-11-26 18:08] SheetSage2 只缺 mir_eval 和 pretty_midi
+
+- **修改的文件**：無源碼改動。
+- **核心邏輯**：檢查腳本的 present 只代表能 import。torch 仍是 2.3.1+cu121，不升級。只補 `mir_eval==0.8.2` 和 `pretty_midi==0.2.10`，並核對兩個 `model.safetensors` 的字節數。MERT 頂層目前沒有權重檔。
+- **AI 備註**：不要 `pip install -r requirements.txt`。SheetSage2 權重應為 228738564 bytes，MERT-v2-FullSong 應為 2529812848 bytes。
+
 ### [2026-11-26 17:56] 用現有環境檢查 SheetSage2 缺包
 
 - **修改的文件**：`public/check_sheetsage_env.py`
