@@ -1,15 +1,9 @@
-# 一首 10 秒 latent 已抽出；SSH 第一步超過 10 秒會重試
+# 10 秒混合音頻已經解出來
 
-`latent_shape=(1, 64, 250)` 且 `finite=True`。10 秒音頻對應 250 幀，YuE2-Vae 的 25 Hz 壓縮是對的。文件在 `/cache/yue2_outputs/vae_one/latent.npy`。`weight_norm` 仍是警告。
+`mix.wav` 在 `/cache/yue2_outputs/vae_one/mix.wav`，48 kHz，約 9.999 秒。這和 250 幀 latent 一致。`quality_checked` 為 `false` 是解碼命令本身不評分，不是失敗。`weight_norm` 仍是警告。
 
-下一步把這段 latent 解回波形，確認人聲加伴奏聽起來是一首歌，而不是錯位或爆音：
+請聽這個文件。要確認的是人聲和伴奏是否在同一段時間裡，音量是否正常，有沒有明顯錯位或只有噪音。
 
-```bash
-CUDA_VISIBLE_DEVICES=0 PYTHONPATH=src python -m yue2.cli decode /cache/yue2_outputs/vae_one/latent.npy --vae /cache/yue2_files/YuE2-Vae --offline --device cuda --output /cache/yue2_outputs/vae_one/mix.wav
-```
+聽起來像一段正常歌曲之後，再從 183 萬條裡抽一小批，例如幾十首，每首仍只取 10 秒，並跳過歌詞短於一句的記錄。保存 latent 和歌詞字數，先不保存歌詞原文到日誌。樂譜和 32768 類語義 token 仍後做。若這 10 秒聽起來不對，先不要批量抽取，把聽到的問題告訴我。
 
-聽 `mix.wav`。聽起來正常之後，再從這 180 萬條裡抽一小批 latent 和歌詞。這首的歌詞只有 7 個字，不適合當歌詞樣本。樂譜和 32768 類語義 token 仍未做。
-
-`sync_to_linux.ps1` 的第一步現在最多等 10 秒。逾時會關掉該次 `ssh` 並拋出錯誤，`watch_sync_to_linux.ps1` 的迴圈會在下一輪重跑。正在跑的監視視窗要重新啟動一次。
-
-本次更新的文件：`sync_to_linux.ps1`
+本次沒有更新任何文件。
