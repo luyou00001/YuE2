@@ -1,12 +1,7 @@
-# 監視一直重試，是因為 SSH 在第一步失敗
+# `echo ok > /dev/null` 不是失敗原因
 
-`watch_sync_to_linux.ps1` 看到本機是 `1d59096`，GitHub 是 `9625d68`，所以每 10 秒都去跑 `sync_to_linux.ps1`。同步腳本在測試 SSH 時失敗，後面的 `git pull` 和推送到 Linux 都沒有執行。本機提交不變，下一輪仍認為有更新，於是不停重試。
+`SSH command failed: echo ok > /dev/null` 是腳本把當時交給遠端的命令原文貼進錯誤訊息。`ssh` 的退出碼不是 0，所以這句會出現。遠端的 `echo` 和 `/dev/null` 沒有語法問題。上一輪能看到的原文是 `Permission denied (publickey)`，也就是這把私鑰沒被 `ma-user` 接受。
 
-失敗有兩種：
+改了兩處，避免再被這行字誤導：連線測試改為遠端執行 `true`，失敗時把 `ssh` 自己的錯誤文字印出來。10 秒逾時仍在。監視視窗要重新啟動後再跑 `.\sync_to_linux.ps1`。若新錯誤裡仍有 `Permission denied (publickey)`，就是 `Saxphone.pem` 還沒被這台機器授權。
 
-- 大約 1 秒就出現 `SSH command failed`：SSH 已經得到結果並返回非 0。這和之前的 `Permission denied (publickey)` 是同一類，伺服器沒有接受目前的 `Saxphone.pem`。現在的逾時寫法沒有把 `ssh` 自己的錯誤文字印出來，所以畫面上只剩這句。
-- `SSH timed out after 10s`：端口在 10 秒內沒有完成連線，腳本把該次 `ssh` 關掉了。這是逾時生效，不是卡住。
-
-所以公司電腦這段時間並沒有把新代碼同步到 `10.155.175.163`。要麼這台新實例的 `ma-user` 仍未授權 `Saxphone.pem` 的公鑰，要麼 `34456` 這條連線不穩定。在 SSH 測試印出 `SSH OK` 之前，不需要再看後面的推送步驟。
-
-本次沒有更新任何文件。
+本次更新的文件：`sync_to_linux.ps1`

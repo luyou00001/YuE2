@@ -1,3 +1,9 @@
+### [2026-11-26 16:21] SSH 錯誤不是 echo 命令寫錯
+
+- **修改的文件**：`sync_to_linux.ps1`
+- **核心邏輯**：`SSH command failed: echo ok > /dev/null` 只是把遠端命令原文放進異常。真正的失敗是 ssh 退出碼非 0。連線測試改為 `true`，並印出 ssh 的 stderr。
+- **AI 備註**：若新輸出仍是 Permission denied (publickey)，Saxphone.pem 還沒被這台 ma-user 授權。
+
 ### [2026-11-26 16:17] 監視重試是因為 SSH 第一步失敗
 
 - **修改的文件**：無源碼改動。
