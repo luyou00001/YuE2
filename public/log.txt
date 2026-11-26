@@ -1,34 +1,8 @@
-(PyTorch-2.0.0) [ma-user YuE2]$CUDA_VISIBLE_DEVICES=0 PYTHONPATH=src python public/train_lm_head_steps.py \
->   --song outputs/first-song/city_lights \
->   --model /cache/yue2_files/YuE2-3B \
->   --output /cache/yue2_ckpts/lmhead-city-lights
-tokens=707 prefix=642 supervised=65
-`torch_dtype` is deprecated! Use `dtype` instead!
-step=1 ar_loss=3.6250
-step=2 ar_loss=3.6094
-step=3 ar_loss=3.6094
-step=4 ar_loss=3.6094
-step=5 ar_loss=3.6094
-saved=/cache/yue2_ckpts/lmhead-city-lights
-base_unchanged=/cache/yue2_files/YuE2-3B
-(PyTorch-2.0.0) [ma-user YuE2]$CUDA_VISIBLE_DEVICES=0 PYTHONPATH=src python -m yue2.cli generate \
->   --request examples/song.json \
->   --model /cache/yue2_ckpts/lmhead-city-lights \
->   --vae /cache/yue2_files/YuE2-Vae \
->   --offline --device cuda --backend torch-eager --budget 30 \
->   --output /cache/yue2_outputs/lmhead-city-lights
-[YuE2] Completed Resolving model files: 0.0s
-[YuE2] Completed Verifying model files: 21.3s
-[YuE2] / Loading model: 3.3s`torch_dtype` is deprecated! Use `dtype` instead!
-Loading checkpoint shards: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 2/2 [00:00<00:00, 12.59it/s]
-[YuE2] Completed Loading model: 6.3s
-[YuE2] Completed Planning score: 513 tokens | 29.1 tokens/s | 17.6s
-[YuE2] Completed Generating song: 1522 tokens | 31.1 tokens/s | 49.0s
-[YuE2] Completed Synthesizing audio: [########] 32/32 steps (100%) | 44.1s
-[YuE2] \ Loading audio decoder: 4.8s/home/ma-user/anaconda3/envs/PyTorch-2.0.0/lib/python3.9/site-packages/torch/nn/utils/weight_norm.py:28: UserWarning: torch.nn.utils.weight_norm is deprecated in favor of torch.nn.utils.parametrizations.weight_norm.
-  warnings.warn("torch.nn.utils.weight_norm is deprecated in favor of torch.nn.utils.parametrizations.weight_norm.")
-[YuE2] Completed Loading audio decoder: 5.7s
-[YuE2] Completed Decoding audio: [########] 2/2 chunks (100%) | 2.7s
-[YuE2] Completed: 60.8s audio in 125.6s
-{"status": "complete", "output": "/cache/yue2_outputs/lmhead-city-lights/city_lights", "flac": "/cache/yue2_outputs/lmhead-city-lights/city_lights/audio.flac", "mp3": "/cache/yue2_outputs/lmhead-city-lights/city_lights/audio.mp3", "truncated": {"abc": false, "semantic": false}, "seconds": 125.57686886936426}
+(PyTorch-2.0.0) [ma-user YuE2]$bash public/check_180w_index.sh
+-rw-r----- 1 ma-user ma-group  54M Nov 26 14:33 /cache/yue2_files/datasets/acctask-180w-acc-caption-cfgs/pt_all_v1.txt
+-rw-r----- 1 ma-user ma-group 189M Nov 26 14:34 /cache/yue2_files/datasets/acctask-180w-acc-caption-cfgs/vocal_wav_all.txt
+-rw-r----- 1 ma-user ma-group  44M Nov 26 14:34 /cache/yue2_files/datasets/acctask-180w-acc-caption-cfgs/wav2len.txt
+1833083 /cache/yue2_files/datasets/acctask-180w-acc-caption-cfgs/pt_all_v1.txt
+/cache/yue2_files/datasets/acctask-180w-acc-caption-cfgs/200w-001.txt
+['k', 'v']
 (PyTorch-2.0.0) [ma-user YuE2]$
