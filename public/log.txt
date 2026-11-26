@@ -1,8 +1,16 @@
-(PyTorch-2.0.0) [ma-user YuE2]$PYTHONPATH=src python public/lyric_length_stats.py --max-scan 5000
-scanned=5000 longest=7
-0: 0
-1-7: 5000
-8-19: 0
-20-49: 0
-50+: 0
+(PyTorch-2.0.0) [ma-user YuE2]$CUDA_VISIBLE_DEVICES=0 PYTHONPATH=src python public/fetch_vae_batch.py --count 8
+/home/ma-user/anaconda3/envs/PyTorch-2.0.0/lib/python3.9/site-packages/torch/nn/utils/weight_norm.py:28: UserWarning: torch.nn.utils.weight_norm is deprecated in favor of torch.nn.utils.parametrizations.weight_norm.
+  warnings.warn("torch.nn.utils.weight_norm is deprecated in favor of torch.nn.utils.parametrizations.weight_norm.")
+INFO:root:Using MoXing-v2.2.3.2c7f2141-2c7f2141
+INFO:root:Using OBS-Python-SDK-3.20.9.1
+INFO:root:Using OBS-C-SDK-2.23.1
+000 latent=(1, 64, 250) lyric_chars=7 mp3=True
+001 latent=(1, 64, 250) lyric_chars=7 mp3=True
+002 latent=(1, 64, 250) lyric_chars=7 mp3=True
+003 latent=(1, 64, 250) lyric_chars=7 mp3=True
+004 latent=(1, 64, 250) lyric_chars=7 mp3=True
+005 latent=(1, 64, 250) lyric_chars=7 mp3=True
+006 latent=(1, 64, 250) lyric_chars=7 mp3=True
+007 latent=(1, 64, 250) lyric_chars=7 mp3=True
+saved=8 scanned=8 output=/cache/yue2_outputs/vae_batch
 (PyTorch-2.0.0) [ma-user YuE2]$
