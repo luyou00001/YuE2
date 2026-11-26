@@ -25,7 +25,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 $RepoDir     = $PSScriptRoot
-$SshKey      = "C:/Users/c00871154/.ssh/hk-develop.pem"
+$SshKey      = "C:/Users/c00871154/.ssh/Saxphone.pem"
 $SshPort     = "34456"
 $SshUserHost = "ma-user@10.155.175.163"
 $RemoteDir   = "/home/ma-user/work/YuE2"
