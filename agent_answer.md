@@ -1,3 +1,9 @@
+### [2026-11-26 17:56] 用現有環境檢查 SheetSage2 缺包
+
+- **修改的文件**：`public/check_sheetsage_env.py`
+- **核心邏輯**：在 PyTorch-2.0.0 裡只讀 Python、torch 和 SheetSage2 的 requirements.txt，列出 MISSING，不安裝、不升級 torch。
+- **AI 備註**：權重應已在 `/cache/yue2_files/SheetSage2` 和 `MERT-v2-FullSong`。缺包之後再逐個補。
+
 ### [2026-11-26 17:26] 列出 SheetSage2 和 MERT-v2-FullSong 的下載地址
 
 - **修改的文件**：無源碼改動。
