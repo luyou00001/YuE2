@@ -1,3 +1,9 @@
+### [2026-11-26 14:36] 180 萬索引改到 YuE2 數據副本
+
+- **修改的文件**：`public/check_180w_index.sh`
+- **核心邏輯**：YuE2 訓練索引改讀 `/cache/yue2_files/datasets/acctask-180w-acc-caption-cfgs`。腳本只核對清單和 jsonl 欄位。舊 NAR 路徑保持不動。
+- **AI 備註**：在 V100 上執行 `bash public/check_180w_index.sh`。
+
 ### [2026-11-26 11:11] 對照 180 萬 NAR 數據和 YuE2 訓練字段
 
 - **修改的文件**：無源碼改動。
