@@ -1,12 +1,14 @@
-(PyTorch-2.0.0) [ma-user YuE2]$bash public/check_180w_index.sh
--rw-r----- 1 ma-user ma-group  54M Nov 26 14:33 /cache/yue2_files/datasets/acctask-180w-acc-caption-cfgs/pt_all_v1.txt
--rw-r----- 1 ma-user ma-group 189M Nov 26 14:34 /cache/yue2_files/datasets/acctask-180w-acc-caption-cfgs/vocal_wav_all.txt
--rw-r----- 1 ma-user ma-group  44M Nov 26 14:34 /cache/yue2_files/datasets/acctask-180w-acc-caption-cfgs/wav2len.txt
-1833083 /cache/yue2_files/datasets/acctask-180w-acc-caption-cfgs/pt_all_v1.txt
-/cache/yue2_files/datasets/acctask-180w-acc-caption-cfgs/200w-001.txt
-song_key_chars 43
-lyric: chars=7
-mix_path: suffix=.mp3 exists=False parent=s3:/ttsingnorth/AI_Music_Data_vUltra/5sing/track_5_mp3/5_track_inst
-clamp3_path: suffix=.npy exists=False parent=s3:/ttsingnorth/AI_Music_Data_vUltra/Release/5sing/bpm_cleaned_prompt_muqmulan_text
-codec_path: suffix=none exists=False parent=.
+(PyTorch-2.0.0) [ma-user YuE2]$python - << 'PY'
+> import json
+> from pathlib import Path
+> p = Path("/cache/yue2_files/datasets/acctask-180w-acc-caption-cfgs/200w-001.txt")
+> rec = json.loads(p.read_text(encoding="utf-8").splitlines()[0])
+> inner = rec.get("v", rec)
+> if isinstance(inner, str):
+>     inner = json.loads(inner)
+> print(inner.get("mix_path", ""))
+> PY
+
+s3://ttsingnorth/AI_Music_Data_vUltra/5sing/track_5_mp3/5_track_inst/wsp_player_1780051412931.mp3
+(PyTorch-2.0.0) [ma-user YuE2]$which rclone aws s3cmd || true
 (PyTorch-2.0.0) [ma-user YuE2]$
