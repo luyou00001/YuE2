@@ -1,40 +1,10 @@
-(base) PS D:\linux_output\AI_MUSIC\YuE2> .\watch_sync_to_linux.ps1
-[2026-11-26 16:11:25] watching agent-auto-draft every 10s. Ctrl+C to stop.
-[2026-11-26 16:11:27] change detected local=1d59096 upstream=9625d68; running sync_to_linux.ps1
--> (1/5) Testing SSH connectivity...
-[2026-11-26 16:11:28] sync failed: SSH command failed: echo ok > /dev/null; will retry
-[2026-11-26 16:11:40] change detected local=1d59096 upstream=9625d68; running sync_to_linux.ps1
--> (1/5) Testing SSH connectivity...
-[2026-11-26 16:11:50] sync failed: SSH timed out after 10s; retrying next loop; will retry
-[2026-11-26 16:12:02] change detected local=1d59096 upstream=9625d68; running sync_to_linux.ps1
--> (1/5) Testing SSH connectivity...
-[2026-11-26 16:12:03] sync failed: SSH command failed: echo ok > /dev/null; will retry
-[2026-11-26 16:12:15] change detected local=1d59096 upstream=9625d68; running sync_to_linux.ps1
--> (1/5) Testing SSH connectivity...
-[2026-11-26 16:12:16] sync failed: SSH command failed: echo ok > /dev/null; will retry
-[2026-11-26 16:12:28] change detected local=1d59096 upstream=9625d68; running sync_to_linux.ps1
--> (1/5) Testing SSH connectivity...
-[2026-11-26 16:12:38] sync failed: SSH timed out after 10s; retrying next loop; will retry
-[2026-11-26 16:12:50] change detected local=1d59096 upstream=9625d68; running sync_to_linux.ps1
--> (1/5) Testing SSH connectivity...
-[2026-11-26 16:12:51] sync failed: SSH command failed: echo ok > /dev/null; will retry
-[2026-11-26 16:13:04] change detected local=1d59096 upstream=9625d68; running sync_to_linux.ps1
--> (1/5) Testing SSH connectivity...
-
-=====
-
 (base) PS D:\linux_output\AI_MUSIC\YuE2> .\sync_to_linux.ps1
 -> (1/5) Testing SSH connectivity...
-SSH command failed: echo ok > /dev/null
-At D:\linux_output\AI_MUSIC\YuE2\sync_to_linux.ps1:48 char:33
-+ ...    if ($proc.ExitCode -ne 0) { throw "SSH command failed: $Command" }
-+                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    + CategoryInfo          : OperationStopped: (SSH command failed: echo ok > /dev/null:String) [], RuntimeExcept
-   ion
-    + FullyQualifiedErrorId : SSH command failed: echo ok > /dev/null
+You cannot call a method on a null-valued expression.
+At D:\linux_output\AI_MUSIC\YuE2\sync_to_linux.ps1:53 char:33
++ ... de -ne 0) { throw ("SSH failed ({0}): {1}" -f $proc.ExitCode, $detail ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : InvokeMethodOnNull
 
 (base) PS D:\linux_output\AI_MUSIC\YuE2>
-
-=====
-
-怎麼回事
