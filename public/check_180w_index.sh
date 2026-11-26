@@ -6,5 +6,8 @@ wc -l "$CFG/pt_all_v1.txt"
 mapfile -t lists < <(find "$CFG" -name '200w*.txt' -printf '%p\n' | head)
 printf '%s\n' "${lists[@]}"
 if [ "${#lists[@]}" -gt 0 ]; then
-  python -c 'import json,sys; print(list(json.loads(open(sys.argv[1], encoding="utf-8").readline()).keys()))' "${lists[0]}"
+  python -c 'import json,sys; rec=json.loads(open(sys.argv[1], encoding="utf-8").readline()); inner=rec.get("v", rec);
+inner=json.loads(inner) if isinstance(inner, str) else inner
+print("top_keys", list(rec))
+print("record_keys", list(inner) if isinstance(inner, dict) else type(inner).__name__)' "${lists[0]}"
 fi
