@@ -1,3 +1,9 @@
+### [2026-11-26 14:45] 修正 180 萬欄位檢查的引號錯誤
+
+- **修改的文件**：`public/check_180w_index.sh`、`public/inspect_180w_record.py`
+- **核心邏輯**：內層欄位已確認。`python -c` 被 shell 截斷引號，改由獨立腳本報告歌詞字數、路徑後綴和文件是否存在。
+- **AI 備註**：仍不印歌詞和完整路徑。`mix_path exists=False` 表示現在不能抽 VAE latent。
+
 ### [2026-11-26 14:43] 180 萬記錄含歌詞與三條路徑
 
 - **修改的文件**：`public/check_180w_index.sh`

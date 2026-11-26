@@ -1,13 +1,13 @@
-# 180 萬記錄裡有歌詞和三條路徑
+# 上次檢查停在引號錯誤，欄位還沒看完
 
-`200w-001.txt` 的內層欄位是 `lyric`、`mix_path`、`clamp3_path`、`codec_path`。歌詞文字在，這是 YuE2 文字條件的一部分。`mix_path` 在舊 NAR 裡是伴奏音頻。`clamp3_path` 是風格向量，不是風格句子。`codec_path` 是舊的 MuCodec 文件，不是 YuE2 的 32768 類語義 token。樂譜和 VAE latent 仍然沒有。
+`200w-001.txt` 的內層已經確認有 `lyric`、`mix_path`、`clamp3_path`、`codec_path`。接著要看歌詞字數，以及三條路徑的後綴和文件是否存在。上一版把這段寫在 `python -c` 裡，shell 把引號截斷，Python 3.9 報了 `SyntaxError`，所以 `exists` 還沒有結果。
 
-檢查腳本現在會看第一條記錄：歌詞只印字數，路徑只印後綴和文件是否存在，不印歌詞內容，也不印完整路徑。
+這段已改到 `public/inspect_180w_record.py`。它不印歌詞，也不印完整路徑。
 
 ```bash
 bash public/check_180w_index.sh
 ```
 
-若 `mix_path` 的 `exists` 是 `False`，這份副本只有索引，音頻還在原來的路徑上，現在不能抽 VAE latent。把新輸出貼回來。
+把 `lyric`、`mix_path`、`clamp3_path`、`codec_path` 那幾行貼回來。`mix_path` 的 `exists` 若是 `False`，這份副本只有索引，音頻不在當前路徑上，還不能抽 VAE latent。
 
-本次更新的文件：`public/check_180w_index.sh`
+本次更新的文件：`public/check_180w_index.sh`、`public/inspect_180w_record.py`
