@@ -84,7 +84,7 @@ def main():
     parser.add_argument("--output", type=Path, default=Path("/cache/yue2_outputs/vae_batch"))
     parser.add_argument("--count", type=int, default=8)
     parser.add_argument("--seconds", type=float, default=10.0)
-    parser.add_argument("--min-lyric-chars", type=int, default=20)
+    parser.add_argument("--min-lyric-chars", type=int, default=1)
     parser.add_argument("--max-scan", type=int, default=20000)
     args = parser.parse_args()
     chosen = []
