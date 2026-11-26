@@ -34,9 +34,18 @@ $RemoteName  = "rl-node"
 
 $env:GIT_SSH_COMMAND = "ssh -i `"$SshKey`" -o BatchMode=yes -o ConnectTimeout=15 -o ConnectionAttempts=1 -o ServerAliveInterval=5 -o ServerAliveCountMax=2 -o StrictHostKeyChecking=no"
 
-function Invoke-Ssh([string]$Command) {
-    ssh -i $SshKey -p $SshPort -o BatchMode=yes -o ConnectTimeout=15 -o ConnectionAttempts=1 -o ServerAliveInterval=5 -o ServerAliveCountMax=2 -o StrictHostKeyChecking=no $SshUserHost $Command
-    if ($LASTEXITCODE -ne 0) { throw "SSH command failed: $Command" }
+function Invoke-Ssh([string]$Command, [int]$TimeoutSeconds = 10) {
+    $sshArgs = @(
+        "-i", $SshKey, "-p", $SshPort,
+        "-o", "BatchMode=yes", "-o", "ConnectTimeout=8", "-o", "ConnectionAttempts=1",
+        "-o", "StrictHostKeyChecking=no", $SshUserHost, $Command
+    )
+    $proc = Start-Process -FilePath "ssh" -ArgumentList $sshArgs -NoNewWindow -PassThru
+    if (-not $proc.WaitForExit($TimeoutSeconds * 1000)) {
+        Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+        throw "SSH timed out after ${TimeoutSeconds}s; retrying next loop"
+    }
+    if ($proc.ExitCode -ne 0) { throw "SSH command failed: $Command" }
 }
 
 Set-Location $RepoDir
