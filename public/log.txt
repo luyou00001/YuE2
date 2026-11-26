@@ -1,10 +1,5 @@
-(PyTorch-2.0.0) [ma-user YuE2]$CUDA_VISIBLE_DEVICES=0 PYTHONPATH=src python public/fetch_one_vae_latent.py
-lyric_chars=7
-INFO:root:Using MoXing-v2.2.3.2c7f2141-2c7f2141
-INFO:root:Using OBS-Python-SDK-3.20.9.1
-INFO:root:Using OBS-C-SDK-2.23.1
+(PyTorch-2.0.0) [ma-user YuE2]$CUDA_VISIBLE_DEVICES=0 PYTHONPATH=src python -m yue2.cli decode /cache/yue2_outputs/vae_one/latent.npy --vae /cache/yue2_files/YuE2-Vae --offline --device cuda --output /cache/yue2_outputs/vae_one/mix.wav
 /home/ma-user/anaconda3/envs/PyTorch-2.0.0/lib/python3.9/site-packages/torch/nn/utils/weight_norm.py:28: UserWarning: torch.nn.utils.weight_norm is deprecated in favor of torch.nn.utils.parametrizations.weight_norm.
   warnings.warn("torch.nn.utils.weight_norm is deprecated in favor of torch.nn.utils.parametrizations.weight_norm.")
-latent_shape=(1, 64, 250) finite=True
-saved=/cache/yue2_outputs/vae_one/latent.npy
+{"operation": "decode_latents", "output": "/cache/yue2_outputs/vae_one/mix.wav", "decoder_only": true, "sample_rate": 48000, "audio_seconds": 9.998666666666667, "weights": {"files": {"model.safetensors": {"sha256": "807ce9d5149fa27c5ad3e6582058469852e908f6c5acc8c8aa338e7ab7751346", "bytes": 530512720}}, "config_sha256": "f0191bb9694009956de44e0c361a6f1334760be4c8f848e599bde242a54a0970"}, "quality_checked": false}
 (PyTorch-2.0.0) [ma-user YuE2]$
