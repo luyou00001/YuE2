@@ -1,5 +1,40 @@
-(PyTorch-2.0.0) [ma-user YuE2]$CUDA_VISIBLE_DEVICES=0 PYTHONPATH=src python -m yue2.cli decode /cache/yue2_outputs/vae_one/latent.npy --vae /cache/yue2_files/YuE2-Vae --offline --device cuda --output /cache/yue2_outputs/vae_one/mix.wav
-/home/ma-user/anaconda3/envs/PyTorch-2.0.0/lib/python3.9/site-packages/torch/nn/utils/weight_norm.py:28: UserWarning: torch.nn.utils.weight_norm is deprecated in favor of torch.nn.utils.parametrizations.weight_norm.
-  warnings.warn("torch.nn.utils.weight_norm is deprecated in favor of torch.nn.utils.parametrizations.weight_norm.")
-{"operation": "decode_latents", "output": "/cache/yue2_outputs/vae_one/mix.wav", "decoder_only": true, "sample_rate": 48000, "audio_seconds": 9.998666666666667, "weights": {"files": {"model.safetensors": {"sha256": "807ce9d5149fa27c5ad3e6582058469852e908f6c5acc8c8aa338e7ab7751346", "bytes": 530512720}}, "config_sha256": "f0191bb9694009956de44e0c361a6f1334760be4c8f848e599bde242a54a0970"}, "quality_checked": false}
-(PyTorch-2.0.0) [ma-user YuE2]$
+(base) PS D:\linux_output\AI_MUSIC\YuE2> .\watch_sync_to_linux.ps1
+[2026-11-26 16:11:25] watching agent-auto-draft every 10s. Ctrl+C to stop.
+[2026-11-26 16:11:27] change detected local=1d59096 upstream=9625d68; running sync_to_linux.ps1
+-> (1/5) Testing SSH connectivity...
+[2026-11-26 16:11:28] sync failed: SSH command failed: echo ok > /dev/null; will retry
+[2026-11-26 16:11:40] change detected local=1d59096 upstream=9625d68; running sync_to_linux.ps1
+-> (1/5) Testing SSH connectivity...
+[2026-11-26 16:11:50] sync failed: SSH timed out after 10s; retrying next loop; will retry
+[2026-11-26 16:12:02] change detected local=1d59096 upstream=9625d68; running sync_to_linux.ps1
+-> (1/5) Testing SSH connectivity...
+[2026-11-26 16:12:03] sync failed: SSH command failed: echo ok > /dev/null; will retry
+[2026-11-26 16:12:15] change detected local=1d59096 upstream=9625d68; running sync_to_linux.ps1
+-> (1/5) Testing SSH connectivity...
+[2026-11-26 16:12:16] sync failed: SSH command failed: echo ok > /dev/null; will retry
+[2026-11-26 16:12:28] change detected local=1d59096 upstream=9625d68; running sync_to_linux.ps1
+-> (1/5) Testing SSH connectivity...
+[2026-11-26 16:12:38] sync failed: SSH timed out after 10s; retrying next loop; will retry
+[2026-11-26 16:12:50] change detected local=1d59096 upstream=9625d68; running sync_to_linux.ps1
+-> (1/5) Testing SSH connectivity...
+[2026-11-26 16:12:51] sync failed: SSH command failed: echo ok > /dev/null; will retry
+[2026-11-26 16:13:04] change detected local=1d59096 upstream=9625d68; running sync_to_linux.ps1
+-> (1/5) Testing SSH connectivity...
+
+=====
+
+(base) PS D:\linux_output\AI_MUSIC\YuE2> .\sync_to_linux.ps1
+-> (1/5) Testing SSH connectivity...
+SSH command failed: echo ok > /dev/null
+At D:\linux_output\AI_MUSIC\YuE2\sync_to_linux.ps1:48 char:33
++ ...    if ($proc.ExitCode -ne 0) { throw "SSH command failed: $Command" }
++                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : OperationStopped: (SSH command failed: echo ok > /dev/null:String) [], RuntimeExcept
+   ion
+    + FullyQualifiedErrorId : SSH command failed: echo ok > /dev/null
+
+(base) PS D:\linux_output\AI_MUSIC\YuE2>
+
+=====
+
+怎麼回事
