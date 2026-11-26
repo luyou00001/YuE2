@@ -1,29 +1,13 @@
-# 損失反傳已經通過
+# 五步輸出層更新和重新生成都完成了
 
-這次檢查成功。707 個 token 裡，前 642 個是條件，65 個被計入損失。`ar_loss=3.6250`，對應的 0.25 加權值是 0.9062。`lm_head` 的梯度有限，範數 5.3195。最後一行確認權重沒有被改動。
+訓練損失從 3.6250 降到 3.6094，第 3 步之後不再變化。新權重寫在 `/cache/yue2_ckpts/lmhead-city-lights`，`/cache/yue2_files/YuE2-3B` 沒有被改。接著用這份權重生成了完整的一首歌：樂譜 513 個 token，語義 1522 個 token，60.8 秒音頻，耗時 125.6 秒，沒有截斷。MP3 已寫出：
 
-3.625 是原模型在自己生成出的 token 上的交叉熵。184704 類若完全隨機，交叉熵約是 12.1，所以這個數字只說明原 checkpoint 仍然認得這些 token。它不是音質分數，也不能用來決定訓練好不好。
+`/cache/yue2_outputs/lmhead-city-lights/city_lights/audio.mp3`
 
-下一步做一個分開存放的過擬合測試：只更新輸出層 5 步，存到 `/cache/yue2_ckpts/lmhead-city-lights`，原目錄 `/cache/yue2_files/YuE2-3B` 不會被寫入。
+請把它和原來的 `outputs/first-song/city_lights/audio.flac` 對聽。損失只降了 0.016，而且只動了輸出層，聽感應該和原版非常接近。若幾乎一樣，就說明存檔、重新載入和生成這條鏈是通的。`torch_dtype` 和 `weight_norm` 仍是警告，不是失敗。
 
-```bash
-CUDA_VISIBLE_DEVICES=0 PYTHONPATH=src python public/train_lm_head_steps.py \
-  --song outputs/first-song/city_lights \
-  --model /cache/yue2_files/YuE2-3B \
-  --output /cache/yue2_ckpts/lmhead-city-lights
-```
+這個 checkpoint 到此為止。不要再對它加步數，也不要把它當成新的基模。它只記住了 65 個 token。之後的續訓仍從 `/cache/yue2_files/YuE2-3B` 開始，結果繼續另存。
 
-然後用新權重生成同一首歌，和原來的 `outputs/first-song/city_lights/audio.flac` 對聽：
+V100 上現在已經證明三件事：原模型能出歌、損失能反傳、改過的權重能再出歌。下一步不是繼續這個過擬合。下一步是用多條固定提示詞做聽感對照，每次只改一種訓練設定，並和原模型比。在有新的歌曲數據和語義 token 之前，不再增加訓練步數。
 
-```bash
-CUDA_VISIBLE_DEVICES=0 PYTHONPATH=src python -m yue2.cli generate \
-  --request examples/song.json \
-  --model /cache/yue2_ckpts/lmhead-city-lights \
-  --vae /cache/yue2_files/YuE2-Vae \
-  --offline --device cuda --backend torch-eager --budget 30 \
-  --output /cache/yue2_outputs/lmhead-city-lights
-```
-
-這 5 步只記住這一小段 token。同一首歌的 loss 應該下降；其他提示詞變差是正常的，說明訓練迴圈生效，不說明模型變好。對聽之後就停。若新歌比原 checkpoint 差，繼續使用 `/cache/yue2_files/YuE2-3B`，不要拿這個過擬合權重當新基模。
-
-本次更新的文件：`public/train_lm_head_steps.py`
+本次沒有更新任何文件。
