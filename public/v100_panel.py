@@ -149,6 +149,7 @@ def status_payload():
                 "exit": CURRENT["exit"],
             }
         dirty = [line for line in git_text(["status", "--porcelain"]).splitlines() if line.strip()]
+        task_html, visible_jobs = pipeline_view()
         return {
             "branch": git_text(["rev-parse", "--abbrev-ref", "HEAD"]) or "unknown",
             "head": git_text(["rev-parse", "--short", "HEAD"]) or "unknown",
@@ -161,7 +162,9 @@ def status_payload():
             "jobs": [{"id": key, **{name: value[name] for name in ("title", "detail")}} for key, value in JOBS.items()],
             "running": running,
             "logs": log_rows(),
-            "live": live_text(),
+            "task_html": task_html,
+            "gpu_html": render_gpus(gpu_rows()),
+            "jobs_html": render_jobs(visible_jobs),
         }
     except Exception as exc:
         return {
@@ -176,6 +179,9 @@ def status_payload():
             "jobs": [],
             "running": None,
             "logs": [],
+            "task_html": "",
+            "gpu_html": "",
+            "jobs_html": "",
             "live": "",
             "error": f"{type(exc).__name__}: {exc}",
         }
@@ -367,7 +373,20 @@ PAGE = """<!DOCTYPE html>
   .q { padding:12px 0; border-top:1px solid var(--line); }
   .choice { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
   .choice label { display:flex; gap:6px; align-items:center; background:#f7f4ee; border-radius:999px; padding:6px 12px; }
-  .stage p { color:var(--muted); margin-top:4px; }
+  .gpus { display:grid; grid-template-columns:repeat(8, minmax(0, 1fr)); gap:10px; }
+  .gpu { background:#f7f4ee; border-radius:12px; padding:10px; display:grid; gap:6px; min-width:0; }
+  .gpu strong { font-size:14px; }
+  .gpu span, .gpu small { color:var(--muted); font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .bar { height:8px; background:#e4ddd2; border-radius:99px; overflow:hidden; }
+  .bar > div { height:100%; background:#0f6e56; }
+  .bar.mem > div { background:#1d4e89; }
+  .task-card { border:1px solid; border-radius:14px; padding:14px 16px; display:grid; gap:6px; }
+  .task-label { font:700 12px/1 sans-serif; letter-spacing:.04em; }
+  .task-ready { background:#e7f6ef; border-color:#0f6e56; }
+  .task-running { background:#e8f1fb; border-color:#1d4e89; }
+  .task-done { background:#f3efe8; border-color:#cfc6ba; }
+  .task-next { background:#fff6e0; border-color:#b7791f; }
+  @media (max-width: 1100px) { .gpus { grid-template-columns:repeat(4, minmax(0, 1fr)); } }
   .stage.current-row { background:#f3faf7; margin:0 -18px; padding:14px 18px; }
 </style>
 </head>
@@ -379,9 +398,13 @@ PAGE = """<!DOCTYPE html>
     <summary>本輪回答</summary>
     <pre class="reply">__REPLY__</pre>
   </details>
-  <details class="block" open data-fold="live">
-    <summary>任務與 GPU</summary>
-    <pre class="reply" id="live">__LIVE__</pre>
+  <details class="block" open data-fold="task">
+    <summary>任務</summary>
+    <div id="task-board">__TASKS__</div>
+  </details>
+  <details class="block" open data-fold="gpu">
+    <summary>GPU</summary>
+    <div class="gpus" id="gpus">__GPUS__</div>
   </details>
   <div id="flows">__FLOWS__</div>
   <div class="grid">
@@ -389,7 +412,7 @@ PAGE = """<!DOCTYPE html>
     <details class="block" open data-fold="progress"><summary>目前進度</summary><ul id="progress">__PROGRESS__</ul></details>
     <details class="block" open data-fold="next"><summary>下一步</summary><ul id="next">__NEXT__</ul></details>
   </div>
-  <details class="block" open data-fold="jobs">
+  <details class="block" id="jobs-block" __JOBS_ATTR__ data-fold="jobs">
     <summary>可執行步驟</summary>
     <div id="jobs">__JOBS__</div>
     <p id="note"></p>
@@ -553,8 +576,14 @@ function applyStatus(data) {
   const busy = Boolean(data.running);
   document.querySelectorAll("button[data-job]").forEach(button => { button.disabled = busy; });
   if (note) note.textContent = busy ? `正在跑 ${data.running.id}` : "";
-  const live = document.getElementById("live");
-  if (live && data.live) live.textContent = data.live;
+  const board = document.getElementById("task-board");
+  if (board && data.task_html) board.innerHTML = data.task_html;
+  const gpus = document.getElementById("gpus");
+  if (gpus && data.gpu_html) gpus.innerHTML = data.gpu_html;
+  const jobs = document.getElementById("jobs");
+  const jobsBlock = document.getElementById("jobs-block");
+  if (jobs && data.jobs_html != null) jobs.innerHTML = data.jobs_html;
+  if (jobsBlock) jobsBlock.hidden = !data.jobs_html;
   if (data.running && data.running.log) selectedLog = data.running.log;
   else if (!selectedLog && data.logs.length) selectedLog = data.logs[0].name;
   document.getElementById("logpick").innerHTML = data.logs.map(row =>
@@ -634,9 +663,11 @@ def page_html():
         "__CODE__": render_code(data.get("artifacts") or []),
         "__PROGRESS__": render_items((data.get("narrative") or {}).get("progress") or []),
         "__NEXT__": render_items((data.get("flow") or {}).get("current_next") or (data.get("narrative") or {}).get("next") or []),
-        "__JOBS__": render_jobs(data.get("jobs") or []),
+        "__JOBS__": render_jobs(pipeline_view()[1]),
+        "__JOBS_ATTR__": "open" if pipeline_view()[1] else "hidden",
         "__REPLY__": html.escape(reply_text()),
-        "__LIVE__": html.escape(live_text()),
+        "__TASKS__": pipeline_view()[0],
+        "__GPUS__": render_gpus(gpu_rows()),
         "__OPTIONAL__": optional_blocks(data),
     }
     page = PAGE
@@ -647,6 +678,95 @@ def page_html():
 
 def render_items(items):
     return "".join(f"<li>{html.escape(str(item))}</li>" for item in items)
+
+
+def batch7_is_done():
+    packed = Path("/cache/yue2_outputs/suno_packed")
+    if all((packed / f"{index:03d}" / "prefix.npy").is_file() for index in range(1, 8)):
+        return True
+    logs = log_rows()
+    if not logs:
+        return False
+    return "batch7_done=7" in (read_log(logs[0]["name"]) or "")
+
+
+def batch7_progress():
+    logs = log_rows()
+    if not logs:
+        return ""
+    lines = (read_log(logs[0]["name"]) or "").splitlines()
+    ready = [line for line in lines if line.startswith("ready=")]
+    stage = next((line for line in reversed(lines) if line.startswith("stage ")), "")
+    parts = []
+    if ready:
+        parts.append(f"已打包 {len(ready)} / 7，最後 {ready[-1]}")
+    if stage:
+        parts.append(stage)
+    return "；".join(parts)
+
+
+def task_card(state, label, title, detail):
+    return (
+        f'<div class="task-card task-{state}"><span class="task-label">{html.escape(label)}</span>'
+        f'<strong>{html.escape(title)}</strong><p>{html.escape(detail)}</p></div>'
+    )
+
+
+PIPELINE = ["transcribe7"]
+
+
+def task_done(task_id):
+    if task_id == "transcribe7":
+        return batch7_is_done()
+    return False
+
+
+def job_record(task_id):
+    job = dict(JOBS[task_id])
+    job["id"] = task_id
+    return job
+
+
+def pipeline_view():
+    with LOCK:
+        running = CURRENT["job"]
+    if running and running in JOBS:
+        task = JOBS[running]
+        detail = batch7_progress() if running == "transcribe7" else task["detail"]
+        return task_card("running", "正在進行", task["title"], detail or task["detail"]), []
+    pending = [task_id for task_id in PIPELINE if not task_done(task_id)]
+    finished = [task_id for task_id in PIPELINE if task_done(task_id)]
+    if not pending:
+        if not finished:
+            return "", []
+        task = JOBS[finished[-1]]
+        return task_card("done", "已完成", task["title"], "這一步已經跑完，按鈕已隱藏。"), []
+    nxt = job_record(pending[0])
+    if finished:
+        prev = JOBS[finished[-1]]
+        detail = f'{prev["title"]} 已完成。下一步只保留：{nxt["title"]}。{nxt["detail"]}'
+        return task_card("next", "已完成，可以開始下一步", nxt["title"], detail), [nxt]
+    return task_card("ready", "可以開始", nxt["title"], nxt["detail"]), [nxt]
+
+
+def render_gpus(rows):
+    if not rows:
+        return "<p>沒有讀到 nvidia-smi</p>"
+    cards = []
+    for gpu in rows:
+        try:
+            util = max(0, min(100, int(float(gpu["util"]))))
+            mem_pct = max(0, min(100, int(100 * float(gpu["memory_used"]) / max(float(gpu["memory_total"]), 1))))
+        except ValueError:
+            util, mem_pct = 0, 0
+        cards.append(
+            f'<div class="gpu"><strong>GPU {html.escape(gpu["index"])}</strong>'
+            f'<span>{html.escape(gpu["name"])}</span>'
+            f'<div class="bar"><div style="width:{util}%"></div></div><small>利用率 {util}%</small>'
+            f'<div class="bar mem"><div style="width:{mem_pct}%"></div></div>'
+            f'<small>顯存 {html.escape(gpu["memory_used"])}/{html.escape(gpu["memory_total"])} MiB</small></div>'
+        )
+    return "".join(cards)
 
 
 def render_code(artifacts):
