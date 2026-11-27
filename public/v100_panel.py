@@ -264,7 +264,11 @@ PAGE = """<!DOCTYPE html>
   @media (max-width: 700px) {
     .players { grid-template-columns:1fr; }
   }
-  section { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; margin-bottom:16px; }
+  details.block { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:4px 18px 14px; margin-bottom:16px; }
+  details.block > summary { cursor:pointer; font-weight:700; font-size:18px; padding:14px 0 8px; }
+  details.stage-fold { padding:10px 0; border-top:1px solid var(--line); }
+  details.stage-fold > summary { cursor:pointer; display:flex; gap:12px; align-items:center; font-weight:700; }
+  details.stage-fold .badge { min-width:72px; }
   ul { padding-left:18px; display:grid; gap:8px; }
   code { font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:13px; display:block; overflow-x:auto; white-space:nowrap; }
   button { appearance:none; border:0; background:var(--accent); color:white; border-radius:999px; padding:10px 16px; font:600 15px/1 sans-serif; cursor:pointer; }
@@ -297,40 +301,29 @@ PAGE = """<!DOCTYPE html>
 <main>
   <h1>YuE2 V100</h1>
   <p class="sub" id="revision">__REVISION__</p>
-  <section>
-    <h2>本輪回答</h2>
+  <details class="block" open data-fold="reply">
+    <summary>本輪回答</summary>
     <pre class="reply">__REPLY__</pre>
-  </section>
-  <section>
-    <h2>對聽</h2>
-    <p class="meter">直接播放伺服器上的檔案。只比較旋律和段落。</p>
-    <div class="players" id="players">__PLAYERS__</div>
-  </section>
-  <section>
-    <h2>選擇題</h2>
-    <p class="meter" id="question-intro">__QUESTION_INTRO__</p>
-    <div id="questions">__QUESTIONS__</div>
-    <button id="copy-answers" type="button">複製答案</button>
-    <p id="answer-note" class="meter"></p>
-  </section>
+  </details>
+  __OPTIONAL__
   <div id="flows">__FLOWS__</div>
   <div class="grid">
-    <section><h2>代碼狀態</h2><div id="code">__CODE__</div></section>
-    <section><h2>目前進度</h2><ul id="progress">__PROGRESS__</ul></section>
-    <section><h2>下一步</h2><ul id="next">__NEXT__</ul></section>
+    <details class="block" data-fold="code"><summary>代碼狀態</summary><div id="code">__CODE__</div></details>
+    <details class="block" open data-fold="progress"><summary>目前進度</summary><ul id="progress">__PROGRESS__</ul></details>
+    <details class="block" open data-fold="next"><summary>下一步</summary><ul id="next">__NEXT__</ul></details>
   </div>
-  <section>
-    <h2>可執行步驟</h2>
+  <details class="block" open data-fold="jobs">
+    <summary>可執行步驟</summary>
     <div id="jobs">__JOBS__</div>
     <p id="note"></p>
-  </section>
-  <section>
-    <h2>日誌</h2>
+  </details>
+  <details class="block" open data-fold="logs">
+    <summary>日誌</summary>
     <div class="logpick" id="logpick"></div>
     <button id="copy" type="button">複製完整日誌</button>
     <p id="copy-note" class="meter"></p>
     <pre id="logtext">還沒有日誌</pre>
-  </section>
+  </details>
 </main>
 <script>
 const note = document.getElementById("note");
@@ -343,11 +336,14 @@ function list(id, items) {
 let questionMark = "";
 let playerMark = "";
 function renderQuestions(payload) {
+  const root = document.getElementById("questions");
+  if (!root) return;
   const mark = JSON.stringify(payload || {});
   if (mark === questionMark) return;
   questionMark = mark;
   const questions = (payload && payload.questions) || [];
-  document.getElementById("question-intro").textContent = (payload && payload.intro) || "";
+  const intro = document.getElementById("question-intro");
+  if (intro) intro.textContent = (payload && payload.intro) || "";
   document.getElementById("questions").innerHTML = questions.map((question, index) =>
     `<div class="q" data-question="${esc(question.id)}" data-prompt="${esc(question.prompt)}">
       <strong>${index + 1}. ${esc(question.prompt)}</strong>
@@ -378,9 +374,10 @@ async function copyAnswers() {
     document.execCommand("copy");
     area.remove();
   }
-  answerNote.textContent = "已複製，可以直接貼回來";
+  if (answerNote) answerNote.textContent = "已複製，可以直接貼回來";
 }
-document.getElementById("copy-answers").onclick = copyAnswers;
+const copyAnswersButton = document.getElementById("copy-answers");
+if (copyAnswersButton) copyAnswersButton.onclick = copyAnswers;
 function renderFlows(payload) {
   const labels = { done: "已完成", current: "目前", later: "之後", blocked: "受阻" };
   const flows = (payload && payload.flows) || [];
@@ -398,6 +395,8 @@ function renderFlows(payload) {
   }).join("");
 }
 function renderPlayers(artifacts) {
+  const root = document.getElementById("players");
+  if (!root) return;
   const mark = JSON.stringify(artifacts || []);
   if (mark === playerMark) return;
   playerMark = mark;
@@ -442,6 +441,10 @@ async function copyLog() {
   }
 }
 document.getElementById("copy").onclick = copyLog;
+document.getElementById("jobs").addEventListener("click", event => {
+  const button = event.target.closest("button[data-job]");
+  if (button && !button.disabled) runJob(button.dataset.job);
+});
 async function refresh() {
   let response;
   try {
@@ -470,21 +473,9 @@ async function refresh() {
 function applyStatus(data) {
   try {
   document.getElementById("revision").textContent = `${data.branch} @ ${data.head}，未提交 ${data.dirty_count} 個路徑`;
-  renderPlayers(data.artifacts);
-  renderQuestions(data.questions);
-  document.getElementById("code").innerHTML = data.artifacts.map(row =>
-    `<p><strong>${esc(row.label)}</strong> <span class="${row.exists ? "ok" : "miss"}">${row.exists ? row.bytes + " bytes" : "不存在"}</span><br><code>${esc(row.path)}</code></p>`
-  ).join("");
-  list("progress", data.narrative.progress);
-  list("next", (data.flow && data.flow.current_next) || data.narrative.next);
-  renderFlows(data.flow);
   const busy = Boolean(data.running);
-  document.getElementById("jobs").innerHTML = data.jobs.map(job =>
-    `<div class="job"><div><strong>${esc(job.title)}</strong><p>${esc(job.detail)}</p></div>
-     <button data-job="${esc(job.id)}" ${busy ? "disabled" : ""}>執行</button></div>`
-  ).join("");
-  document.querySelectorAll("button[data-job]").forEach(button => button.onclick = () => runJob(button.dataset.job));
-  note.textContent = busy ? `正在跑 ${data.running.id}` : "";
+  document.querySelectorAll("button[data-job]").forEach(button => { button.disabled = busy; });
+  if (note) note.textContent = busy ? `正在跑 ${data.running.id}` : "";
   if (data.running && data.running.log) selectedLog = data.running.log;
   else if (!selectedLog && data.logs.length) selectedLog = data.logs[0].name;
   document.getElementById("logpick").innerHTML = data.logs.map(row =>
@@ -527,6 +518,28 @@ def reply_text():
         return "尚無回答。"
 
 
+def optional_blocks(data):
+    narrative_data = data.get("narrative") or {}
+    blocks = []
+    if narrative_data.get("show_listen"):
+        blocks.append(
+            '<details class="block" open data-fold="listen"><summary>對聽</summary>'
+            '<p class="meter">直接播放伺服器上的檔案。只比較旋律和段落。</p>'
+            f'<div class="players" id="players">{render_players(data.get("artifacts") or [])}</div>'
+            "</details>"
+        )
+    if narrative_data.get("show_questions"):
+        questions = data.get("questions") or {}
+        blocks.append(
+            '<details class="block" open data-fold="questions"><summary>選擇題</summary>'
+            f'<p class="meter" id="question-intro">{html.escape(questions.get("intro") or "")}</p>'
+            f'<div id="questions">{render_questions(questions)}</div>'
+            '<button id="copy-answers" type="button">複製答案</button>'
+            '<p id="answer-note" class="meter"></p></details>'
+        )
+    return "".join(blocks)
+
+
 def page_html():
     data = status_payload()
     if data.get("error"):
@@ -544,6 +557,7 @@ def page_html():
         "__NEXT__": render_items((data.get("flow") or {}).get("current_next") or (data.get("narrative") or {}).get("next") or []),
         "__JOBS__": render_jobs(data.get("jobs") or []),
         "__REPLY__": html.escape(reply_text()),
+        "__OPTIONAL__": optional_blocks(data),
     }
     page = PAGE
     for key, value in pieces.items():
@@ -607,22 +621,24 @@ def render_flows(payload):
     labels = {"done": "已完成", "current": "目前", "later": "之後", "blocked": "受阻"}
     sections = []
     for flow in payload.get("flows") or []:
+        stages = flow.get("stages") or []
         meter = ""
         if flow.get("total"):
             meter = f'已完成 {flow["done"]} / {flow["total"]}。目前：{flow.get("current_title") or "未標明"}。'
-        stages = []
-        for index, stage in enumerate(flow.get("stages") or [], 1):
+        open_flow = " open" if any(stage.get("status") == "current" for stage in stages) else ""
+        stage_html = []
+        for index, stage in enumerate(stages, 1):
             status = stage.get("status") or ""
-            row = " current-row" if status == "current" else ""
-            stages.append(
-                f'<div class="stage{row}"><div class="badge {html.escape(status)}">'
-                f'{html.escape(labels.get(status, status))}</div><div>'
-                f'<strong>{index}. {html.escape(stage.get("title") or "")}</strong>'
-                f'<p>{html.escape(stage.get("detail") or "")}</p></div></div>'
+            open_stage = " open" if status == "current" else ""
+            stage_html.append(
+                f'<details class="stage-fold"{open_stage}><summary>'
+                f'<span class="badge {html.escape(status)}">{html.escape(labels.get(status, status))}</span>'
+                f'{index}. {html.escape(stage.get("title") or "")}</summary>'
+                f'<p>{html.escape(stage.get("detail") or "")}</p></details>'
             )
         sections.append(
-            f'<section><h2>{html.escape(flow.get("title") or "")}</h2>'
-            f'<p class="meter">{html.escape(meter)}</p>{"".join(stages)}</section>'
+            f'<details class="block"{open_flow}><summary>{html.escape(flow.get("title") or "")}</summary>'
+            f'<p class="meter">{html.escape(meter)}</p>{"".join(stage_html)}</details>'
         )
     return "".join(sections)
 

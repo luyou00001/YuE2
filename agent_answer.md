@@ -1,3 +1,9 @@
+### [2026-11-27 16:32] 隱藏對聽與選擇題，區塊改為可折疊
+
+- **修改的文件**：`public/v100_panel.py`、`public/panel_state.json`
+- **核心邏輯**：`show_listen` 和 `show_questions` 為 false 時不渲染這兩塊。各區塊用 details 折疊，已完成的推理流程預設收起，目前的訓練步驟預設展開。
+- **AI 備註**：轉譜任務進行中時，控制台會等任務結束再因新提交而重啟。
+
 ### [2026-11-27 16:22] 說明轉譜和 MERT，回答改顯示在頁首
 
 - **修改的文件**：`public/v100_panel.py`、`public/suno_batch7.py`、`public/panel_flow.json`、`public/panel_state.json`、`docs/training-flow.md`

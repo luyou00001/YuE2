@@ -1,5 +1,7 @@
 {
-  "updated": "2026-11-27 16:22",
+  "show_listen": false,
+  "show_questions": false,
+  "updated": "2026-11-27 16:32",
   "progress": [
     "聽感：整體有點像，旋律不同，段落大致對，伴奏接近，人聲自然。",
     "轉譜是為了得到訓練用的 ABC 目標。MERT 不能代替未公開的語義 tokenizer。",
