@@ -1,3 +1,9 @@
+### [2026-11-27 14:21] 100 首對上，開始算第 1 首 ABC loss
+
+- **修改的文件**：`public/suno_first.py`、`public/pack_suno_one.py`
+- **核心邏輯**：100 首混音和 metadata 全部對上。下一條轉 `suno_cn_013117` track 0，打包前綴並計算樂譜 token 的 loss，不更新權重。
+- **AI 備註**：歌曲長 174.80 秒。loss 數字回來之後再決定要不要動 lm_head。
+
 ### [2026-11-27 14:16] Suno 100 首先對檔，訓練目標是 ABC
 
 - **修改的文件**：`public/suno_prepare.py`、`public/train_abc_loss.py`

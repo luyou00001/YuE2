@@ -24,7 +24,8 @@ def main():
     parser.add_argument("--audio", type=Path, required=True)
     parser.add_argument("--lyrics-file", type=Path, required=True)
     parser.add_argument("--score", type=Path, required=True)
-    parser.add_argument("--style", required=True)
+    parser.add_argument("--style")
+    parser.add_argument("--style-file", type=Path)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--model", type=Path, default=Path("/cache/yue2_files/YuE2-3B"))
     parser.add_argument("--id", default="song")
@@ -34,10 +35,12 @@ def main():
             raise SystemExit(f"missing {path}")
     lyrics = args.lyrics_file.read_text(encoding="utf-8")
     abc = args.score.read_text(encoding="utf-8")
-    if not lyrics.strip() or not abc.strip() or not args.style.strip():
+    style = args.style_file.read_text(encoding="utf-8") if args.style_file else (args.style or "")
+    style = style.strip()
+    if not lyrics.strip() or not abc.strip() or not style:
         raise SystemExit("style, lyrics, and score must be nonempty")
     info = sf.info(args.audio)
-    request = make_request(style=args.style, lyrics=lyrics, cot="full", abc=abc, id=args.id)
+    request = make_request(style=style, lyrics=lyrics, cot="full", abc=abc, id=args.id)
     tokenizer = YuE2TextTokenizer.from_pretrained(args.model)
     prefix = token_prefixes(request, tokenizer)
     args.output.mkdir(parents=True, exist_ok=True)
@@ -50,7 +53,7 @@ def main():
         "lyric_chars": len(lyrics),
         "abc_chars": len(abc),
         "prefix_len": len(prefix),
-        "style_chars": len(args.style),
+        "style_chars": len(style),
     }
     (args.output / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
     print(
