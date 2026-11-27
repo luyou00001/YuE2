@@ -50,6 +50,11 @@ JOBS = {
         "detail": "對 000 到 007 各做一步，只更新最後一層。新權重存到 /cache/yue2_ckpts/fit32-suno8。",
         "script": "train_fit32.py",
     },
+    "free004_fit32": {
+        "title": "用新權重無譜生成 004",
+        "detail": "用 fit32-suno8 的權重，只給第 004 首的歌詞和 style。輸出 suno_004_fit32。",
+        "script": "suno_free_004_fit32.py",
+    },
     "export_listen": {
         "title": "匯出對聽路徑",
         "detail": "只讀原曲和生成 mp3 的路徑與大小，不載入模型。",
@@ -192,6 +197,7 @@ def status_payload():
             "tree_html": tree_html,
             "tree_mark": tree_mark,
             "tree_count": tree_count,
+            "run_detail": run_detail(),
             "show_copy_log": copy_log_visible(),
         }
     except Exception as exc:
@@ -215,10 +221,26 @@ def status_payload():
             "tree_html": "",
             "tree_mark": "",
             "tree_count": "",
+            "run_detail": "",
             "show_copy_log": False,
             "live": "",
             "error": f"{type(exc).__name__}: {exc}",
         }
+
+
+def run_detail():
+    with LOCK:
+        job = CURRENT["job"]
+        log_name = CURRENT["log"]
+        started = CURRENT["started"]
+    if not job:
+        return ""
+    lines = [line for line in (read_log(log_name) or "").splitlines() if line.strip()]
+    head = f"正在跑 {job}"
+    if started:
+        head += f"  {started}"
+    tail = lines[-8:]
+    return head if not tail else head + "\n" + "\n".join(tail)
 
 
 def read_log(name):
@@ -370,7 +392,13 @@ PAGE = """<!DOCTYPE html>
   .layout { display:grid; grid-template-columns:minmax(0, 1fr) minmax(420px, 600px); gap:16px; align-items:start; width:100%; }
   .main-col, .side { min-width:0; }
   .side { position:sticky; top:var(--side-top, 64px); height:calc(100vh - var(--side-top, 64px) - 12px); max-height:calc(100vh - var(--side-top, 64px) - 12px); display:flex; flex-direction:column; gap:12px; overflow:hidden; padding-right:2px; }
-  .pager { display:flex; gap:8px; align-items:center; margin-bottom:8px; }
+  .pager, .copy-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; flex-wrap:nowrap; }
+  select.timepick { appearance:none; border:0; background:#efeae2; color:var(--ink); border-radius:999px; padding:8px 14px; font:600 14px/1 sans-serif; max-width:280px; }
+  .step-split { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:12px; margin-top:10px; }
+  .step-split > div { background:#f7f4ee; border-radius:12px; padding:10px 12px; min-width:0; }
+  .step-split .meter { margin-bottom:6px; }
+  .run-live { margin-top:8px; white-space:pre-wrap; font:13px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  #copy-note { margin:0; }
   @media (max-width: 900px) {
     .layout { grid-template-columns:1fr; }
     .side { position:static; height:auto; max-height:none; overflow:visible; }
@@ -461,20 +489,23 @@ PAGE = """<!DOCTYPE html>
   .sync-step.current { background:#e8f1fb; }
   .sync-step.wait { color:var(--muted); }
   .tree-pane { position:relative; min-width:0; min-height:100%; }
-  .tree-pane > .meter { margin:0 0 6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .tree-scroll { position:absolute; left:0; right:0; top:24px; bottom:0; overflow:auto; border:1px solid var(--line); border-radius:12px; background:#fffdf9; }
+  .tree-pane > .meter { display:flex; align-items:center; gap:8px; margin:0 0 6px; min-width:0; white-space:nowrap; overflow:hidden; }
+  .tree-label { flex:none; }
+  .chip-row { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .chip { display:inline-block; margin-right:6px; padding:2px 6px; border-radius:6px; font:700 11px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .tree-scroll { position:absolute; left:0; right:0; top:32px; bottom:0; overflow:auto; border:1px solid var(--line); border-radius:12px; background:#fffdf9; }
   .tree, .tree ul { list-style:none; margin:0; padding:0; }
-  .tree { margin:6px 0 6px 10px; padding-left:12px; border-left:1px solid #d4cbbf; position:relative; font:13px/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .tree { margin:4px 0 4px 10px; padding-left:12px; border-left:1px solid #d4cbbf; position:relative; font:12px/1.2 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
   .tree ul { margin-left:7px; padding-left:12px; border-left:1px solid #d4cbbf; position:relative; }
   .tree li { position:relative; }
-  .tree > li::before, .tree ul > li::before { content:""; position:absolute; left:-12px; top:13px; width:12px; border-top:1px solid #d4cbbf; }
-  .tree::before, .tree ul::before { content:""; position:absolute; left:-1px; top:0; width:2px; height:13px; background:#fffdf9; }
-  .tree > li:last-child::after, .tree ul > li:last-child::after { content:""; position:absolute; left:-13px; top:14px; bottom:0; width:3px; background:#fffdf9; }
-  .tree summary { display:flex; align-items:center; gap:6px; min-height:26px; padding-right:8px; border-radius:8px; cursor:pointer; list-style:none; }
+  .tree > li::before, .tree ul > li::before { content:""; position:absolute; left:-12px; top:10px; width:12px; border-top:1px solid #d4cbbf; }
+  .tree::before, .tree ul::before { content:""; position:absolute; left:-1px; top:0; width:2px; height:10px; background:#fffdf9; }
+  .tree > li:last-child::after, .tree ul > li:last-child::after { content:""; position:absolute; left:-13px; top:11px; bottom:0; width:3px; background:#fffdf9; }
+  .tree summary { display:flex; align-items:center; gap:6px; min-height:20px; padding-right:8px; border-radius:6px; cursor:pointer; list-style:none; }
   .tree summary::-webkit-details-marker { display:none; }
-  .tree .chev { width:7px; height:7px; border-right:1.5px solid #8a8175; border-bottom:1.5px solid #8a8175; transform:rotate(-45deg); flex:none; }
+  .tree .chev { width:6px; height:6px; border-right:1.5px solid #8a8175; border-bottom:1.5px solid #8a8175; transform:rotate(-45deg); flex:none; }
   .tree details[open] > summary .chev { transform:rotate(45deg); margin-top:-2px; }
-  .tree .file { display:flex; align-items:center; gap:6px; min-height:26px; padding-right:8px; border-radius:8px; color:#6d675e; }
+  .tree .file { display:flex; align-items:center; gap:6px; min-height:20px; padding-right:8px; border-radius:6px; color:#6d675e; }
   .tree .name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .tree .meta { margin-left:auto; color:#8a8175; font:11px/1 sans-serif; }
   .tree .file.hit { background:#fff6e0; color:var(--ink); }
@@ -484,6 +515,10 @@ PAGE = """<!DOCTYPE html>
   .tree .tag-M { background:#fff1d6; color:#9a6700; }
   .tree .tag-D { background:#f8e8e2; color:#9a3412; }
   .tree .tag-R { background:#e8f1fb; color:#1d4e89; }
+  .chip.tag-A { background:#e5f4ef; color:#0f6e56; }
+  .chip.tag-M { background:#fff1d6; color:#9a6700; }
+  .chip.tag-D { background:#f8e8e2; color:#9a3412; }
+  .chip.tag-R { background:#e8f1fb; color:#1d4e89; }
   #git-notice[hidden] { display:none; }
   button[hidden] { display:none; }
   #git-notice { position:fixed; inset:0; z-index:80; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(28,25,21,.35); }
@@ -516,7 +551,7 @@ PAGE = """<!DOCTYPE html>
     <summary>本輪回答</summary>
     <div class="pager">
       <button id="reply-prev" class="ghost" type="button">上一則</button>
-      <span id="reply-pos"></span>
+      <select id="reply-pick" class="timepick"></select>
       <button id="reply-next" class="ghost" type="button">下一則</button>
     </div>
     <div class="reply md" id="reply">__REPLY__</div>
@@ -525,9 +560,11 @@ PAGE = """<!DOCTYPE html>
   <div id="flows">__FLOWS__</div>
   <details class="block" open data-fold="logs">
     <summary>日誌</summary>
-    <div class="logpick" id="logpick"></div>
-    <button id="copy" type="button">複製完整日誌</button>
-    <p id="copy-note" class="meter"></p>
+    <div class="copy-row">
+      <select id="log-pick" class="timepick"></select>
+      <button id="copy" type="button">複製完整日誌</button>
+      <span id="copy-note" class="meter"></span>
+    </div>
     <pre id="logtext">還沒有日誌</pre>
   </details>
   </div>
@@ -675,16 +712,28 @@ const replies = __REPLIES__;
 let replyIndex = replies.length ? replies.length - 1 : 0;
 function showReply() {
   const box = document.getElementById("reply");
-  const pos = document.getElementById("reply-pos");
+  const pick = document.getElementById("reply-pick");
   if (!box || !replies.length) return;
   const item = replies[replyIndex];
   box.innerHTML = item.html || "";
-  if (pos) pos.textContent = (replyIndex + 1) + " / " + replies.length + "  " + (item.time || "");
+  if (pick) pick.value = String(replyIndex);
+}
+function fillReplyPick() {
+  const pick = document.getElementById("reply-pick");
+  if (!pick) return;
+  pick.innerHTML = replies.map((item, index) =>
+    `<option value="${index}">${esc(item.time || ("第 " + (index + 1) + " 則"))}</option>`
+  ).join("");
+  pick.onchange = function () {
+    replyIndex = Number(pick.value);
+    showReply();
+  };
 }
 const replyPrev = document.getElementById("reply-prev");
 const replyNext = document.getElementById("reply-next");
 if (replyPrev) replyPrev.onclick = function () { if (replyIndex > 0) { replyIndex -= 1; showReply(); } };
 if (replyNext) replyNext.onclick = function () { if (replyIndex < replies.length - 1) { replyIndex += 1; showReply(); } };
+fillReplyPick();
 showReply();
 document.getElementById("task-board").addEventListener("click", event => {
   const button = event.target.closest("button[data-job]");
@@ -726,7 +775,9 @@ function applyStatus(data) {
   document.getElementById("revision").textContent = `${data.branch} @ ${data.head}，未提交 ${data.dirty_count} 個路徑`;
   pinSide();
   const busy = Boolean(data.running);
-  if (note) note.textContent = busy ? `正在跑 ${data.running.id}` : "";
+  if (note) note.textContent = "";
+  const live = document.getElementById("run-live");
+  if (live) live.textContent = data.run_detail || "";
   const board = document.getElementById("task-board");
   if (board && data.task_html && data.task_html !== taskSig) {
     taskSig = data.task_html;
@@ -748,20 +799,26 @@ function applyStatus(data) {
     tree.dataset.mark = data.tree_mark || "";
   }
   const treeCount = document.getElementById("tree-count");
-  if (treeCount && data.tree_count) treeCount.textContent = data.tree_count;
+  if (treeCount && data.tree_count) treeCount.innerHTML = data.tree_count;
   if (data.running && data.running.log) selectedLog = data.running.log;
   else if (!selectedLog && data.logs.length) selectedLog = data.logs[0].name;
-  document.getElementById("logpick").innerHTML = data.logs.map(row =>
-    `<button type="button" class="ghost" data-log="${esc(row.name)}">${esc(row.mtime)}</button>`
-  ).join("");
-  document.querySelectorAll("button[data-log]").forEach(button => {
-    button.onclick = () => {
-      selectedLog = button.dataset.log;
+  const logPick = document.getElementById("log-pick");
+  if (logPick) {
+    const sig = data.logs.map(row => row.name).join("|");
+    if (sig !== logPick.dataset.sig) {
+      logPick.dataset.sig = sig;
+      logPick.innerHTML = data.logs.map(row =>
+        `<option value="${esc(row.name)}">${esc(row.mtime)}</option>`
+      ).join("");
+    }
+    if (selectedLog) logPick.value = selectedLog;
+    logPick.onchange = function () {
+      selectedLog = logPick.value;
       shownLog = "";
       const row = data.logs.find(item => item.name === selectedLog);
       showLog(selectedLog, row ? row.bytes : 0);
     };
-  });
+  }
   const chosen = data.logs.find(row => row.name === selectedLog);
   showLog(selectedLog, chosen ? chosen.bytes : 0);
   } catch (error) {
@@ -769,10 +826,11 @@ function applyStatus(data) {
   }
 }
 async function runJob(id) {
-  note.textContent = "啟動中";
+  const live = document.getElementById("run-live");
+  if (live) live.textContent = "啟動中";
   const response = await fetch("/api/run/" + encodeURIComponent(id), { method: "POST" });
   const data = await response.json();
-  note.textContent = response.ok ? "已開始，輸出會顯示在下方" : (data.error || "無法啟動");
+  if (live) live.textContent = response.ok ? "已開始" : (data.error || "無法啟動");
   refresh();
 }
 function pinSide() {
@@ -986,10 +1044,14 @@ def render_file_tree(listing, marks):
         return f"<ul{klass}>{''.join(chunks)}</ul>"
 
     changed = sum(tally(root).values())
-    names = [f"{letter} {Path(path).name}" for path, letter in sorted(marks.items())]
-    caption = f"代碼樹 {file_count(root)} 個文件，本次變更 {changed}"
-    if names:
-        caption += "  " + "、".join(names)
+    chips = "".join(
+        f'<span class="chip tag-{html.escape(letter)}">{html.escape(f"{letter} {Path(path).name}")}</span>'
+        for path, letter in sorted(marks.items())
+    )
+    caption = (
+        f'<span class="tree-label">代碼樹 {file_count(root)} 個文件，本次變更：</span>'
+        f'<span class="chip-row">{chips}</span>'
+    )
     return walk(root, True), caption
 
 
@@ -1272,7 +1334,17 @@ def pipeline_view():
             if running == "fit32_update":
                 cards.append(task_card("running", "正在進行", update_title, update_detail))
             elif update_is_done():
-                cards.append(task_card("done", "已完成", update_title, "新權重已另存。把 saved= 那一行貼回來。"))
+                cards.append(task_card("done", "已完成", update_title, "8 首各一步已完成。峰值 9.85 GiB。新權重在 fit32-suno8。"))
+                listen_new = f"{len(PIPELINE) + 4}. 用新權重生成 004"
+                listen_detail = JOBS["free004_fit32"]["detail"]
+                if running == "free004_fit32":
+                    cards.append(task_card("running", "正在進行", listen_new, listen_detail))
+                elif Path("/cache/yue2_outputs/suno_free/suno_004_fit32/audio.mp3").is_file():
+                    cards.append(task_card("done", "已完成", listen_new, "新權重的第 004 首已生成。請對聽。"))
+                else:
+                    record = job_record("free004_fit32")
+                    cards.append(task_card("next", "下一步", listen_new, listen_detail, record))
+                    visible.append(record)
             else:
                 record = job_record("fit32_update")
                 cards.append(task_card("next", "下一步", update_title, update_detail, record))
@@ -1406,12 +1478,13 @@ def render_flows(payload, progress=None):
             status = stage.get("status") or ""
             open_stage = " open" if status == "current" else ""
             extra = ""
-            if stage.get("id") == "fit32":
+            if status == "current":
                 extra = (
-                    '<p class="meter">目前進度</p>'
+                    '<div class="step-split"><div><p class="meter">目前進度</p>'
                     + render_items(progress or [])
-                    + '<p class="meter">下一步</p>'
+                    + '<div id="run-live" class="run-live"></div></div><div><p class="meter">下一步</p>'
                     + render_items(stage.get("next") or [])
+                    + "</div></div>"
                 )
             stage_html.append(
                 f'<details class="stage-fold"{open_stage}><summary>'

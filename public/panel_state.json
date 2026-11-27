@@ -2,13 +2,14 @@
   "show_listen": false,
   "show_questions": false,
   "listen_done": true,
-  "updated": "2026-11-27 18:29",
+  "updated": "2026-11-27 18:43",
   "progress": [
-    "顯存探針完成：峰值 9.54 GiB，abc_loss=0.3594。",
-    "可訓練參數 100672000，是最後一層。沒有寫入基模。"
+    "小更新完成：8 首各一步，峰值 9.85 GiB。",
+    "新權重在 /cache/yue2_ckpts/fit32-suno8。基模目錄沒有改。",
+    "印出的 abc_loss 是每一步更新前的數值，004 仍是 0.6875。"
   ],
   "next": [
-    "對 000 到 007 各做一步，只更新最後一層",
-    "新權重存到 /cache/yue2_ckpts/fit32-suno8"
+    "用新權重無譜生成第 004 首",
+    "和基模那次、以及原曲對聽"
   ]
 }

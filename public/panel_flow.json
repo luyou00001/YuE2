@@ -91,19 +91,19 @@
         {
           "id": "fit32",
           "title": "單張 V100 上做放得進 32GB 的初步訓練",
-          "status": "current",
-          "detail": "最後一層約 1.01 億參數。一次反向峰值 9.54 GiB，abc_loss=0.3594。沒有更新權重，基模目錄沒有改。",
-          "next": [
-            "對 000 到 007 各做一步，只更新最後一層",
-            "新權重存到 /cache/yue2_ckpts/fit32-suno8",
-            "完成後把 saved= 那一行貼回來"
-          ]
+          "status": "done",
+          "detail": "8 首各一步已完成，峰值 9.85 GiB。新權重在 /cache/yue2_ckpts/fit32-suno8。基模目錄沒有改。印出的 abc_loss 是更新前的數值。",
+          "next": []
         },
         {
           "id": "relisten",
           "title": "用新權重再生成並對聽",
-          "status": "later",
-          "detail": "同一首歌詞和 style，比較基模、新權重和原曲。頁面會換成新的選擇題。"
+          "status": "current",
+          "detail": "用 fit32-suno8 無譜生成第 004 首，再和基模那次、以及原曲比較。",
+          "next": [
+            "按任務裡的用新權重生成 004",
+            "完成後聽原曲、基模生成、新權重生成"
+          ]
         },
         {
           "id": "semantic",

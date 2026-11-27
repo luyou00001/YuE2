@@ -1,3 +1,9 @@
+### [2026-11-27 18:43] 小更新完成，進度改成並排
+
+- **修改的文件**：`public/v100_panel.py`、`public/suno_free_004_fit32.py`、`public/panel_flow.json`、`public/panel_state.json`
+- **核心邏輯**：8 首小更新已存到 fit32-suno8，峰值 9.85 GiB。進度和下一步並排。運行細節改到進度區塊。下一步用新權重無譜生成第 004 首。
+- **AI 備註**：同步後按「用新權重生成 004」。完成後對聽原曲、基模生成和新權重生成。
+
 ### [2026-11-27 18:29] 探針峰值 9.54 GiB，並整理訓練第 6 步
 
 - **修改的文件**：`public/v100_panel.py`、`public/train_fit32.py`、`public/panel_flow.json`、`public/panel_state.json`
