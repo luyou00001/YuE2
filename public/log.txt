@@ -1,20 +1,33 @@
-(PyTorch-2.0.0) [ma-user YuE2]$PYTHONPATH=src python public/check_sheetsage_env.py
-python 3.9.11
-torch: 2.3.1+cu121
-torchaudio: 2.3.1+cu121
-transformers: 4.57.6
-numpy: 1.23.5
-sheetsage_dir=True weights=True infer=True requirements=True
-mert_dir=True weights=False config=True
-requirement torch==2.8.0: present
-requirement torchaudio==2.8.0: present
-requirement transformers==4.45.2: present
-requirement huggingface-hub==0.36.0: present
-requirement safetensors==0.5.3: present
-requirement numpy==1.24.3: present
-requirement scipy==1.13.1: present
-requirement mir_eval==0.8.2: MISSING
-requirement pretty_midi==0.2.10: MISSING
-requirement mido==1.3.3: present
-requirement setuptools==78.1.1: present
+(PyTorch-2.0.0) [ma-user YuE2]$python -m pip install mir_eval==0.8.2 pretty_midi==0.2.10 --no-deps
+Looking in indexes: http://repo.myhuaweicloud.com/repository/pypi/simple
+Collecting mir_eval==0.8.2
+  Downloading http://repo.myhuaweicloud.com/repository/pypi/packages/1b/5a/69ce896a32ebc8c75deae00b1fba9837567405fa6ef37b377f2e85b856ae/mir_eval-0.8.2-py3-none-any.whl (102 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 102.8/102.8 KB 41.4 MB/s eta 0:00:00
+Collecting pretty_midi==0.2.10
+  Downloading http://repo.myhuaweicloud.com/repository/pypi/packages/c2/81/f3e47efdf65eab347d1b78e8279222f6e3122d722cc9d68d443503a3c0e7/pretty_midi-0.2.10.tar.gz (5.6 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.6/5.6 MB 41.1 MB/s eta 0:00:00
+  Preparing metadata (setup.py) ... done
+Building wheels for collected packages: pretty_midi
+  Building wheel for pretty_midi (setup.py) ... done
+  Created wheel for pretty_midi: filename=pretty_midi-0.2.10-py3-none-any.whl size=5592288 sha256=5dbf74c927ff3fc165021567bc9b8ae81ed905152aa05514bb84bd0d9ed6f14e
+  Stored in directory: /home/ma-user/.cache/pip/wheels/f6/0e/f8/4326f8066ae6cee539075be00dba1833d8900f540fb8413b47
+Successfully built pretty_midi
+Installing collected packages: pretty_midi, mir_eval
+Successfully installed mir_eval-0.8.2 pretty_midi-0.2.10
+WARNING: You are using pip version 22.0.4; however, version 26.0.1 is available.
+You should consider upgrading via the '/home/ma-user/anaconda3/envs/PyTorch-2.0.0/bin/python -m pip install --upgrade pip' command.
+(PyTorch-2.0.0) [ma-user YuE2]$python -c "import mir_eval, pretty_midi; print('imports ok')"
+imports ok
+(PyTorch-2.0.0) [ma-user YuE2]$python -c "from pathlib import Path
+> for root in (Path('/cache/yue2_files/SheetSage2'), Path('/cache/yue2_files/MERT-v2-FullSong')):
+>     print('DIR', root)
+>     found=False
+>     for p in root.rglob('*'):
+>         if p.is_file() and (p.suffix in ('.safetensors','.bin') or p.stat().st_size>1000000):
+>             print(p, p.stat().st_size); found=True
+>     if not found: print('no weight file')"
+DIR /cache/yue2_files/SheetSage2
+/cache/yue2_files/SheetSage2/model.safetensors 228738564
+DIR /cache/yue2_files/MERT-v2-FullSong
+/cache/yue2_files/MERT-v2-FullSong/model.safetensors 2529812848
 (PyTorch-2.0.0) [ma-user YuE2]$
