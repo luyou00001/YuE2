@@ -63,7 +63,7 @@ JOBS = {
 }
 
 LOCK = threading.Lock()
-CURRENT = {"job": None, "log": None, "started": None, "exit": None}
+CURRENT = {"job": None, "log": None, "started": None, "exit": None, "finished_id": None}
 START_HEAD = ""
 RESTART = False
 SERVER = None
@@ -173,6 +173,9 @@ def status_payload():
                 "started": CURRENT["started"],
                 "exit": CURRENT["exit"],
             }
+            finished_id = CURRENT.get("finished_id")
+            finished_exit = CURRENT["exit"]
+            finished_log = CURRENT["log"]
         dirty = [line for line in git_text(["status", "--porcelain"]).splitlines() if line.strip()]
         task_html, visible_jobs = pipeline_view()
         sync_head, sync_steps = sync_parts()
@@ -198,6 +201,9 @@ def status_payload():
             "tree_mark": tree_mark,
             "tree_count": tree_count,
             "run_detail": run_detail(),
+            "finished_job": None if running else finished_id,
+            "finished_exit": None if running else finished_exit,
+            "finished_log": finished_log or "",
             "show_copy_log": copy_log_visible(),
         }
     except Exception as exc:
@@ -222,25 +228,41 @@ def status_payload():
             "tree_mark": "",
             "tree_count": "",
             "run_detail": "",
+            "finished_job": None,
+            "finished_exit": None,
+            "finished_log": "",
             "show_copy_log": False,
             "live": "",
             "error": f"{type(exc).__name__}: {exc}",
         }
 
 
+def brief_progress(line):
+    text = line.strip()
+    if text.startswith("[YuE2] "):
+        text = text[7:]
+    if "elapsed " in text:
+        stage, _, rest = text.partition(": ")
+        elapsed = rest.split("elapsed ", 1)[1].split()[0]
+        return f"{stage}  {elapsed}"
+    return text
+
+
 def run_detail():
     with LOCK:
         job = CURRENT["job"]
         log_name = CURRENT["log"]
-        started = CURRENT["started"]
     if not job:
         return ""
-    lines = [line for line in (read_log(log_name) or "").splitlines() if line.strip()]
-    head = f"正在跑 {job}"
-    if started:
-        head += f"  {started}"
-    tail = lines[-8:]
-    return head if not tail else head + "\n" + "\n".join(tail)
+    latest = ""
+    for line in (read_log(log_name) or "").splitlines():
+        line = line.strip()
+        if not line or line.startswith("job "):
+            continue
+        latest = brief_progress(line)
+    if not latest:
+        return f"正在跑 {job}"
+    return f"正在跑 {job}　{latest}"
 
 
 def read_log(name):
@@ -356,6 +378,7 @@ def run_job(job_id, log_name):
             cwd=ROOT, env=env, stdout=handle, stderr=subprocess.STDOUT, check=False)
     with LOCK:
         CURRENT["exit"] = completed.returncode
+        CURRENT["finished_id"] = job_id
         if CURRENT["log"] == log_name:
             CURRENT["job"] = None
 
@@ -395,9 +418,11 @@ PAGE = """<!DOCTYPE html>
   .pager, .copy-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; flex-wrap:nowrap; }
   select.timepick { appearance:none; border:0; background:#efeae2; color:var(--ink); border-radius:999px; padding:8px 14px; font:600 14px/1 sans-serif; max-width:280px; }
   .step-split { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:12px; margin-top:10px; }
-  .step-split > div { background:#f7f4ee; border-radius:12px; padding:10px 12px; min-width:0; }
-  .step-split .meter { margin-bottom:6px; }
-  .run-live { margin-top:8px; white-space:pre-wrap; font:13px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .step-split > div { background:#f7f4ee; border-radius:12px; padding:12px; min-width:0; }
+  .step-split .meter { margin:0 0 8px; font-weight:700; color:var(--ink); }
+  .step-list { list-style:none; margin:0; padding:0; display:grid; gap:6px; }
+  .step-list li { background:#fffdf9; border-radius:8px; padding:7px 10px; }
+  .run-live { margin-top:8px; color:var(--muted); }
   #copy-note { margin:0; }
   @media (max-width: 900px) {
     .layout { grid-template-columns:1fr; }
@@ -495,17 +520,17 @@ PAGE = """<!DOCTYPE html>
   .chip { display:inline-block; margin-right:6px; padding:2px 6px; border-radius:6px; font:700 11px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
   .tree-scroll { position:absolute; left:0; right:0; top:32px; bottom:0; overflow:auto; border:1px solid var(--line); border-radius:12px; background:#fffdf9; }
   .tree, .tree ul { list-style:none; margin:0; padding:0; }
-  .tree { margin:4px 0 4px 10px; padding-left:12px; border-left:1px solid #d4cbbf; position:relative; font:12px/1.2 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-  .tree ul { margin-left:7px; padding-left:12px; border-left:1px solid #d4cbbf; position:relative; }
+  .tree { margin:2px 0 2px 8px; padding-left:10px; border-left:1px solid #d4cbbf; position:relative; font:12px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .tree ul { margin-left:6px; padding-left:10px; border-left:1px solid #d4cbbf; position:relative; }
   .tree li { position:relative; }
-  .tree > li::before, .tree ul > li::before { content:""; position:absolute; left:-12px; top:10px; width:12px; border-top:1px solid #d4cbbf; }
-  .tree::before, .tree ul::before { content:""; position:absolute; left:-1px; top:0; width:2px; height:10px; background:#fffdf9; }
-  .tree > li:last-child::after, .tree ul > li:last-child::after { content:""; position:absolute; left:-13px; top:11px; bottom:0; width:3px; background:#fffdf9; }
-  .tree summary { display:flex; align-items:center; gap:6px; min-height:20px; padding-right:8px; border-radius:6px; cursor:pointer; list-style:none; }
+  .tree > li::before, .tree ul > li::before { content:""; position:absolute; left:-10px; top:7px; width:10px; border-top:1px solid #d4cbbf; }
+  .tree::before, .tree ul::before { content:""; position:absolute; left:-1px; top:0; width:2px; height:7px; background:#fffdf9; }
+  .tree > li:last-child::after, .tree ul > li:last-child::after { content:""; position:absolute; left:-11px; top:8px; bottom:0; width:3px; background:#fffdf9; }
+  .tree summary { display:flex; align-items:center; gap:4px; min-height:16px; padding:0 6px 0 0; border-radius:4px; cursor:pointer; list-style:none; }
   .tree summary::-webkit-details-marker { display:none; }
-  .tree .chev { width:6px; height:6px; border-right:1.5px solid #8a8175; border-bottom:1.5px solid #8a8175; transform:rotate(-45deg); flex:none; }
-  .tree details[open] > summary .chev { transform:rotate(45deg); margin-top:-2px; }
-  .tree .file { display:flex; align-items:center; gap:6px; min-height:20px; padding-right:8px; border-radius:6px; color:#6d675e; }
+  .tree .chev { width:5px; height:5px; border-right:1.5px solid #8a8175; border-bottom:1.5px solid #8a8175; transform:rotate(-45deg); flex:none; }
+  .tree details[open] > summary .chev { transform:rotate(45deg); margin-top:-1px; }
+  .tree .file { display:flex; align-items:center; gap:4px; min-height:16px; padding:0 6px 0 0; border-radius:4px; color:#6d675e; }
   .tree .name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .tree .meta { margin-left:auto; color:#8a8175; font:11px/1 sans-serif; }
   .tree .file.hit { background:#fff6e0; color:var(--ink); }
@@ -560,8 +585,10 @@ PAGE = """<!DOCTYPE html>
   <div id="flows">__FLOWS__</div>
   <details class="block" open data-fold="logs">
     <summary>日誌</summary>
-    <div class="copy-row">
+    <div class="pager">
+      <button id="log-prev" class="ghost" type="button">上一則</button>
       <select id="log-pick" class="timepick"></select>
+      <button id="log-next" class="ghost" type="button">下一則</button>
       <button id="copy" type="button">複製完整日誌</button>
       <span id="copy-note" class="meter"></span>
     </div>
@@ -582,6 +609,14 @@ PAGE = """<!DOCTYPE html>
   </aside>
   </div>
 </main>
+<div id="done-notice" hidden>
+  <div class="notice-card">
+    <h2 id="done-title">任務已完成</h2>
+    <p id="done-text"></p>
+    <button id="copy-done" type="button">複製目前日誌</button>
+    <button id="close-done" class="ghost" type="button">關閉</button>
+  </div>
+</div>
 <div id="git-notice" hidden>
   <div class="notice-card">
     <h2>Git 已更新</h2>
@@ -675,6 +710,8 @@ let seenHead = document.body.getAttribute("data-head") || "";
 let selectedLog = "";
 let shownLog = "";
 let taskSig = "";
+let sawJob = false;
+let logRows = [];
 async function showLog(name, bytes) {
   const mark = name + ":" + bytes;
   if (!name) {
@@ -775,6 +812,18 @@ function applyStatus(data) {
   document.getElementById("revision").textContent = `${data.branch} @ ${data.head}，未提交 ${data.dirty_count} 個路徑`;
   pinSide();
   const busy = Boolean(data.running);
+  if (data.running) sawJob = true;
+  else if (sawJob) {
+    sawJob = false;
+    const doneBox = document.getElementById("done-notice");
+    const doneTitle = document.getElementById("done-title");
+    const doneText = document.getElementById("done-text");
+    const ok = data.finished_exit === 0;
+    if (doneTitle) doneTitle.textContent = ok ? "任務已完成" : "任務已結束";
+    if (doneText) doneText.textContent = (data.finished_job || "") + (ok ? "" : "  exit=" + data.finished_exit);
+    if (data.finished_log) selectedLog = data.finished_log;
+    if (doneBox) doneBox.hidden = false;
+  }
   if (note) note.textContent = "";
   const live = document.getElementById("run-live");
   if (live) live.textContent = data.run_detail || "";
@@ -819,6 +868,27 @@ function applyStatus(data) {
       showLog(selectedLog, row ? row.bytes : 0);
     };
   }
+  logRows = data.logs;
+  const logPrev = document.getElementById("log-prev");
+  const logNext = document.getElementById("log-next");
+  if (logPrev) logPrev.onclick = function () {
+    const index = logRows.findIndex(row => row.name === selectedLog);
+    if (index > 0) {
+      selectedLog = logRows[index - 1].name;
+      shownLog = "";
+      if (logPick) logPick.value = selectedLog;
+      showLog(selectedLog, logRows[index - 1].bytes);
+    }
+  };
+  if (logNext) logNext.onclick = function () {
+    const index = logRows.findIndex(row => row.name === selectedLog);
+    if (index >= 0 && index < logRows.length - 1) {
+      selectedLog = logRows[index + 1].name;
+      shownLog = "";
+      if (logPick) logPick.value = selectedLog;
+      showLog(selectedLog, logRows[index + 1].bytes);
+    }
+  };
   const chosen = data.logs.find(row => row.name === selectedLog);
   showLog(selectedLog, chosen ? chosen.bytes : 0);
   } catch (error) {
@@ -841,6 +911,20 @@ function pinSide() {
 }
 const reloadPage = document.getElementById("reload-page");
 if (reloadPage) reloadPage.onclick = function () { location.reload(); };
+const copyDone = document.getElementById("copy-done");
+if (copyDone) copyDone.onclick = async function () {
+  const row = logRows.find(item => item.name === selectedLog);
+  if (row) {
+    shownLog = "";
+    await showLog(selectedLog, row.bytes);
+  }
+  copyLog();
+};
+const closeDone = document.getElementById("close-done");
+if (closeDone) closeDone.onclick = function () {
+  const box = document.getElementById("done-notice");
+  if (box) box.hidden = true;
+};
 pinSide();
 window.addEventListener("resize", pinSide);
 const taskBoard = document.getElementById("task-board");
@@ -1481,9 +1565,9 @@ def render_flows(payload, progress=None):
             if status == "current":
                 extra = (
                     '<div class="step-split"><div><p class="meter">目前進度</p>'
-                    + render_items(progress or [])
-                    + '<div id="run-live" class="run-live"></div></div><div><p class="meter">下一步</p>'
-                    + render_items(stage.get("next") or [])
+                    + '<ul class="step-list">' + render_items(progress or []) + "</ul>"
+                    + '<p id="run-live" class="run-live"></p></div><div><p class="meter">下一步</p>'
+                    + '<ul class="step-list">' + render_items(stage.get("next") or []) + "</ul>"
                     + "</div></div>"
                 )
             stage_html.append(
