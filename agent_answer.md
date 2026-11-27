@@ -1,3 +1,9 @@
+### [2026-11-27 18:09] 側欄各佔一半，並列出小更新探針
+
+- **修改的文件**：`public/v100_panel.py`、`public/train_fit32_probe.py`
+- **核心邏輯**：標題與版本同一行。任務和 GPU 各佔視窗扣除標題後的一半，任務列表開在最底。變更檔名接在本次變更後面並省略過長部分。下一步先對最後一層做一次反向，只印顯存，不存權重。
+- **AI 備註**：探針指令是 PYTHONPATH=src HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 python public/train_fit32_probe.py。基模目錄不改。
+
 ### [2026-11-27 17:56] 代碼樹折線，並記下第 004 首聽感
 
 - **修改的文件**：`public/v100_panel.py`、`public/panel_flow.json`、`public/panel_state.json`

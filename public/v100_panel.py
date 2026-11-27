@@ -354,16 +354,16 @@ PAGE = """<!DOCTYPE html>
   * { box-sizing: border-box; }
   body { margin:0; font:16px/1.5 "Iowan Old Style", Palatino, "Songti SC", serif; color:var(--ink); background:var(--paper); }
   main { max-width:none; width:100%; margin:0; padding:0 20px 40px; }
-  .topbar { position:sticky; top:0; z-index:40; background:var(--paper); margin:0 -20px 16px; padding:14px 20px 10px; border-bottom:1px solid var(--line); }
-  .topbar h1 { margin:0; }
-  .topbar .sub { margin:2px 0 0; }
+  .topbar { position:sticky; top:0; z-index:40; background:var(--paper); margin:0 -20px 12px; padding:10px 20px; border-bottom:1px solid var(--line); }
+  .topbar h1 { margin:0; display:flex; align-items:baseline; gap:14px; font-size:28px; }
+  .topbar .sub { margin:0; font-size:14px; font-weight:400; }
   .layout { display:grid; grid-template-columns:minmax(0, 1fr) minmax(420px, 600px); gap:16px; align-items:start; width:100%; }
   .main-col, .side { min-width:0; }
-  .side { position:sticky; top:var(--side-top, 116px); max-height:calc(100vh - var(--side-top, 116px) - 12px); overflow:auto; padding-right:2px; }
+  .side { position:sticky; top:var(--side-top, 64px); height:calc(100vh - var(--side-top, 64px) - 12px); max-height:calc(100vh - var(--side-top, 64px) - 12px); display:flex; flex-direction:column; gap:12px; overflow:hidden; padding-right:2px; }
   .pager { display:flex; gap:8px; align-items:center; margin-bottom:8px; }
   @media (max-width: 900px) {
     .layout { grid-template-columns:1fr; }
-    .side { position:static; max-height:none; }
+    .side { position:static; height:auto; max-height:none; overflow:visible; }
   }
   h1 { font-size:32px; margin:0 0 4px; }
   h2 { font-size:18px; margin:0 0 12px; }
@@ -416,7 +416,10 @@ PAGE = """<!DOCTYPE html>
   .bar { height:8px; background:#e4ddd2; border-radius:99px; overflow:hidden; }
   .bar > div { height:100%; background:#0f6e56; }
   .bar.mem > div { background:#1d4e89; }
-  #task-board { display:flex; flex-direction:column; gap:12px; max-height:320px; overflow:auto; resize:vertical; padding:2px 6px 8px 0; margin:4px 0 12px; }
+  #task-board { display:flex; flex-direction:column; gap:12px; flex:1 1 auto; min-height:0; overflow:auto; padding:2px 6px 8px 0; margin:0 0 8px; }
+  .side > details.block { flex:1 1 0; min-height:0; margin:0; display:flex; flex-direction:column; overflow:hidden; }
+  .side > details.block > summary { flex:none; }
+  .side .gpus { flex:1 1 auto; min-height:0; overflow:auto; align-content:start; }
   .task-card { border:1px solid; border-radius:14px; padding:0; margin:0; display:block; }
   .task-card > summary { cursor:pointer; padding:12px 14px; }
   .task-card > p { margin:0; padding:0 14px 14px; color:var(--muted); }
@@ -437,8 +440,8 @@ PAGE = """<!DOCTYPE html>
   .sync-step.current { background:#e8f1fb; }
   .sync-step.wait { color:var(--muted); }
   .tree-pane { position:relative; min-width:0; min-height:100%; }
-  .tree-pane > .meter { margin:0 0 6px; }
-  .tree-scroll { position:absolute; left:0; right:0; top:26px; bottom:0; overflow:auto; border:1px solid var(--line); border-radius:12px; background:#fffdf9; }
+  .tree-pane > .meter { margin:0 0 6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tree-scroll { position:absolute; left:0; right:0; top:24px; bottom:0; overflow:auto; border:1px solid var(--line); border-radius:12px; background:#fffdf9; }
   .tree, .tree ul { list-style:none; margin:0; padding:0; }
   .tree { margin:6px 0 6px 10px; padding-left:12px; border-left:1px solid #d4cbbf; position:relative; font:13px/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
   .tree ul { margin-left:7px; padding-left:12px; border-left:1px solid #d4cbbf; position:relative; }
@@ -468,8 +471,7 @@ PAGE = """<!DOCTYPE html>
 <body>
 <main>
   <div class="topbar">
-    <h1>YuE2 V100</h1>
-    <p class="sub" id="revision">__REVISION__</p>
+    <h1>YuE2 V100 <span class="sub" id="revision">__REVISION__</span></h1>
   </div>
   <div class="layout">
   <div class="main-col">
@@ -695,6 +697,7 @@ function applyStatus(data) {
   if (board && data.task_html && data.task_html !== taskSig) {
     taskSig = data.task_html;
     board.innerHTML = data.task_html;
+    board.scrollTop = board.scrollHeight;
   }
   document.querySelectorAll("button[data-job]").forEach(button => { button.disabled = busy; });
   const gpus = document.getElementById("gpus");
@@ -746,6 +749,8 @@ function pinSide() {
 }
 pinSide();
 window.addEventListener("resize", pinSide);
+const taskBoard = document.getElementById("task-board");
+if (taskBoard) taskBoard.scrollTop = taskBoard.scrollHeight;
 refresh();
 setInterval(refresh, 2000);
 </script>
@@ -945,7 +950,10 @@ def render_file_tree(listing, marks):
         return f"<ul{klass}>{''.join(chunks)}</ul>"
 
     changed = sum(tally(root).values())
+    names = [f"{letter} {Path(path).name}" for path, letter in sorted(marks.items())]
     caption = f"代碼樹 {file_count(root)} 個文件，本次變更 {changed}"
+    if names:
+        caption += "  " + "、".join(names)
     return walk(root, True), caption
 
 
