@@ -1,14 +1,13 @@
-# 10 秒已成功，下一首改完整原音
+# 用這份完整譜生成一首對照
 
-10 秒轉譜成功：`score.abc` 有 275 字，`abc_error` 是空的，沒有 warnings。`torch_dtype` 那兩行只是提示，可以忽略。譜面是 C 小調、4/4、每分鐘 101 拍，人聲全是休止，伴奏有旋律和 `Fm7`、`D#maj7`。這符合一段前奏，還看不出整首歌的結構。
+3 分 56 秒的原音已經轉成 2917 字的 ABC。譜裡有 intro、verse、chorus，人聲有音符，也有和弦，`abc_error` 為空。3.8 GB 顯存說明轉譜可以放在 V100 上跑。180 萬首先保持不動。
 
-另外 7 首 10 秒先停著。下一步只做同一首歌的完整原音：人聲和伴奏相加，不經過 VAE。聽的檔是同目錄的 `mix.mp3`。
+這一步把這份譜交給現有的 YuE2-3B，`cot=full`，生成對照音頻。歌詞仍是空的段落標籤，聽的時候只比較旋律、和弦和段落，不評價唱詞。對照的原音是 `/cache/yue2_outputs/full_mix/000/mix.mp3`。生成結果裡會有 `audio.mp3`。整首歌可能要數分鐘。
 
 ```bash
-PYTHONPATH=src python public/fetch_one_full_mix.py
-HF_HUB_OFFLINE=1 PYTHONPATH=src python public/transcribe_one.py --audio /cache/yue2_outputs/full_mix/000/mix.wav --output /cache/yue2_outputs/full_mix/000/score
+PYTHONPATH=src python -m yue2 generate --model /cache/yue2_files/YuE2-3B --vae /cache/yue2_files/YuE2-Vae --backend torch-eager --budget 30 --offline --request public/full_mix_000.json --abc-file /cache/yue2_outputs/full_mix/000/score/score.abc --output /cache/yue2_outputs/full_mix_000_cover
 ```
 
-第一行會印 `duration_sec`。第二行會印完整譜的開頭。把兩段輸出都貼回來。若第二行出現 CUDA 顯存不足，再改跑前 180 秒：把第一行換成 `PYTHONPATH=src python public/fetch_one_full_mix.py --seconds 180`。
+把終端最後一行 JSON 貼回來。微調還要等同事提供、能用索引欄位 `k` 對上的真實歌詞；語義 tokenizer 目前沒有公開權重，這一步不做訓練。
 
-本次更新的文件：`public/fetch_one_full_mix.py`、`public/transcribe_one.py`
+本次更新的文件：`public/full_mix_000.json`
