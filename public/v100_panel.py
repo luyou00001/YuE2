@@ -16,6 +16,7 @@ from urllib.parse import unquote, urlparse
 
 ROOT = Path(__file__).resolve().parents[1]
 STATE_PATH = ROOT / "public" / "panel_state.json"
+FLOW_PATH = ROOT / "public" / "panel_flow.json"
 LOG_DIR = Path("/cache/yue2_panel/logs") if Path("/cache").is_dir() else ROOT / "public" / "_panel_logs"
 HOST = "127.0.0.1"
 PORT = 8765
@@ -62,6 +63,20 @@ def narrative():
         return {"updated": "", "progress": [], "next": []}
 
 
+def flow_payload():
+    try:
+        data = json.loads(FLOW_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        data = {"title": "推理流程", "updated": "", "stages": []}
+    stages = data.get("stages") or []
+    data["done"] = sum(1 for stage in stages if stage.get("status") == "done")
+    data["total"] = len(stages)
+    current = next((stage for stage in stages if stage.get("status") == "current"), None)
+    data["current_title"] = current.get("title") if current else ""
+    data["current_next"] = current.get("next") or [] if current else []
+    return data
+
+
 def log_rows():
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     files = [path for path in LOG_DIR.glob("*.log") if path.is_file()]
@@ -88,6 +103,7 @@ def status_payload():
         "dirty_count": len(dirty),
         "artifacts": artifact_rows(),
         "narrative": narrative(),
+        "flow": flow_payload(),
         "jobs": [{"id": key, **{name: value[name] for name in ("title", "detail")}} for key, value in JOBS.items()],
         "running": running,
         "logs": log_rows(),
@@ -157,12 +173,25 @@ PAGE = """<!DOCTYPE html>
   td { padding:8px 0; border-top:1px solid var(--line); vertical-align:top; }
   .ok { color:var(--accent); } .miss { color:#9a3412; }
   #note { min-height:1.4em; color:var(--muted); margin-top:8px; }
+  .meter { color:var(--muted); margin-bottom:8px; }
+  .stage { display:grid; grid-template-columns:88px 1fr; gap:12px; padding:14px 0; border-top:1px solid var(--line); }
+  .badge { font:600 12px/1 sans-serif; border-radius:999px; padding:6px 0; text-align:center; height:fit-content; }
+  .done { background:#e5f4ef; color:#0f6e56; }
+  .current { background:#0f6e56; color:white; }
+  .later { background:#f3efe8; color:#5c564c; }
+  .stage p { color:var(--muted); margin-top:4px; }
+  .stage.current-row { background:#f3faf7; margin:0 -18px; padding:14px 18px; }
 </style>
 </head>
 <body>
 <main>
   <h1>YuE2 V100</h1>
   <p class="sub" id="revision">讀取中</p>
+  <section>
+    <h2 id="flow-title">推理流程</h2>
+    <p class="meter" id="flow-meter"></p>
+    <div id="flow"></div>
+  </section>
   <div class="grid">
     <section><h2>代碼狀態</h2><div id="code"></div></section>
     <section><h2>目前進度</h2><ul id="progress"></ul></section>
@@ -198,7 +227,19 @@ async function refresh() {
     `<p><strong>${esc(row.label)}</strong> <span class="${row.exists ? "ok" : "miss"}">${row.exists ? row.bytes + " bytes" : "不存在"}</span><br><code>${esc(row.path)}</code></p>`
   ).join("");
   list("progress", data.narrative.progress);
-  list("next", data.narrative.next);
+  list("next", (data.flow && data.flow.current_next) || data.narrative.next);
+  const labels = { done: "已完成", current: "目前", later: "之後" };
+  const flow = data.flow || { stages: [] };
+  document.getElementById("flow-title").textContent = flow.title || "推理流程";
+  document.getElementById("flow-meter").textContent = flow.total
+    ? `已完成 ${flow.done} / ${flow.total}。目前：${flow.current_title || "未標明"}。流程檔 public/panel_flow.json，保存稿 docs/inference-flow.md。`
+    : "";
+  document.getElementById("flow").innerHTML = (flow.stages || []).map((stage, index) =>
+    `<div class="stage ${stage.status === "current" ? "current-row" : ""}">
+      <div class="badge ${esc(stage.status)}">${labels[stage.status] || esc(stage.status)}</div>
+      <div><strong>${index + 1}. ${esc(stage.title)}</strong><p>${esc(stage.detail || "")}</p></div>
+    </div>`
+  ).join("");
   const busy = Boolean(data.running);
   document.getElementById("jobs").innerHTML = data.jobs.map(job =>
     `<div class="job"><div><strong>${esc(job.title)}</strong><p>${esc(job.detail)}</p></div>

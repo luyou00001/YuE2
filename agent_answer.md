@@ -1,3 +1,9 @@
+### [2026-11-27 15:19] 網頁列出推理流程，目前停在對聽
+
+- **修改的文件**：`public/v100_panel.py`、`public/panel_flow.json`、`public/panel_state.json`、`docs/inference-flow.md`
+- **核心邏輯**：把已跑通的 8 步推理流程做成可改的 JSON，網頁標出已完成 6 步、目前是對聽。保存稿在 docs/inference-flow.md。
+- **AI 備註**：原曲和無譜生成的 mp3 都已確認存在。下一步只聽，不跑模型。
+
 ### [2026-11-27 15:05] 修好同步腳本並加上 V100 控制台
 
 - **修改的文件**：`sync_to_linux.ps1`、`public/v100_panel.py`、`public/panel_state.json`、`public/panel_export_listen.py`

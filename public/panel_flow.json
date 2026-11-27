@@ -1,0 +1,60 @@
+{
+  "title": "YuE2 推理流程",
+  "updated": "2026-11-27 15:19",
+  "note": "改這一檔即可更新網頁上的流程。狀態只用 done、current、later。",
+  "stages": [
+    {
+      "id": "env",
+      "title": "環境與本地權重",
+      "status": "done",
+      "detail": "PyTorch-2.0.0 裡是 Python 3.9.11、torch 2.3.1+cu121。YuE2-3B、YuE2-Vae、SheetSage2、MERT-v2-FullSong 都在 /cache/yue2_files。V100 32GB 夠用，轉譜約 3.8GB。"
+    },
+    {
+      "id": "suno",
+      "title": "對上 Suno 混音、歌詞和 style",
+      "status": "done",
+      "detail": "100 首都能對上。第 1 首是 suno_cn_013117 track 0，174.80 秒，歌詞 608 字。混音在 /cache/yue2_files/datasets/suno_100/suno_wav/suno_cn_013117_0.mp3。"
+    },
+    {
+      "id": "transcribe",
+      "title": "SheetSage2 把混音轉成完整 ABC",
+      "status": "done",
+      "detail": "第 1 首譜 2312 字，有 intro、verse、chorus、bridge 和和弦，abc_error 為空。主歌和副歌的樂器軌大多是休止，譜上記的是人聲旋律加和弦。"
+    },
+    {
+      "id": "prefix",
+      "title": "把歌詞、style 和 ABC 打成前綴",
+      "status": "done",
+      "detail": "前綴 2262 token，其中 1770 個是樂譜 token。檔案在 /cache/yue2_outputs/suno_packed/000/prefix.npy。"
+    },
+    {
+      "id": "guided",
+      "title": "有譜生成：YuE2 沿用外部 ABC",
+      "status": "done",
+      "detail": "先前那首 235 秒原音已生成 235.2 秒，沒有截斷。聽感是同一首歌，伴奏較少，人聲較怪。伴奏少來自樂器軌休止，人聲怪來自當時沒有歌詞。"
+    },
+    {
+      "id": "free",
+      "title": "無譜生成：只給歌詞和 style",
+      "status": "done",
+      "detail": "suno_cn_013117 已生成 185.9 秒，模型自己規劃了 2109 個樂譜 token，樂譜和語義都沒有截斷。mp3 在 /cache/yue2_outputs/suno_free/suno_013117_free/audio.mp3，約 4.0MB。"
+    },
+    {
+      "id": "listen",
+      "title": "對聽原曲和無譜生成",
+      "status": "current",
+      "detail": "兩個檔都在。原曲 4083837 bytes，生成 4043445 bytes。只比較旋律和段落。這一步不跑模型。",
+      "next": [
+        "聽 /cache/yue2_files/datasets/suno_100/suno_wav/suno_cn_013117_0.mp3",
+        "聽 /cache/yue2_outputs/suno_free/suno_013117_free/audio.mp3",
+        "把旋律和段落像不像的結論貼回來"
+      ]
+    },
+    {
+      "id": "train",
+      "title": "再決定要不要更新權重",
+      "status": "later",
+      "detail": "這首的樂譜損失是 0.3594，基模在已知前面音符時已經會接下去，所以還沒有改權重。完整音頻微調還缺未公開的語義 tokenizer，3B 全參數 Adam 也放不進 32GB。"
+    }
+  ]
+}
