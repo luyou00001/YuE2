@@ -18,6 +18,7 @@ from urllib.parse import unquote, urlparse
 ROOT = Path(__file__).resolve().parents[1]
 STATE_PATH = ROOT / "public" / "panel_state.json"
 FLOW_PATH = ROOT / "public" / "panel_flow.json"
+QUESTION_PATH = ROOT / "public" / "panel_questions.json"
 LOG_DIR = Path("/cache/yue2_panel/logs") if Path("/cache").is_dir() else ROOT / "public" / "_panel_logs"
 HOST = "127.0.0.1"
 PORT = 8765
@@ -35,6 +36,8 @@ CURRENT = {"job": None, "log": None, "started": None, "exit": None}
 START_HEAD = ""
 RESTART = False
 SERVER = None
+QUIET_LOCK = threading.Lock()
+QUIET = {"key": None, "line": None}
 
 
 def git_text(args):
@@ -72,18 +75,38 @@ def narrative():
         return {"updated": "", "progress": [], "next": []}
 
 
+def annotate_flow(flow):
+    stages = flow.get("stages") or []
+    flow["done"] = sum(1 for stage in stages if stage.get("status") == "done")
+    flow["total"] = len(stages)
+    current = next((stage for stage in stages if stage.get("status") == "current"), None)
+    flow["current_title"] = current.get("title") if current else ""
+    flow["current_next"] = (current.get("next") or []) if current else []
+    return flow
+
+
 def flow_payload():
     try:
         data = json.loads(FLOW_PATH.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
-        data = {"title": "推理流程", "updated": "", "stages": []}
-    stages = data.get("stages") or []
-    data["done"] = sum(1 for stage in stages if stage.get("status") == "done")
-    data["total"] = len(stages)
-    current = next((stage for stage in stages if stage.get("status") == "current"), None)
-    data["current_title"] = current.get("title") if current else ""
-    data["current_next"] = current.get("next") or [] if current else []
+        data = {"flows": []}
+    flows = data.get("flows")
+    if not flows and data.get("stages"):
+        flows = [data]
+    data["flows"] = [annotate_flow(flow) for flow in flows or []]
+    data["current_next"] = []
+    for flow in data["flows"]:
+        if flow.get("current_next"):
+            data["current_next"] = flow["current_next"]
+            break
     return data
+
+
+def question_payload():
+    try:
+        return json.loads(QUESTION_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {"intro": "", "questions": []}
 
 
 def log_rows():
@@ -114,6 +137,7 @@ def status_payload():
         "artifacts": artifact_rows(),
         "narrative": narrative(),
         "flow": flow_payload(),
+        "questions": question_payload(),
         "jobs": [{"id": key, **{name: value[name] for name in ("title", "detail")}} for key, value in JOBS.items()],
         "running": running,
         "logs": log_rows(),
@@ -225,6 +249,10 @@ PAGE = """<!DOCTYPE html>
   .done { background:#e5f4ef; color:#0f6e56; }
   .current { background:#0f6e56; color:white; }
   .later { background:#f3efe8; color:#5c564c; }
+  .blocked { background:#f8e8e2; color:#9a3412; }
+  .q { padding:12px 0; border-top:1px solid var(--line); }
+  .choice { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+  .choice label { display:flex; gap:6px; align-items:center; background:#f7f4ee; border-radius:999px; padding:6px 12px; }
   .stage p { color:var(--muted); margin-top:4px; }
   .stage.current-row { background:#f3faf7; margin:0 -18px; padding:14px 18px; }
 </style>
@@ -239,10 +267,13 @@ PAGE = """<!DOCTYPE html>
     <div class="players" id="players"></div>
   </section>
   <section>
-    <h2 id="flow-title">推理流程</h2>
-    <p class="meter" id="flow-meter"></p>
-    <div id="flow"></div>
+    <h2>選擇題</h2>
+    <p class="meter" id="question-intro"></p>
+    <div id="questions"></div>
+    <button id="copy-answers" type="button">複製答案</button>
+    <p id="answer-note" class="meter"></p>
   </section>
+  <div id="flows"></div>
   <div class="grid">
     <section><h2>代碼狀態</h2><div id="code"></div></section>
     <section><h2>目前進度</h2><ul id="progress"></ul></section>
@@ -269,7 +300,63 @@ function esc(value) {
 function list(id, items) {
   document.getElementById(id).innerHTML = (items || []).map(item => `<li>${esc(item)}</li>`).join("");
 }
+let questionMark = "";
 let playerMark = "";
+function renderQuestions(payload) {
+  const mark = JSON.stringify(payload || {});
+  if (mark === questionMark) return;
+  questionMark = mark;
+  const questions = (payload && payload.questions) || [];
+  document.getElementById("question-intro").textContent = (payload && payload.intro) || "";
+  document.getElementById("questions").innerHTML = questions.map((question, index) =>
+    `<div class="q" data-question="${esc(question.id)}" data-prompt="${esc(question.prompt)}">
+      <strong>${index + 1}. ${esc(question.prompt)}</strong>
+      <div class="choice">${(question.options || []).map(option =>
+        `<label><input type="radio" name="${esc(question.id)}" value="${esc(option.label)}">${esc(option.label)}</label>`
+      ).join("")}</div>
+    </div>`
+  ).join("");
+}
+function answerText() {
+  const lines = ["聽感結論"];
+  document.querySelectorAll("[data-question]").forEach(block => {
+    const chosen = block.querySelector("input:checked");
+    lines.push(block.dataset.prompt + " " + (chosen ? chosen.value : "未選"));
+  });
+  return lines.join("\n");
+}
+async function copyAnswers() {
+  const text = answerText();
+  const answerNote = document.getElementById("answer-note");
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch (error) {
+    const area = document.createElement("textarea");
+    area.value = text;
+    document.body.appendChild(area);
+    area.select();
+    document.execCommand("copy");
+    area.remove();
+  }
+  answerNote.textContent = "已複製，可以直接貼回來";
+}
+document.getElementById("copy-answers").onclick = copyAnswers;
+function renderFlows(payload) {
+  const labels = { done: "已完成", current: "目前", later: "之後", blocked: "受阻" };
+  const flows = (payload && payload.flows) || [];
+  document.getElementById("flows").innerHTML = flows.map(flow => {
+    const meter = flow.total
+      ? `已完成 ${flow.done} / ${flow.total}。目前：${flow.current_title || "未標明"}。`
+      : "";
+    const stages = (flow.stages || []).map((stage, index) =>
+      `<div class="stage ${stage.status === "current" ? "current-row" : ""}">
+        <div class="badge ${esc(stage.status)}">${labels[stage.status] || esc(stage.status)}</div>
+        <div><strong>${index + 1}. ${esc(stage.title)}</strong><p>${esc(stage.detail || "")}</p></div>
+      </div>`
+    ).join("");
+    return `<section><h2>${esc(flow.title)}</h2><p class="meter">${esc(meter)}</p>${stages}</section>`;
+  }).join("");
+}
 function renderPlayers(artifacts) {
   const mark = JSON.stringify(artifacts || []);
   if (mark === playerMark) return;
@@ -333,23 +420,13 @@ async function refresh() {
   last = key;
   document.getElementById("revision").textContent = `${data.branch} @ ${data.head}，未提交 ${data.dirty_count} 個路徑`;
   renderPlayers(data.artifacts);
+  renderQuestions(data.questions);
   document.getElementById("code").innerHTML = data.artifacts.map(row =>
     `<p><strong>${esc(row.label)}</strong> <span class="${row.exists ? "ok" : "miss"}">${row.exists ? row.bytes + " bytes" : "不存在"}</span><br><code>${esc(row.path)}</code></p>`
   ).join("");
   list("progress", data.narrative.progress);
   list("next", (data.flow && data.flow.current_next) || data.narrative.next);
-  const labels = { done: "已完成", current: "目前", later: "之後" };
-  const flow = data.flow || { stages: [] };
-  document.getElementById("flow-title").textContent = flow.title || "推理流程";
-  document.getElementById("flow-meter").textContent = flow.total
-    ? `已完成 ${flow.done} / ${flow.total}。目前：${flow.current_title || "未標明"}。流程檔 public/panel_flow.json，保存稿 docs/inference-flow.md。`
-    : "";
-  document.getElementById("flow").innerHTML = (flow.stages || []).map((stage, index) =>
-    `<div class="stage ${stage.status === "current" ? "current-row" : ""}">
-      <div class="badge ${esc(stage.status)}">${labels[stage.status] || esc(stage.status)}</div>
-      <div><strong>${index + 1}. ${esc(stage.title)}</strong><p>${esc(stage.detail || "")}</p></div>
-    </div>`
-  ).join("");
+  renderFlows(data.flow);
   const busy = Boolean(data.running);
   document.getElementById("jobs").innerHTML = data.jobs.map(job =>
     `<div class="job"><div><strong>${esc(job.title)}</strong><p>${esc(job.detail)}</p></div>
@@ -479,7 +556,21 @@ class Handler(BaseHTTPRequestHandler):
         self.send_json(code, payload)
 
     def log_message(self, fmt, *args):
-        print("[panel]", self.address_string(), fmt % args, flush=True)
+        message = f"{self.address_string()} {fmt % args}"
+        stamp = datetime.now().strftime("%H:%M:%S")
+        line = f"[panel] {stamp} {message}"
+        with QUIET_LOCK:
+            previous = QUIET["line"]
+            same = QUIET["key"] == message
+            QUIET["key"] = message
+            QUIET["line"] = line
+            if previous is None:
+                print(line, end="", flush=True)
+            elif same:
+                pad = max(0, len(previous) - len(line))
+                print("\r" + line + (" " * pad), end="", flush=True)
+            else:
+                print("\n" + line, end="", flush=True)
 
 
 class PanelServer(ThreadingHTTPServer):

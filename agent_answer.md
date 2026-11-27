@@ -1,3 +1,9 @@
+### [2026-11-27 15:54] 收起重複的狀態日誌，補上訓練流程
+
+- **修改的文件**：`public/v100_panel.py`、`public/panel_flow.json`、`public/panel_questions.json`、`public/panel_state.json`、`docs/inference-flow.md`、`docs/training-flow.md`
+- **核心邏輯**：相同的 HTTP 請求改成同一行並更新時間。推理聽感標成完成。頁面加上 12 萬首訓練流程，以及可複製的選擇題。
+- **AI 備註**：上一輪卡在瀏覽器檢查，這些頁面改動當時還沒提交。刷屏是每 2 秒的狀態查詢。
+
 ### [2026-11-27 15:35] 控制台加寬並加上對聽播放器
 
 - **修改的文件**：`public/v100_panel.py`
