@@ -45,13 +45,18 @@ def git_text(args):
     return completed.stdout.strip()
 
 
-def artifact_rows():
-    rows = []
+def listen_targets():
     pointer = Path("/cache/yue2_outputs/suno_prep/000/audio.path")
     original = Path(pointer.read_text(encoding="utf-8").strip()) if pointer.is_file() else pointer
     generated = Path("/cache/yue2_outputs/suno_free/suno_013117_free/audio.mp3")
-    for label, path in (("原曲", original), ("無譜生成", generated)):
+    return (("original", "原曲", original), ("generated", "無譜生成", generated))
+
+
+def artifact_rows():
+    rows = []
+    for audio_id, label, path in listen_targets():
         rows.append({
+            "id": audio_id,
             "label": label,
             "path": str(path),
             "exists": path.is_file(),
@@ -185,15 +190,24 @@ PAGE = """<!DOCTYPE html>
   :root { color-scheme: light; --ink:#1c1915; --muted:#5c564c; --line:#e4ddd2; --paper:#f7f4ee; --card:#fffdf9; --accent:#0f6e56; }
   * { box-sizing: border-box; }
   body { margin:0; font:16px/1.5 "Iowan Old Style", Palatino, "Songti SC", serif; color:var(--ink); background:var(--paper); }
-  main { max-width:980px; margin:0 auto; padding:32px 20px 64px; }
+  main { max-width:1560px; margin:0 auto; padding:28px 36px 72px; }
   h1 { font-size:32px; margin:0 0 4px; }
   h2 { font-size:18px; margin:0 0 12px; }
+  h3 { font-size:16px; margin:0; }
   p, li { margin:0; }
-  .sub { color:var(--muted); margin-bottom:24px; }
-  .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:16px; }
+  .sub { color:var(--muted); margin-bottom:20px; }
+  .grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:16px; }
+  .players { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .player audio { width:100%; margin:10px 0; height:42px; }
+  @media (max-width: 900px) {
+    .grid { grid-template-columns:1fr; }
+  }
+  @media (max-width: 700px) {
+    .players { grid-template-columns:1fr; }
+  }
   section { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; margin-bottom:16px; }
   ul { padding-left:18px; display:grid; gap:8px; }
-  code { font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:13px; }
+  code { font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:13px; display:block; overflow-x:auto; white-space:nowrap; }
   button { appearance:none; border:0; background:var(--accent); color:white; border-radius:999px; padding:10px 16px; font:600 15px/1 sans-serif; cursor:pointer; }
   button.ghost { background:#efeae2; color:var(--ink); }
   pre { white-space:pre-wrap; word-break:break-word; max-height:520px; overflow:auto; background:#1c1915; color:#f7f4ee; border-radius:12px; padding:14px; font:13px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
@@ -219,6 +233,11 @@ PAGE = """<!DOCTYPE html>
 <main>
   <h1>YuE2 V100</h1>
   <p class="sub" id="revision">讀取中</p>
+  <section>
+    <h2>對聽</h2>
+    <p class="meter">直接播放伺服器上的檔案。只比較旋律和段落。</p>
+    <div class="players" id="players"></div>
+  </section>
   <section>
     <h2 id="flow-title">推理流程</h2>
     <p class="meter" id="flow-meter"></p>
@@ -249,6 +268,17 @@ function esc(value) {
 }
 function list(id, items) {
   document.getElementById(id).innerHTML = (items || []).map(item => `<li>${esc(item)}</li>`).join("");
+}
+let playerMark = "";
+function renderPlayers(artifacts) {
+  const mark = JSON.stringify(artifacts || []);
+  if (mark === playerMark) return;
+  playerMark = mark;
+  document.getElementById("players").innerHTML = (artifacts || []).map(row =>
+    `<div class="player"><h3>${esc(row.label)} <span class="${row.exists ? "ok" : "miss"}">${row.exists ? row.bytes + " bytes" : "不存在"}</span></h3>
+     ${row.exists ? `<audio controls preload="none" src="/audio/${esc(row.id)}"></audio>` : ""}
+     <code>${esc(row.path)}</code></div>`
+  ).join("");
 }
 let last = "";
 let seenHead = "";
@@ -302,6 +332,7 @@ async function refresh() {
   if (key === last) return;
   last = key;
   document.getElementById("revision").textContent = `${data.branch} @ ${data.head}，未提交 ${data.dirty_count} 個路徑`;
+  renderPlayers(data.artifacts);
   document.getElementById("code").innerHTML = data.artifacts.map(row =>
     `<p><strong>${esc(row.label)}</strong> <span class="${row.exists ? "ok" : "miss"}">${row.exists ? row.bytes + " bytes" : "不存在"}</span><br><code>${esc(row.path)}</code></p>`
   ).join("");
@@ -366,6 +397,48 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def send_audio(self, file_path):
+        if not file_path.is_file():
+            self.send_json(404, {"error": "audio not found"})
+            return
+        size = file_path.stat().st_size
+        start, end = 0, size - 1
+        status = 200
+        range_header = self.headers.get("Range")
+        if range_header and range_header.startswith("bytes="):
+            bounds = range_header[6:].split(",", 1)[0].split("-", 1)
+            if bounds[0]:
+                start = int(bounds[0])
+            if len(bounds) > 1 and bounds[1]:
+                end = int(bounds[1])
+            end = min(end, size - 1)
+            if start < 0 or start > end or start >= size:
+                self.send_response(416)
+                self.send_header("Content-Range", f"bytes */{size}")
+                self.end_headers()
+                return
+            status = 206
+        length = end - start + 1
+        try:
+            self.send_response(status)
+            self.send_header("Content-Type", "audio/mpeg")
+            self.send_header("Accept-Ranges", "bytes")
+            self.send_header("Content-Length", str(length))
+            if status == 206:
+                self.send_header("Content-Range", f"bytes {start}-{end}/{size}")
+            self.end_headers()
+            with file_path.open("rb") as handle:
+                handle.seek(start)
+                remaining = length
+                while remaining > 0:
+                    chunk = handle.read(min(65536, remaining))
+                    if not chunk:
+                        break
+                    self.wfile.write(chunk)
+                    remaining -= len(chunk)
+        except (BrokenPipeError, ConnectionResetError):
+            return
+
     def do_GET(self):
         path = unquote(urlparse(self.path).path)
         if path in ("/", "/index.html"):
@@ -378,6 +451,14 @@ class Handler(BaseHTTPRequestHandler):
             return
         if path == "/api/status":
             self.send_json(200, status_payload())
+            return
+        if path.startswith("/audio/"):
+            audio_id = path[len("/audio/"):]
+            chosen = next((item for item in listen_targets() if item[0] == audio_id), None)
+            if chosen is None:
+                self.send_json(404, {"error": "unknown audio"})
+                return
+            self.send_audio(chosen[2])
             return
         if path.startswith("/api/log/"):
             text = read_log(path[len("/api/log/"):])
