@@ -13,3 +13,15 @@
 [YuE2] Completed: 185.9s audio in 445.4s
 {"status": "complete", "output": "/cache/yue2_outputs/suno_free/suno_013117_free", "flac": "/cache/yue2_outputs/suno_free/suno_013117_free/audio.flac", "mp3": "/cache/yue2_outputs/suno_free/suno_013117_free/audio.mp3", "truncated": {"abc": false, "semantic": false}, "seconds": 445.4081418849528}
 (PyTorch-2.0.0) [ma-user YuE2]$
+
+====
+
+(base) PS D:\linux_output\AI_MUSIC\YuE2> .\sync_to_linux.ps1
+At D:\linux_output\AI_MUSIC\YuE2\sync_to_linux.ps1:52 char:61
++ function Show-UpdatedFiles([string]$Before, [string]$After) {
++                                                             ~
+Missing closing '}' in statement block or type definition.
+    + CategoryInfo          : ParserError: (:) [], ParseException
+    + FullyQualifiedErrorId : MissingEndCurlyBrace
+
+(base) PS D:\linux_output\AI_MUSIC\YuE2>
