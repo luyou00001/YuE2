@@ -1,19 +1,12 @@
-job transcribe7
-stage suno_prepare.py
-jsonl=/cache/yue2_files/datasets/suno_100/train_cn.jsonl jsonl_rows=49516 selected=100 matched=100 missing_meta=0 missing_audio=0 mix_files=200
-wrote=000 id=suno_cn_013117 track=0 audio_sec=174.80 lyric_chars=608 style_chars=133 sections=11
-wrote=001 id=suno_cn_003308 track=0 audio_sec=187.52 lyric_chars=530 style_chars=105 sections=10
-wrote=002 id=suno_cn_024258 track=0 audio_sec=177.92 lyric_chars=426 style_chars=111 sections=10
-wrote=003 id=suno_cn_024399 track=0 audio_sec=152.12 lyric_chars=359 style_chars=99 sections=10
-wrote=004 id=suno_cn_011286 track=0 audio_sec=172.72 lyric_chars=443 style_chars=83 sections=10
-wrote=005 id=suno_cn_013673 track=0 audio_sec=206.56 lyric_chars=425 style_chars=118 sections=10
-wrote=006 id=suno_cn_023478 track=0 audio_sec=182.04 lyric_chars=542 style_chars=136 sections=10
-wrote=007 id=suno_cn_004832 track=0 audio_sec=182.88 lyric_chars=424 style_chars=115 sections=10
-ready=001 id=suno_cn_003308
-ready=002 id=suno_cn_024258
-ready=003 id=suno_cn_024399
-ready=004 id=suno_cn_011286
-ready=005 id=suno_cn_013673
-ready=006 id=suno_cn_023478
-ready=007 id=suno_cn_004832
-batch7_done=7
+job abc_loss8
+`torch_dtype` is deprecated! Use `dtype` instead!
+000 abc_loss=0.3594 tokens=2262 supervised_abc=1770
+001 abc_loss=0.3887 tokens=2352 supervised_abc=1948
+002 abc_loss=0.4473 tokens=2016 supervised_abc=1662
+003 abc_loss=0.3613 tokens=2091 supervised_abc=1779
+004 abc_loss=0.6875 tokens=1724 supervised_abc=1383
+005 abc_loss=0.4082 tokens=1759 supervised_abc=1401
+006 abc_loss=0.6797 tokens=1657 supervised_abc=1285
+007 abc_loss=0.6445 tokens=1619 supervised_abc=1280
+abc_loss8_done=8 mean=0.4971
+no weights were updated or saved
