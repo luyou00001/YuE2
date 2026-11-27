@@ -1,7 +1,8 @@
-聽感結論
-原曲和無譜生成，整體像不像？ 很像
-旋律接近嗎？ 只有部分段落接近
-前奏、主歌、副歌的順序對得上嗎？ 對得上
-伴奏厚度怎麼樣？ 接近原曲
-人聲聽起來怎麼樣？ 自然
-下一步先做哪一件？ 先做放得進 32GB 的小更新
+job fit32_probe
+tokens=2262 supervised_abc=1770
+`torch_dtype` is deprecated! Use `dtype` instead!
+trainable_params=100672000 layer=last
+abc_loss=0.3594
+peak_gib=9.54
+no weights were updated or saved
+base_unchanged=/cache/yue2_files/YuE2-3B
