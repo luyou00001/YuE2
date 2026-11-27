@@ -40,6 +40,11 @@ JOBS = {
         "detail": "004 的樂譜損失最高，為 0.6875。只用它的歌詞和 style 生成，不餵 ABC。",
         "script": "suno_free_004.py",
     },
+    "fit32_probe": {
+        "title": "32GB 顯存探針",
+        "detail": "只對最後一層做一次反向，印出峰值顯存。不更新權重，不寫進基模。",
+        "script": "train_fit32_probe.py",
+    },
     "export_listen": {
         "title": "匯出對聽路徑",
         "detail": "只讀原曲和生成 mp3 的路徑與大小，不載入模型。",
@@ -353,7 +358,7 @@ PAGE = """<!DOCTYPE html>
   :root { color-scheme: light; --ink:#1c1915; --muted:#5c564c; --line:#e4ddd2; --paper:#f7f4ee; --card:#fffdf9; --accent:#0f6e56; }
   * { box-sizing: border-box; }
   body { margin:0; font:16px/1.5 "Iowan Old Style", Palatino, "Songti SC", serif; color:var(--ink); background:var(--paper); }
-  main { max-width:none; width:100%; margin:0; padding:0 20px 40px; }
+  main { max-width:none; width:100%; margin:0; padding:0 20px 12px; }
   .topbar { position:sticky; top:0; z-index:40; background:var(--paper); margin:0 -20px 12px; padding:10px 20px; border-bottom:1px solid var(--line); }
   .topbar h1 { margin:0; display:flex; align-items:baseline; gap:14px; font-size:28px; }
   .topbar .sub { margin:0; font-size:14px; font-weight:400; }
@@ -389,7 +394,15 @@ PAGE = """<!DOCTYPE html>
   button { appearance:none; border:0; background:var(--accent); color:white; border-radius:999px; padding:10px 16px; font:600 15px/1 sans-serif; cursor:pointer; }
   button.ghost { background:#efeae2; color:var(--ink); }
   pre { white-space:pre-wrap; word-break:break-word; max-height:520px; overflow:auto; background:#1c1915; color:#f7f4ee; border-radius:12px; padding:14px; font:13px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-  pre.reply { max-height:70vh; background:#fffdf9; color:var(--ink); border:1px solid var(--line); font:16px/1.6 "Iowan Old Style", Palatino, "Songti SC", serif; }
+  .reply.md { max-height:70vh; overflow:auto; background:#fffdf9; color:var(--ink); border:1px solid var(--line); border-radius:12px; padding:8px 16px 16px; }
+  .reply.md h1 { font-size:26px; margin:8px 0 12px; }
+  .reply.md h2 { font-size:20px; margin:16px 0 8px; }
+  .reply.md h3 { font-size:17px; margin:12px 0 6px; }
+  .reply.md p { margin:0 0 10px; }
+  .reply.md ul { margin:0 0 12px; }
+  .reply.md code { display:inline; white-space:normal; font-size:.92em; background:#f3efe8; padding:0 4px; border-radius:4px; }
+  .reply.md pre { margin:0 0 12px; }
+  .reply.md pre code { display:block; white-space:pre-wrap; background:transparent; color:inherit; padding:0; }
   .logpick { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 12px; }
   button:disabled { background:#b7b1a7; cursor:wait; }
   .job { display:flex; justify-content:space-between; gap:16px; align-items:center; padding:12px 0; border-top:1px solid var(--line); }
@@ -416,10 +429,11 @@ PAGE = """<!DOCTYPE html>
   .bar { height:8px; background:#e4ddd2; border-radius:99px; overflow:hidden; }
   .bar > div { height:100%; background:#0f6e56; }
   .bar.mem > div { background:#1d4e89; }
-  #task-board { display:flex; flex-direction:column; gap:12px; flex:1 1 auto; min-height:0; overflow:auto; padding:2px 6px 8px 0; margin:0 0 8px; }
-  .side > details.block { flex:1 1 0; min-height:0; margin:0; display:flex; flex-direction:column; overflow:hidden; }
+  .side > details.block { flex:1 1 0; height:0; min-height:0; margin:0; display:flex; flex-direction:column; overflow:hidden; }
   .side > details.block > summary { flex:none; }
-  .side .gpus { flex:1 1 auto; min-height:0; overflow:auto; align-content:start; }
+  .side > details.block::details-content { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
+  #task-board, .side .gpus { flex:1 1 auto; min-height:0; overflow:auto; }
+  #task-board { display:flex; flex-direction:column; gap:12px; padding:2px 6px 8px 0; margin:0 0 8px; }
   .task-card { border:1px solid; border-radius:14px; padding:0; margin:0; display:block; }
   .task-card > summary { cursor:pointer; padding:12px 14px; }
   .task-card > p { margin:0; padding:0 14px 14px; color:var(--muted); }
@@ -493,7 +507,7 @@ PAGE = """<!DOCTYPE html>
       <span id="reply-pos"></span>
       <button id="reply-next" class="ghost" type="button">下一則</button>
     </div>
-    <pre class="reply" id="reply">__REPLY__</pre>
+    <div class="reply md" id="reply">__REPLY__</div>
   </details>
   __OPTIONAL__
   <div id="flows">__FLOWS__</div>
@@ -650,7 +664,7 @@ function showReply() {
   const pos = document.getElementById("reply-pos");
   if (!box || !replies.length) return;
   const item = replies[replyIndex];
-  box.textContent = item.text;
+  box.innerHTML = item.html || "";
   if (pos) pos.textContent = (replyIndex + 1) + " / " + replies.length + "  " + (item.time || "");
 }
 const replyPrev = document.getElementById("reply-prev");
@@ -970,6 +984,71 @@ def code_tree():
     return html_tree, signature, count
 
 
+def render_markdown(text):
+    def inline(value):
+        escaped = html.escape(value)
+        parts = []
+        while "`" in escaped:
+            before, marker, rest = escaped.partition("`")
+            code, end, after = rest.partition("`")
+            if not end:
+                parts.append(before + marker + rest)
+                break
+            parts.append(f"{before}<code>{code}</code>")
+            escaped = after
+        else:
+            parts.append(escaped)
+        return "".join(parts)
+
+    lines = text.splitlines()
+    blocks = []
+    paragraph = []
+    index = 0
+
+    def flush_paragraph():
+        if paragraph:
+            blocks.append("<p>" + inline(" ".join(paragraph)) + "</p>")
+            paragraph.clear()
+
+    while index < len(lines):
+        line = lines[index]
+        if line.startswith("```"):
+            flush_paragraph()
+            index += 1
+            code_lines = []
+            while index < len(lines) and not lines[index].startswith("```"):
+                code_lines.append(lines[index])
+                index += 1
+            if index < len(lines):
+                index += 1
+            blocks.append("<pre><code>" + html.escape("\n".join(code_lines)) + "</code></pre>")
+            continue
+        if line.startswith("### "):
+            flush_paragraph()
+            blocks.append("<h3>" + inline(line[4:]) + "</h3>")
+        elif line.startswith("## "):
+            flush_paragraph()
+            blocks.append("<h2>" + inline(line[3:]) + "</h2>")
+        elif line.startswith("# "):
+            flush_paragraph()
+            blocks.append("<h1>" + inline(line[2:]) + "</h1>")
+        elif line.startswith("- "):
+            flush_paragraph()
+            items = []
+            while index < len(lines) and lines[index].startswith("- "):
+                items.append("<li>" + inline(lines[index][2:]) + "</li>")
+                index += 1
+            blocks.append("<ul>" + "".join(items) + "</ul>")
+            continue
+        elif line.strip():
+            paragraph.append(line.strip())
+        else:
+            flush_paragraph()
+        index += 1
+    flush_paragraph()
+    return "".join(blocks)
+
+
 def reply_history():
     path = ROOT / "public" / "panel_replies.jsonl"
     items = []
@@ -983,9 +1062,15 @@ def reply_history():
             except json.JSONDecodeError:
                 continue
             if item.get("text"):
-                items.append({"time": item.get("time") or "", "text": item["text"]})
+                text = item["text"]
+                items.append({
+                    "time": item.get("time") or "",
+                    "text": text,
+                    "html": render_markdown(text),
+                })
     if not items:
-        items.append({"time": "", "text": reply_text()})
+        text = reply_text()
+        items.append({"time": "", "text": text, "html": render_markdown(text)})
     return items
 
 
@@ -1006,7 +1091,7 @@ def page_html():
         "__NEXT__": render_items((data.get("flow") or {}).get("current_next") or (data.get("narrative") or {}).get("next") or []),
         "__JOBS__": render_jobs(pipeline_view()[1]),
         "__JOBS_ATTR__": "open" if pipeline_view()[1] else "hidden",
-        "__REPLY__": html.escape(reply_text()),
+        "__REPLY__": render_markdown(reply_text()),
         "__REPLIES__": json.dumps(reply_history(), ensure_ascii=False).replace("<", "\\u003c"),
         "__SYNCHEAD__": html.escape(data.get("sync_head") or ""),
         "__SYNCSTEPS__": data.get("sync_steps") or "",
@@ -1153,15 +1238,29 @@ def pipeline_view():
             "done", "已完成", listen_title,
             "整體很像。旋律只有部分段落接近。段落對得上。伴奏接近原曲。人聲自然。",
         ))
-        cards.append(task_card(
-            "next", "下一步", f"{len(PIPELINE) + 2}. 32GB 小更新",
-            "單張 V100 上做放得進 32GB 的更新。基模目錄不改，新權重另存。",
-        ))
+        probe_title = f"{len(PIPELINE) + 2}. 32GB 顯存探針"
+        probe_detail = JOBS["fit32_probe"]["detail"]
+        if running == "fit32_probe":
+            cards.append(task_card("running", "正在進行", probe_title, probe_detail))
+        elif probe_is_done():
+            cards.append(task_card("done", "已完成", probe_title, "已印出峰值顯存。把 peak_gib 和 abc_loss 貼回來。"))
+        else:
+            record = job_record("fit32_probe")
+            cards.append(task_card("next", "下一步", probe_title, probe_detail, record))
+            visible.append(record)
     elif listen_is_current():
         cards.append(task_card("next", "請對聽", listen_title, "播放原曲和這次生成。選完選擇題後按複製答案。"))
     else:
         cards.append(task_card("later", "之後", listen_title, "播放原曲和這次生成。選完選擇題後按複製答案。"))
     return "".join(cards), visible
+
+
+def probe_is_done():
+    for row in log_rows():
+        text = read_log(row["name"]) or ""
+        if "peak_gib=" in text and "no weights were updated" in text:
+            return True
+    return False
 
 
 def listen_recorded():
@@ -1179,11 +1278,7 @@ def copy_log_visible():
     with LOCK:
         running = CURRENT["job"]
         exit_code = CURRENT["exit"]
-    if running:
-        return True
-    if exit_code not in (None, 0) and not listen_is_current():
-        return True
-    return False
+    return running is not None or exit_code is not None
 
 
 def render_gpus(rows):
