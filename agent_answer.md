@@ -1,3 +1,9 @@
+### [2026-11-27 19:05] 同步左右各半，並修好粗體
+
+- **修改的文件**：`public/v100_panel.py`
+- **核心邏輯**：同步狀態和代碼樹標題各佔區塊一半，並和下方內容對齊。Markdown 的 **粗體** 會渲染成 strong。
+- **AI 備註**：對聽仍是原曲、基模生成、新權重生成。選完複製答案貼回來。
+
 ### [2026-11-27 19:01] 新權重生成完成，打開三份對聽
 
 - **修改的文件**：`public/v100_panel.py`、`public/panel_state.json`、`public/panel_flow.json`、`public/panel_questions.json`

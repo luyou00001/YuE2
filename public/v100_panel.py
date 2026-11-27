@@ -7,6 +7,7 @@ from __future__ import annotations
 import html
 import json
 import os
+import re
 import subprocess
 import sys
 import threading
@@ -458,7 +459,7 @@ PAGE = """<!DOCTYPE html>
   button.ghost { background:#efeae2; color:var(--ink); }
   pre { white-space:pre-wrap; word-break:break-word; max-height:520px; overflow:auto; background:#1c1915; color:#f7f4ee; border-radius:12px; padding:14px; font:13px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
   .reply.md { max-height:70vh; overflow:auto; background:#fffdf9; color:var(--ink); border:1px solid var(--line); border-radius:12px; padding:8px 16px 16px; }
-  .reply.md h1 { font-size:26px; margin:8px 0 12px; }
+  .reply.md strong { font-weight:700; }
   .reply.md h2 { font-size:20px; margin:16px 0 8px; }
   .reply.md h3 { font-size:17px; margin:12px 0 6px; }
   .reply.md p { margin:0 0 10px; }
@@ -511,22 +512,21 @@ PAGE = """<!DOCTYPE html>
   .task-later { background:#f7f4ee; border-color:#e4ddd2; }
   .task-group { display:grid; gap:10px; margin-top:12px; }
   .task-group h3 { margin:0; font-size:14px; }
-  .sync-split { display:grid; grid-template-columns:minmax(240px, 0.85fr) minmax(0, 1.15fr); gap:16px; align-items:stretch; }
+  .sync-split { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); gap:16px; align-items:stretch; }
+  .sync-col, .tree-pane { display:flex; flex-direction:column; gap:8px; min-width:0; min-height:0; }
+  .sync-col .meter, #tree-count { margin:0; }
+  #tree-count { display:flex; align-items:center; gap:8px; min-width:0; overflow:hidden; }
   .sync-steps { list-style:none; margin:0; padding:0; display:grid; gap:4px; }
   .sync-step { display:flex; gap:8px; align-items:baseline; padding:4px 8px; border-radius:8px; background:#f7f4ee; }
   .sync-step .mark { font:700 12px/1 sans-serif; min-width:48px; }
   .sync-step.done { background:#e7f6ef; }
   .sync-step.current { background:#e8f1fb; }
   .sync-step.wait { color:var(--muted); }
-  .tree-pane { position:relative; min-width:0; min-height:100%; }
-  .sync-title { display:flex; align-items:center; gap:16px; min-width:0; margin-bottom:8px; }
-  .sync-title .meter { margin:0; }
-  #sync-head { flex:none; }
-  #tree-count { flex:1; min-width:0; display:flex; align-items:center; gap:8px; overflow:hidden; }
+  .tree-pane { position:relative; }
   .tree-label { flex:none; }
   .chip-row { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .chip { display:inline-block; margin-right:6px; padding:2px 6px; border-radius:6px; font:700 11px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-  .tree-scroll { position:absolute; left:0; right:0; top:0; bottom:0; overflow:auto; border:1px solid var(--line); border-radius:12px; background:#fffdf9; }
+  .tree-scroll { position:relative; flex:1 1 auto; min-height:0; overflow:auto; border:1px solid var(--line); border-radius:12px; background:#fffdf9; }
   .tree, .tree ul { list-style:none; margin:0; padding:0; }
   .tree { margin:2px 0 2px 8px; padding-left:10px; border-left:1px solid #d4cbbf; position:relative; font:12px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
   .tree ul { margin-left:6px; padding-left:10px; border-left:1px solid #d4cbbf; position:relative; }
@@ -571,13 +571,13 @@ PAGE = """<!DOCTYPE html>
   <div class="main-col">
   <details class="block" open data-fold="sync">
     <summary>Git 同步</summary>
-    <div class="sync-title">
-      <p class="meter" id="sync-head">__SYNCHEAD__</p>
-      <p class="meter" id="tree-count">__FILECOUNT__</p>
-    </div>
     <div class="sync-split">
-      <ol class="sync-steps" id="sync-steps">__SYNCSTEPS__</ol>
+      <div class="sync-col">
+        <p class="meter" id="sync-head">__SYNCHEAD__</p>
+        <ol class="sync-steps" id="sync-steps">__SYNCSTEPS__</ol>
+      </div>
       <div class="tree-pane">
+        <p class="meter" id="tree-count">__FILECOUNT__</p>
         <div class="tree-scroll" id="code-tree" data-mark="__FILEMARK__">__FILETREE__</div>
       </div>
     </div>
@@ -1166,16 +1166,15 @@ def render_markdown(text):
     def inline(value):
         escaped = html.escape(value)
         parts = []
-        while "`" in escaped:
-            before, marker, rest = escaped.partition("`")
-            code, end, after = rest.partition("`")
-            if not end:
-                parts.append(before + marker + rest)
-                break
-            parts.append(f"{before}<code>{code}</code>")
-            escaped = after
-        else:
-            parts.append(escaped)
+        position = 0
+        for match in re.finditer(r"`([^`]+)`|\*\*(.+?)\*\*", escaped):
+            parts.append(escaped[position:match.start()])
+            if match.group(1) is not None:
+                parts.append(f"<code>{match.group(1)}</code>")
+            else:
+                parts.append(f"<strong>{match.group(2)}</strong>")
+            position = match.end()
+        parts.append(escaped[position:])
         return "".join(parts)
 
     lines = text.splitlines()
