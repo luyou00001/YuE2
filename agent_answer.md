@@ -1,3 +1,9 @@
+### [2026-11-27 10:51] 權重與缺包已齊，開始轉第一首
+
+- **修改的文件**：`public/transcribe_one.py`
+- **核心邏輯**：mir_eval、pretty_midi 和兩個 model.safetensors 的字節數都正確。用本地 MERT 目錄做完整轉譜，避免 infer.py 去 Hub 拉父模型；V100 上用 fp32。
+- **AI 備註**：目標是 `/cache/yue2_outputs/vae_batch/000/mix.wav`，輸出 `score/score.abc`。不要升級 torch。
+
 ### [2026-11-26 18:08] SheetSage2 只缺 mir_eval 和 pretty_midi
 
 - **修改的文件**：無源碼改動。

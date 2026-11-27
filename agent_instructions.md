@@ -1,32 +1,13 @@
-# SheetSage2 環境檢查結果
+# 環境已齊，轉第一首 10 秒
 
-腳本裡的 `present` 只代表這個名字能 import，不代表版本符合 `requirements.txt`。目前環境是 Python 3.9.11、torch 2.3.1+cu121、torchaudio 2.3.1+cu121、transformers 4.57.6、numpy 1.23.5。這些都留著，不要執行 `pip install -r requirements.txt`，那會去裝 torch 2.8，把現在能跑 YuE2 的 CUDA 12.1 換掉。
+`mir_eval 0.8.2` 和 `pretty_midi 0.2.10` 已裝上，import 成功。兩個權重字節數也正確：SheetSage2 `model.safetensors` 是 228738564，MERT-v2-FullSong `model.safetensors` 是 2529812848。pip 提示升級可以忽略，torch 維持 2.3.1+cu121。
 
-真正缺的只有兩個包：`mir_eval` 和 `pretty_midi`。用 `--no-deps` 安裝，避免 pip 順手升級 numpy 或 torch。
-
-```bash
-python -m pip install mir_eval==0.8.2 pretty_midi==0.2.10 --no-deps
-python -c "import mir_eval, pretty_midi; print('imports ok')"
-```
-
-SheetSage2 目錄裡有權重文件。MERT-v2-FullSong 只有 `config.json`，頂層沒有 `.safetensors` 或 `.bin`。完整權重應是這兩個檔，大小必須完全一致：
-
-- `/cache/yue2_files/SheetSage2/model.safetensors`：228738564 bytes
-- `/cache/yue2_files/MERT-v2-FullSong/model.safetensors`：2529812848 bytes
-
-先印出實際大小。若 MERT 那個檔不在、或只有一百多 bytes 的 Git LFS 指標，請把 2.53 GB 的 `model.safetensors` 再傳到上面那個路徑。
+自帶的 `infer.py` 會按設定去找 Hub 上的 `m-a-p/MERT-v2-FullSong`。這次改走已經放在 `/cache/yue2_files/MERT-v2-FullSong` 的本地目錄，並做完整轉譜（旋律、和弦、段落），輸出到這首 10 秒音頻旁邊。V100 上用 fp32。
 
 ```bash
-python -c "from pathlib import Path
-for root in (Path('/cache/yue2_files/SheetSage2'), Path('/cache/yue2_files/MERT-v2-FullSong')):
-    print('DIR', root)
-    found=False
-    for p in root.rglob('*'):
-        if p.is_file() and (p.suffix in ('.safetensors','.bin') or p.stat().st_size>1000000):
-            print(p, p.stat().st_size); found=True
-    if not found: print('no weight file')"
+HF_HUB_OFFLINE=1 PYTHONPATH=src python public/transcribe_one.py
 ```
 
-兩個包裝好、兩個 safetensors 大小正確之後，把這段輸出貼回來，再跑第一首轉譜。
+成功時會印出 `score_exists True`，以及 `/cache/yue2_outputs/vae_batch/000/score/score.abc` 的開頭。把完整輸出貼回來。若中途報缺模組或 CUDA 錯誤，也原樣貼回來，先不要改 torch。
 
-本次更新的文件：無（只根據 `public/log.txt` 解讀，沒有改源碼）。
+本次更新的文件：`public/transcribe_one.py`
