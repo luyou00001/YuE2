@@ -526,7 +526,7 @@ PAGE = """<!DOCTYPE html>
   .tree-label { flex:none; }
   .chip-row { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .chip { display:inline-block; margin-right:6px; padding:2px 6px; border-radius:6px; font:700 11px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-  .tree-scroll { position:relative; flex:1 1 auto; min-height:0; overflow:auto; border:1px solid var(--line); border-radius:12px; background:#fffdf9; }
+  .tree-scroll { position:absolute; left:0; right:0; top:28px; bottom:0; overflow:auto; border:1px solid var(--line); border-radius:12px; background:#fffdf9; }
   .tree, .tree ul { list-style:none; margin:0; padding:0; }
   .tree { margin:2px 0 2px 8px; padding-left:10px; border-left:1px solid #d4cbbf; position:relative; font:12px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
   .tree ul { margin-left:6px; padding-left:10px; border-left:1px solid #d4cbbf; position:relative; }
@@ -558,7 +558,10 @@ PAGE = """<!DOCTYPE html>
   .notice-card { width:min(420px, 100%); background:#fffdf9; border-radius:16px; padding:22px 24px; box-shadow:0 12px 40px rgba(28,25,21,.18); }
   .notice-card h2 { margin:0 0 8px; }
   .notice-card p { margin:0 0 16px; }
-  @media (max-width: 900px) { .sync-split { grid-template-columns:1fr; } }
+  @media (max-width: 900px) {
+    .sync-split { grid-template-columns:1fr; }
+    .tree-scroll { position:relative; top:auto; height:280px; }
+  }
   .stage.current-row { background:#f3faf7; margin:0 -18px; padding:14px 18px; }
 </style>
 </head>
