@@ -1,7 +1,515 @@
-聽感結論
-原曲和無譜生成，整體像不像？ 有點像
-旋律接近嗎？ 旋律不同
-前奏、主歌、副歌的順序對得上嗎？ 大致對，有一段錯
-伴奏厚度怎麼樣？ 接近原曲
-人聲聽起來怎麼樣？ 自然
-下一步先做哪一件？ 先再轉 7 首，確認批量轉譜
+job transcribe7
+stage suno_prepare.py
+jsonl=/cache/yue2_files/datasets/suno_100/train_cn.jsonl jsonl_rows=49516 selected=100 matched=100 missing_meta=0 missing_audio=0 mix_files=200
+wrote=000 id=suno_cn_013117 track=0 audio_sec=174.80 lyric_chars=608 style_chars=133 sections=11
+wrote=001 id=suno_cn_003308 track=0 audio_sec=187.52 lyric_chars=530 style_chars=105 sections=10
+wrote=002 id=suno_cn_024258 track=0 audio_sec=177.92 lyric_chars=426 style_chars=111 sections=10
+wrote=003 id=suno_cn_024399 track=0 audio_sec=152.12 lyric_chars=359 style_chars=99 sections=10
+wrote=004 id=suno_cn_011286 track=0 audio_sec=172.72 lyric_chars=443 style_chars=83 sections=10
+wrote=005 id=suno_cn_013673 track=0 audio_sec=206.56 lyric_chars=425 style_chars=118 sections=10
+wrote=006 id=suno_cn_023478 track=0 audio_sec=182.04 lyric_chars=542 style_chars=136 sections=10
+wrote=007 id=suno_cn_004832 track=0 audio_sec=182.88 lyric_chars=424 style_chars=115 sections=10
+stage transcribe_one.py
+`torch_dtype` is deprecated! Use `dtype` instead!
+`torch_dtype` is deprecated! Use `dtype` instead!
+score_exists True
+score_chars 2481
+X:1
+T:
+M:4/4
+L:1/32
+Q:1/4=95
+V: Vocal clef=treble name="Vocal Melody" snm="Vocal"
+V: Ins clef=treble name="Ins Melody" snm="Inst."
+K:Bb
+% intro
+V: Vocal
+Z2|"A#sus2"z32|"Dm7"z32|
+V: Ins
+Z|z24f4g4|b24c'4d'4|a16z8f4g4|
+V: Vocal
+"Gm7"z32|"D#"z32|"A#"z32|"Dm7"z32|
+V: Ins
+b16z4c'8d'4|g16z4f2g2b2g2f2g2|c'4d'12z4f2g2b2g2f2g2|c'4d'16z8b2g2|
+V: Vocal
+"Gm7"z32|"D#"z32|
+V: Ins
+b2z2b2g2b4z2b2z4b2z2b4z4|b6c'2z4b16z4|
+% verse
+V: Vocal
+"A#"z4d4d4d2d6c4B4c4|"Dm7"A8z12B4B4G4|"Gm7"B4G4B4G2B6G4G6F2-|"A#"F6z12z2d4d4c4|
+V: Ins
+Z4|
+V: Vocal
+"A#"d4d4d4c2d6d4d4a4-|"Dm7"a4f8z8B4A4B4-|"D#"B4G4B4G2B6G4B4c4|"A#"B4B8z8d4d4B4|
+V: Ins
+Z4|
+% pre-chorus
+V: Vocal
+"D#"G4B8z8B4B4f4|"A#maj7/C##"d4d8z8d4d4B4|"Cm7"B4G4B4d4d4B4B4c4-|"Fsus4"c24-c4z4|
+V: Ins
+Z4|
+V: Vocal
+"F"z4f4f4d4c4B4c4B4|
+V: Ins
+Z|
+% chorus
+V: Vocal
+"A#"z4d4d4c2d6d4d4b4|"Dm"a4f4f8z4c2d2c4B4|"Gm"d4d4c2B4G4z2c2d2c4B4|
+V: Ins
+Z3|
+V: Vocal
+M:3/4
+"D#"d4d4c4B4G6c2-|
+V: Ins
+M:3/4
+Z|
+V: Vocal
+M:4/4
+"A#"c4z24z4|
+V: Ins
+M:4/4
+z6B2B2z4B2z4B2z2B4z4|
+% verse
+V: Vocal
+"A#"z4c2d2d4d2d2d4B2B6c2d2|"Dm7"c2c2c2c2c2c2c2d2c4B4z4B2G2|"Gm7"B4B2G2B4G2B4B4G2B4G4|"D#"B2B4G2B4B2G2B2B2c2c4B6|
+V: Ins
+Z4|
+V: Vocal
+"A#"z4c2d2d4d4d4d4d4a4-|"Dm7"a4f12z4f4f4g4-|"D#"g4f4f4d2d6c4c4B2B2-|"A
+abc_error None
+warnings []
+stage pack_suno_one.py
+audio_sec=187.52 lyric_chars=530 abc_chars=2481 prefix_len=2352 saved=/cache/yue2_outputs/suno_packed/001
+ready=001 id=suno_cn_003308
+stage transcribe_one.py
+`torch_dtype` is deprecated! Use `dtype` instead!
+`torch_dtype` is deprecated! Use `dtype` instead!
+score_exists True
+score_chars 2154
+X:1
+T:
+M:2/4
+L:1/32
+Q:1/4=70
+V: Vocal clef=treble name="Vocal Melody" snm="Vocal"
+V: Ins clef=treble name="Ins Melody" snm="Inst."
+K:F
+% intro
+V: Vocal
+Z2|
+V: Ins
+Z|f2e2f2c'4c2e2f2-|
+V: Vocal
+M:4/4
+"A#sus2"z16"C"z16|"Dm7"z32|"A#"z16"C"z16|"C"z32|
+V: Ins
+M:4/4
+f2c2e2f4c2e2f2f2e2f2c'4c2e2f2-|f2c2e2f4c2e2f2f2c2f2c2g2c2f2c2|a8z2g2f2f8z2e2f2e2c2|G32|
+% verse
+V: Vocal
+"A#sus2"z4A2G2A4G2A6G4A4c4|"Am7"z4A2G2A4G2A6G4A4D4|"Gm7"z4D2D2F4D2F4D2F2D2F4z4|"A#sus2"B2A2B2A2B2c6"Csus4"G8z8|
+V: Ins
+Z3|z24f2e2c2B2|
+V: Vocal
+"A#sus2"z4d4d4a4"C"a4g2g6e2f2|"Am7"g6c6A2d2-"Dm"d6z6d2e2|"Gm7"f4d2f6z2d2f4d2f4g6|"Csus4"g16"C"z8f4e4|
+V: Ins
+c4z24z4|Z3|
+% chorus
+V: Vocal
+"F"c8a4e2g2-"C"g4z4f4e4|"Dm7"c4c4a4f2e2-"Am7"e4z4f2e2d2c2|"A#"d6f6c'4"F"z4a4g2f2f2d2|"Gm7"d6f6a4"Csus4"g16|
+V: Ins
+Z4|
+% interlude
+V: Vocal
+"A#sus2"z16"C"z16|"A#sus2"z32|
+V: Ins
+c2e2f2c'4f4c8e2f2e2c2G2|F6f6c16z4|
+% verse
+V: Vocal
+"F"z4A2G2A4z4A4G4A4c4|"Am7"z4A2G2A4G2A6G4A4D4|"A#sus2"z4F2D2F4D2F4F4F4z4F2|"C"B2A2B2A2B2c4G8z8z2|
+V: Ins
+Z4|
+V: Vocal
+"A#sus2"z4d4d4a4"C"a4g2g6e2f2|"Am7"g6c6A2d2-"Dm7"d6z6d2e2|"Gm7"f4d2f6z2d2f4d2f4g6|
+V: Ins
+Z3|
+V: Vocal
+M:3/4
+"Csus4"g16z8|
+V: Ins
+M:3/4
+Z|
+% chorus
+V: Vocal
+M:4/4
+"F"c8a4g2g2-"C"g4z4f4e4|"Dm7"c4c4a4e2e2-"
+abc_error None
+warnings []
+stage pack_suno_one.py
+audio_sec=177.92 lyric_chars=426 abc_chars=2154 prefix_len=2016 saved=/cache/yue2_outputs/suno_packed/002
+ready=002 id=suno_cn_024258
+stage transcribe_one.py
+`torch_dtype` is deprecated! Use `dtype` instead!
+`torch_dtype` is deprecated! Use `dtype` instead!
+score_exists True
+score_chars 2348
+X:1
+T:
+M:4/4
+L:1/32
+Q:1/4=123
+V: Vocal clef=treble name="Vocal Melody" snm="Vocal"
+V: Ins clef=treble name="Ins Melody" snm="Inst."
+K:G
+% intro
+V: Vocal
+Z|"G"z32|"Bm"z32|"Cmaj7"z32|
+V: Ins
+Z|G4z2d2b4z2a8z2g8|B4z2B2f4z2e2f'4z2g'2f'4z2d'2|g6z2c'4z2b8z2g8|
+V: Vocal
+"D"z16z6B2d6B2|
+V: Ins
+z6a2a4z4a4z12|
+% verse
+V: Vocal
+"G"d8B6d8z2d6d2|"Bm"f6f2d6d4z4B2d6B2|"C"c8c8c6d8d2|"C"c8z8c8d8|
+V: Ins
+Z4|
+V: Vocal
+"G"B16g16|"Bm"f12d2d8z8z2|"C"z8c6c2c6B2c6d2-|"D"d6d8d2d6B2A6B2-|
+V: Ins
+Z4|
+V: Vocal
+"G"B6z2B6B2B6c2d6f2-|"Bm7"f6z2f6f2f6g8e2-|"C"e12-e2z16z2|"D"z8d6d2e6e2g6g2|
+V: Ins
+Z2|z16g4z2a2b8|f8z24|
+% chorus
+V: Vocal
+"G"b12z2d8z2b8|"B7"a6a2a8b8f6g2-|"Em"g12-g2z8z2g6g2|"Bm"f8g8f4d2d6e2e2-|
+V: Ins
+Z4|
+V: Vocal
+"C"e12-e2z8z2e6e2|"D"d8b16a8|"G"g24z8|"G"z24d6d2|
+V: Ins
+Z4|
+% verse
+V: Vocal
+"G"d6B2d6d2d6d8d2|"Bm"e6d2d6d2d6d8B2|"C"c12c2c6d2d6c2c2-|"C"c6z2c6B2c6B2G8|
+V: Ins
+Z4|
+V: Vocal
+"G"A12B2B8z2d6e2|"Bm"f6d2d6d2d8d6d2|"C"e8g12a4a2z2g2g2-|"Cm/Eb"g6z2^d8=d8c8|
+V: Ins
+Z4|
+V: Vocal
+"Am7"B12g16z4|"D"z8d8g8a8|"G"a4g24z4|"G"z8"D"d6d2e6e2g6g2|
+V: Ins
+Z4|
+% chorus
+V: Vocal
+"G"b12z2d8z2b8|"B7"a6a2a8b8f6g2-|"Em"g12-g2z8z2g6g2|"Bm"f8g8f4d2d6e2e2-|
+V: Ins
+Z4|
+V: Vocal
+"C"e12-e2z8z2e6e2|
+V: Ins
+Z|
+V: Vocal
+M:2/4
+"
+abc_error None
+warnings []
+stage pack_suno_one.py
+audio_sec=152.12 lyric_chars=359 abc_chars=2348 prefix_len=2091 saved=/cache/yue2_outputs/suno_packed/003
+ready=003 id=suno_cn_024399
+stage transcribe_one.py
+`torch_dtype` is deprecated! Use `dtype` instead!
+`torch_dtype` is deprecated! Use `dtype` instead!
+score_exists True
+score_chars 1990
+X:1
+T:
+M:4/4
+L:1/16
+Q:1/4=71
+V: Vocal clef=treble name="Vocal Melody" snm="Vocal"
+V: Ins clef=treble name="Ins Melody" snm="Inst."
+K:Bb
+% intro
+V: Vocal
+Z|"A#"z8"A#/C##"z8|"Gm7"z16|"D#maj7"z8"F7"z8|
+V: Ins
+z2f4b4c'4z2|c'2d'2f2df4z2fbc'|c'2d'2b2ab3f2b2f'2|f'4e'2d'2c'4zc'2b|
+V: Vocal
+"A#"z12Bcd2|
+V: Ins
+b12z4|
+% verse
+V: Vocal
+"A#"d2z2Bcdd-"A#/C##"df3z2dc|"Gm"B2BB2cd2"A#/E#"d2z2Bcd2|"D#"e2ee2dd2"A#/C##"B2z3dcB|"Cm7"c2Bc2Bd2"Fsus4"c2z6|
+V: Ins
+Z4|
+V: Vocal
+"A#"dcdcd2f2"F/A"f2c2d2c2|"Gm"B2z2b2ab"Dm7"a2ff2dff|"D#"g2bbbggc'-"F"c'2z2fgb2|"A#"c'2d'2"F/A"c'2fb-"Gm7"b2z2dcB2|
+V: Ins
+Z4|
+V: Vocal
+"D#"d2cc2d2c-"F"c2z2dcB2|"D#"c2d2"Fsus4"c2BB-"A#"B3z4z|
+V: Ins
+Z2|
+V: Vocal
+M:2/4
+"A#"z8|
+V: Ins
+M:2/4
+z4d'2c'd'-|
+% interlude
+V: Vocal
+M:4/4
+"D#maj7"z16|"A#/C##"z16|"Cm7"z16|"F7sus4"z12z2Bc|
+V: Ins
+M:4/4
+d'gc'd'2gc'd'2gc'd'f'2c'd'-|d'fc'd'2fc'd'f'd'c'b2fbf'|f'e'e'd'd'c'c'bb4zgbf'|b12z4|
+% verse
+V: Vocal
+"A#"d2z2dcdd-"Dm7"df3z2dc|"Gm7"B2BB2cd2"Dm7"B2z2Bcdd|"Cm7"e2ee2ddd"A#/C##"B2z3dcB|"Cm7"c2Bc2Bd2"Fsus4"c2z2"F"z4|
+V: Ins
+Z4|
+V: Vocal
+"A#"dcdcd2f2"Dm7"f2c2d2cc|"Gm7"B2z2b2ac'-"Dm7"c'2f3fff|"D#"g2bbbggc'-"F"c'2z2fgb2|"A#"c'2d'2"F/A"c'2fb-"Gm7"b2z2dcB2|
+V: Ins
+Z4|
+V: Vocal
+"D#"d2cc2d2c"F"c2z2dcB2|"D#"c2
+abc_error None
+warnings []
+stage pack_suno_one.py
+audio_sec=172.72 lyric_chars=443 abc_chars=1990 prefix_len=1724 saved=/cache/yue2_outputs/suno_packed/004
+ready=004 id=suno_cn_011286
+stage transcribe_one.py
+`torch_dtype` is deprecated! Use `dtype` instead!
+`torch_dtype` is deprecated! Use `dtype` instead!
+score_exists True
+score_chars 1994
+X:1
+T:
+M:4/4
+L:1/16
+Q:1/4=74
+V: Vocal clef=treble name="Vocal Melody" snm="Vocal"
+V: Ins clef=treble name="Ins Melody" snm="Inst."
+K:B
+% intro
+V: Vocal
+Z|"Bmaj7"z16|"Bmaj7/D#"z16|"E"z16|
+V: Ins
+Z|B2F2B2FA2AF2ABF2|z2F2B2FA2AF2ABF2|z2E2B2EA2AE2ABE2|
+V: Vocal
+"E"z16|
+V: Ins
+z2E2B2EA2AE2ABE2|
+% verse
+V: Vocal
+"Bmaj7"z2d2d2c2d4F2c2-|"Bmaj7/D#"c2z4zBcBcd2F2B-|"E"B3z12z|"E"z6zBededeed2-|
+V: Ins
+Z2|z4B2zAzAE2ABE2|z4B2z8z2|
+V: Vocal
+"Bmaj7"d2z4d2d4f2c2-|"Bmaj7/D#"c2z4c2c4d4|"E"G4z12|"E"z8Bc2d2e2d-|
+V: Ins
+Z2|z4B2zAzAE2ABE2|z4B2zAz8|
+% pre-chorus
+V: Vocal
+"G#m7"d2z4dddd2b2a2c-|"F#"c6-cz4zBc3|
+V: Ins
+Z2|
+% chorus
+V: Vocal
+"B"f2d2d2cc2d3Bc3|"D#m"f2d2d2cd3zBBc3|"E"f2d2d2cd3z2d3c|"Em"c2d2c2BGB4z4|
+V: Ins
+Z4|
+V: Vocal
+"Em"z16|
+V: Ins
+Z|
+% verse
+V: Vocal
+"B"z2d2d2cd2d3f2c2|"Bmaj7/D#"z6cBcc2d2F2G-|"E"G2z12z2|"E"z8ed2e2f2d-|
+V: Ins
+Z4|
+V: Vocal
+"B"d2z4dcd2d2f2c2|"Bmaj7/D#"z6cBc2c2d2G2|"E"z6BGBG2B2d2c|"F#"c4z3BBc2d2e2e|
+V: Ins
+Z4|
+% pre-chorus
+V: Vocal
+"G#m"d4z2d2d2db2a2c-|"F#"c8-c3BBc3|"E"f2d2d2c2"F#"cd3cB2B-|"B"B2z12z2|
+V: Ins
+Z4|
+V: Vocal
+"E"g2a2b2c'2-"F#"c'4baf2-|"D#m"f2z12z2|"E"g2a2b2c'2-"F#"c'4ba2f-|"B"f3z12z|
+V: Ins
+Z4|
+V: Vocal
+"E"g2a2b2c'2-"F#"c'4baf2-|"D#m"f4zdg2"G#7"f2z2d2d2|"C#m7"cB2z4z"F
+abc_error None
+warnings []
+stage pack_suno_one.py
+audio_sec=206.56 lyric_chars=425 abc_chars=1994 prefix_len=1759 saved=/cache/yue2_outputs/suno_packed/005
+ready=005 id=suno_cn_013673
+stage transcribe_one.py
+`torch_dtype` is deprecated! Use `dtype` instead!
+`torch_dtype` is deprecated! Use `dtype` instead!
+score_exists True
+score_chars 1911
+X:1
+T:
+M:4/4
+L:1/16
+Q:1/4=79
+V: Vocal clef=treble name="Vocal Melody" snm="Vocal"
+V: Ins clef=treble name="Ins Melody" snm="Inst."
+K:Eb
+% intro
+V: Vocal
+Z|"D#"z8"Gm7/D"z8|"Cm"z8"Gm/Bb"z8|"G#maj7"z16|
+V: Ins
+Z|z4B4A4G4|E6g2f2e2B2B2|c8z4efg2-|
+V: Vocal
+"A#sus4"z8"A#"z8|
+V: Ins
+g6fef8|
+% verse
+V: Vocal
+"D#"zBBBB2GF-"A#/C##"FG3FE3|"Cm"F2EE2C2E3z2"D#/A#"z3E|"G#"cB2BB2EE2zCCE2G2|"A#sus4"G4F2EF-"A#"F2z6|
+V: Ins
+Z4|
+V: Vocal
+"D#"z2BBB2Gc-"A#/C##"cB2BB2G2|"Cm7"c2BB2B2E3z3B,CE|"G#"G2FF2E2E2z2B,CE3|"A#sus4"G2G2G2FF4z4z|
+V: Ins
+Z4|
+V: Vocal
+M:2/4
+"A#"z4Bce2|
+V: Ins
+M:2/4
+Z|
+% chorus
+V: Vocal
+M:4/4
+"D#"e2z2Bcef"A#"f2z2Bce2|"Cm"e3e2c2g"Gm"gz4Bce|"G#maj7"g2ce3cB"A#"Bcfgf2e2|"D#"e12z4|
+V: Ins
+M:4/4
+Z4|
+% verse
+V: Vocal
+"D#"z2ede2de-"A#/C##"ed2B2BBG|"Cm7"c2BB2Bc2E2z2"A#6"z4|"G#"ce2ceece3e2c2e2|"A#sus4"g6f2"A#"f4z4|
+V: Ins
+Z4|
+V: Vocal
+"D#"z2gfg2fg-"A#/C##"gb3b2g2|"Cm7"c'2bb2b2e-"Gm/Bb"e2z4ce|"G#"g2ff2e2e2zece2c2|"A#sus4"g4b2ff-"A#"f3zBce2|
+V: Ins
+Z4|
+% chorus
+V: Vocal
+"D#"e2z2Bcef"A#"f2z2Bce2|"Cm"e2ce2c2g"Gm"gz4Bce|"G#"g2ce3cB"A#"Bcfgf2e2|"D#"e8z8|
+V: Ins
+Z3|z12e4|
+% interlude
+V: Vocal
+"D#"z8"Gm7/D"z8|"Cm"z8"D#/A#"z8|"G#"z16|"D#"z12z2Bc|
+V: Ins
+g8f4b4|e12z2cd|e8d2e2b4|g12z4|
+% bridge
+V: Vocal
+"G#"e
+abc_error None
+warnings []
+stage pack_suno_one.py
+audio_sec=182.04 lyric_chars=542 abc_chars=1911 prefix_len=1657 saved=/cache/yue2_outputs/suno_packed/006
+ready=006 id=suno_cn_023478
+stage transcribe_one.py
+`torch_dtype` is deprecated! Use `dtype` instead!
+`torch_dtype` is deprecated! Use `dtype` instead!
+score_exists True
+score_chars 1860
+X:1
+T:
+M:4/4
+L:1/16
+Q:1/4=74
+V: Vocal clef=treble name="Vocal Melody" snm="Vocal"
+V: Ins clef=treble name="Ins Melody" snm="Inst."
+K:Bb
+% intro
+V: Vocal
+Z2|"A#"z16|"Dm"z16|
+V: Ins
+Z2|z4d2c2c2B2B4|z12d2f2|
+V: Vocal
+"D#"z8"F7sus4"z8|"A#"z12z2Bc|
+V: Ins
+g6fgb2a2g2f2|d12z4|
+% verse
+V: Vocal
+"A#"d2dddc2d3zFd2cB|"Dm"A4A2FD3z4zD|"D#"G2B2B2Ac2B2BB2c2|"F"d2c2cB2c3z6|
+V: Ins
+Z4|
+V: Vocal
+"D#"z3BB2Bc-"F"c3zc2B2|"A#"f6d2"Gm"z8|"D#"z4e2de-"F"e2d2c2B2|"A#"B4z8d2f2|
+V: Ins
+Z4|
+% chorus
+V: Vocal
+"Gm"g2b2b2gb-"D#"b2bbbgg2|"A#"g2ff3c2"F"d2z2d2cB|"Gm"B2B4b2"D#"gfff3fd|"A#"g2f2d2dd-"F"dcc6|
+V: Ins
+Z4|
+V: Vocal
+M:2/4
+"F"z6zF|
+V: Ins
+M:2/4
+Z|
+% verse
+V: Vocal
+M:4/4
+"A#"d2d2dc2d2d2dd2cB|"Dm"A3A3F2D2z4zF|"D#"B2B2BB2c-"F"c2z2B2c2|"A#"d2c2cB2B4z4z|
+V: Ins
+M:4/4
+Z3|z8z3cBcBG|
+V: Vocal
+"D#"z2BBBB3"F"c4c2B2|
+V: Ins
+B2z12z2|
+V: Vocal
+M:3/4
+"A#"f4-"Dm/A"f2d2-"Gm"d2z2|
+V: Ins
+M:3/4
+z8z2dc|
+V: Vocal
+M:4/4
+"D#"z2e2e2de-"F"e2d2cB2B-|"A#"B3z8zd2f2|
+V: Ins
+M:4/4
+e2z12z2|Z|
+% chorus
+V: Vocal
+"Gm"g2b2bggb-"D#"b2bbbgg2|"A#"g2ff3c2"F"ddz2d2cB|"Gm"B2B4b2"D#"gfff3fd|"A#"g2f2d2dd-"F"dc4zBc|
+V: Ins
+Z4|
+V: Vocal
+"D#"d6ze"F"c4zBBc|"A#"B4z12|
+V: Ins
+Z|z12z2bc'|
+% interlude
+V: Vocal
+"D#"z8"F"z8|"A#"z12zddf|
+V: Ins
+d'4d'2f'2c'4d'4
+abc_error None
+warnings []
+stage pack_suno_one.py
+audio_sec=182.88 lyric_chars=424 abc_chars=1860 prefix_len=1619 saved=/cache/yue2_outputs/suno_packed/007
+ready=007 id=suno_cn_004832
+batch7_done=7
