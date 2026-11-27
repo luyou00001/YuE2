@@ -175,6 +175,7 @@ def status_payload():
             "task_html": task_html,
             "gpu_html": render_gpus(gpu_rows()),
             "jobs_html": render_jobs(visible_jobs),
+            "sync_text": sync_text(),
         }
     except Exception as exc:
         return {
@@ -192,6 +193,7 @@ def status_payload():
             "task_html": "",
             "gpu_html": "",
             "jobs_html": "",
+            "sync_text": "",
             "live": "",
             "error": f"{type(exc).__name__}: {exc}",
         }
@@ -339,7 +341,14 @@ PAGE = """<!DOCTYPE html>
   :root { color-scheme: light; --ink:#1c1915; --muted:#5c564c; --line:#e4ddd2; --paper:#f7f4ee; --card:#fffdf9; --accent:#0f6e56; }
   * { box-sizing: border-box; }
   body { margin:0; font:16px/1.5 "Iowan Old Style", Palatino, "Songti SC", serif; color:var(--ink); background:var(--paper); }
-  main { max-width:1560px; margin:0 auto; padding:28px 36px 72px; }
+  main { max-width:none; width:100%; margin:0; padding:16px 20px 40px; }
+  .layout { display:grid; grid-template-columns:minmax(0, 1fr) minmax(300px, 440px); gap:16px; align-items:start; }
+  .side { position:sticky; top:12px; max-height:calc(100vh - 24px); overflow:auto; }
+  .pager { display:flex; gap:8px; align-items:center; margin-bottom:8px; }
+  @media (max-width: 900px) {
+    .layout { grid-template-columns:1fr; }
+    .side { position:static; max-height:none; }
+  }
   h1 { font-size:32px; margin:0 0 4px; }
   h2 { font-size:18px; margin:0 0 12px; }
   h3 { font-size:16px; margin:0; }
@@ -407,20 +416,22 @@ PAGE = """<!DOCTYPE html>
 <main>
   <h1>YuE2 V100</h1>
   <p class="sub" id="revision">__REVISION__</p>
+  <div class="layout">
+  <div class="main-col">
+  <details class="block" open data-fold="sync">
+    <summary>Git 同步</summary>
+    <pre class="reply" id="sync">__SYNC__</pre>
+  </details>
   <details class="block" open data-fold="reply">
     <summary>本輪回答</summary>
-    <pre class="reply">__REPLY__</pre>
+    <div class="pager">
+      <button id="reply-prev" class="ghost" type="button">上一則</button>
+      <span id="reply-pos"></span>
+      <button id="reply-next" class="ghost" type="button">下一則</button>
+    </div>
+    <pre class="reply" id="reply">__REPLY__</pre>
   </details>
-  <details class="block" open data-fold="task">
-    <summary>任務</summary>
-    <div id="task-board">__TASKS__</div>
-    <button id="copy-task-log" type="button">複製目前日誌</button>
-    <p id="note"></p>
-  </details>
-  <details class="block" open data-fold="gpu">
-    <summary>GPU</summary>
-    <div class="gpus" id="gpus">__GPUS__</div>
-  </details>
+  __OPTIONAL__
   <div id="flows">__FLOWS__</div>
   <div class="grid">
     <details class="block" data-fold="code"><summary>代碼狀態</summary><div id="code">__CODE__</div></details>
@@ -434,6 +445,20 @@ PAGE = """<!DOCTYPE html>
     <p id="copy-note" class="meter"></p>
     <pre id="logtext">還沒有日誌</pre>
   </details>
+  </div>
+  <aside class="side">
+  <details class="block" open data-fold="task">
+    <summary>任務</summary>
+    <div id="task-board">__TASKS__</div>
+    <button id="copy-task-log" type="button">複製目前日誌</button>
+    <p id="note"></p>
+  </details>
+  <details class="block" open data-fold="gpu">
+    <summary>GPU</summary>
+    <div class="gpus" id="gpus">__GPUS__</div>
+  </details>
+  </aside>
+  </div>
 </main>
 <script>
 const note = document.getElementById("note");
@@ -553,6 +578,21 @@ async function copyLog() {
 document.getElementById("copy").onclick = copyLog;
 const copyTaskLog = document.getElementById("copy-task-log");
 if (copyTaskLog) copyTaskLog.onclick = copyLog;
+const replies = __REPLIES__;
+let replyIndex = replies.length ? replies.length - 1 : 0;
+function showReply() {
+  const box = document.getElementById("reply");
+  const pos = document.getElementById("reply-pos");
+  if (!box || !replies.length) return;
+  const item = replies[replyIndex];
+  box.textContent = item.text;
+  if (pos) pos.textContent = (replyIndex + 1) + " / " + replies.length + "  " + (item.time || "");
+}
+const replyPrev = document.getElementById("reply-prev");
+const replyNext = document.getElementById("reply-next");
+if (replyPrev) replyPrev.onclick = function () { if (replyIndex > 0) { replyIndex -= 1; showReply(); } };
+if (replyNext) replyNext.onclick = function () { if (replyIndex < replies.length - 1) { replyIndex += 1; showReply(); } };
+showReply();
 document.getElementById("task-board").addEventListener("click", event => {
   const button = event.target.closest("button[data-job]");
   if (button && !button.disabled) runJob(button.dataset.job);
@@ -592,6 +632,8 @@ function applyStatus(data) {
   document.querySelectorAll("button[data-job]").forEach(button => { button.disabled = busy; });
   const gpus = document.getElementById("gpus");
   if (gpus && data.gpu_html) gpus.innerHTML = data.gpu_html;
+  const sync = document.getElementById("sync");
+  if (sync && data.sync_text) sync.textContent = data.sync_text;
   if (data.running && data.running.log) selectedLog = data.running.log;
   else if (!selectedLog && data.logs.length) selectedLog = data.logs[0].name;
   document.getElementById("logpick").innerHTML = data.logs.map(row =>
@@ -656,6 +698,48 @@ def optional_blocks(data):
     return "".join(blocks)
 
 
+def sync_text():
+    path = Path("/cache/yue2_panel/sync_status.json")
+    state, sha, when = "unknown", "", ""
+    if path.is_file():
+        try:
+            info = json.loads(path.read_text(encoding="utf-8"))
+            state = str(info.get("state") or "unknown")
+            sha = str(info.get("sha") or "")
+            when = str(info.get("time") or "")
+        except (OSError, json.JSONDecodeError):
+            pass
+    labels = {"syncing": "正在同步", "synced": "已同步", "unknown": "尚無同步記錄"}
+    head = git_text(["log", "-1", "--format=%h %ci %s"]) or "unknown"
+    dirty = git_text(["status", "--porcelain"])
+    dirty_n = len([line for line in dirty.splitlines() if line.strip()]) if dirty else 0
+    return "\n".join([
+        f"同步：{labels.get(state, state)}",
+        f"上次同步：{when or '無'}  {sha}",
+        f"伺服器：{head}",
+        f"未提交：{dirty_n}",
+    ])
+
+
+def reply_history():
+    path = ROOT / "public" / "panel_replies.jsonl"
+    items = []
+    if path.is_file():
+        for line in path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                item = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if item.get("text"):
+                items.append({"time": item.get("time") or "", "text": item["text"]})
+    if not items:
+        items.append({"time": "", "text": reply_text()})
+    return items
+
+
 def page_html():
     data = status_payload()
     if data.get("error"):
@@ -674,6 +758,8 @@ def page_html():
         "__JOBS__": render_jobs(pipeline_view()[1]),
         "__JOBS_ATTR__": "open" if pipeline_view()[1] else "hidden",
         "__REPLY__": html.escape(reply_text()),
+        "__REPLIES__": json.dumps(reply_history(), ensure_ascii=False).replace("<", "\\u003c"),
+        "__SYNC__": html.escape(sync_text()),
         "__TASKS__": pipeline_view()[0],
         "__GPUS__": render_gpus(gpu_rows()),
         "__OPTIONAL__": optional_blocks(data),
@@ -730,9 +816,11 @@ def task_card(state, label, title, detail, button=None):
     action = ""
     if button:
         action = f'<button data-job="{html.escape(button["id"])}" type="button">執行</button>'
+    open_attr = "" if state == "done" else " open"
     return (
-        f'<div class="task-card task-{state}"><span class="task-label">{html.escape(label)}</span>'
-        f'<strong>{html.escape(title)}</strong><p>{html.escape(detail)}</p>{action}</div>'
+        f'<details class="task-card task-{state}"{open_attr}>'
+        f'<summary><span class="task-label">{html.escape(label)}</span> {html.escape(title)}</summary>'
+        f'<p>{html.escape(detail)}</p>{action}</details>'
     )
 
 

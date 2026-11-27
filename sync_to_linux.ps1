@@ -49,6 +49,15 @@ function Get-RemoteHead {
     return ("$output").Trim()
 }
 
+function Write-RemoteSyncStatus([string]$State) {
+    $head = "unknown"
+    try { $head = (git rev-parse --short HEAD).Trim() } catch { $head = "unknown" }
+    $stamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    $payload = '{"state":"' + $State + '","sha":"' + $head + '","time":"' + $stamp + '"}'
+    $b64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($payload))
+    ssh -i $SshKey -p $SshPort -o StrictHostKeyChecking=no $SshUserHost "mkdir -p /cache/yue2_panel && printf '%s' '$b64' | base64 -d > /cache/yue2_panel/sync_status.json"
+}
+
 function Show-UpdatedFiles([string]$Before, [string]$After) {
     $emptyTree = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
     if ($Before) { $fromLabel = $Before.Substring(0, [Math]::Min(7, $Before.Length)) } else { $fromLabel = "none" }
@@ -78,6 +87,7 @@ Set-Location $RepoDir
 Write-Host "-> (1/5) Testing SSH connectivity..." -ForegroundColor Cyan
 Invoke-Ssh "echo ok > /dev/null"
 Write-Host "   SSH OK" -ForegroundColor Green
+Write-RemoteSyncStatus "syncing"
 
 Write-Host "-> (2/5) Pulling latest from origin (GitHub)..." -ForegroundColor Cyan
 git pull
@@ -148,4 +158,5 @@ Write-Host "-> Verifying server side..." -ForegroundColor Cyan
 Invoke-Ssh "cd '$RemoteDir' && git status --short --branch && echo '---' && ls -1"
 $LocalHead = (git rev-parse HEAD).Trim()
 Show-UpdatedFiles $RemoteBefore $LocalHead
+Write-RemoteSyncStatus "synced"
 Write-Host "Done." -ForegroundColor Green

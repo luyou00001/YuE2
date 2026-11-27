@@ -1,3 +1,9 @@
+### [2026-11-27 17:10] 同步狀態、固定側欄和回答翻頁
+
+- **修改的文件**：`public/v100_panel.py`、`public/panel_replies.jsonl`、`public/panel_state.json`、`sync_to_linux.ps1`
+- **核心邏輯**：頁面寬度跟隨瀏覽器。任務和 GPU 固定在右側。已完成步驟預設折疊。Git 同步狀態寫到 /cache/yue2_panel/sync_status.json。回答歷史存在 panel_replies.jsonl，可上一則、下一則。
+- **AI 備註**：8 首平均損失 0.4971。下一步仍是無譜生成第 004 首。若該任務正在跑，同步會等它結束再換頁。
+
 ### [2026-11-27 17:02] 任務按編號排列，並加上複製日誌
 
 - **修改的文件**：`public/v100_panel.py`、`public/suno_free_004.py`、`public/panel_flow.json`、`public/panel_state.json`
