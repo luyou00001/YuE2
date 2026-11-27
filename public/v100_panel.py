@@ -4,6 +4,7 @@ Logs are written under /cache/yue2_panel/logs. Only the scripts listed below can
 """
 from __future__ import annotations
 
+import html
 import json
 import os
 import subprocess
@@ -289,28 +290,28 @@ PAGE = """<!DOCTYPE html>
 <body>
 <main>
   <h1>YuE2 V100</h1>
-  <p class="sub" id="revision">讀取中</p>
+  <p class="sub" id="revision">__REVISION__</p>
   <section>
     <h2>對聽</h2>
     <p class="meter">直接播放伺服器上的檔案。只比較旋律和段落。</p>
-    <div class="players" id="players"></div>
+    <div class="players" id="players">__PLAYERS__</div>
   </section>
   <section>
     <h2>選擇題</h2>
-    <p class="meter" id="question-intro"></p>
-    <div id="questions"></div>
+    <p class="meter" id="question-intro">__QUESTION_INTRO__</p>
+    <div id="questions">__QUESTIONS__</div>
     <button id="copy-answers" type="button">複製答案</button>
     <p id="answer-note" class="meter"></p>
   </section>
-  <div id="flows"></div>
+  <div id="flows">__FLOWS__</div>
   <div class="grid">
-    <section><h2>代碼狀態</h2><div id="code"></div></section>
-    <section><h2>目前進度</h2><ul id="progress"></ul></section>
-    <section><h2>下一步</h2><ul id="next"></ul></section>
+    <section><h2>代碼狀態</h2><div id="code">__CODE__</div></section>
+    <section><h2>目前進度</h2><ul id="progress">__PROGRESS__</ul></section>
+    <section><h2>下一步</h2><ul id="next">__NEXT__</ul></section>
   </div>
   <section>
     <h2>可執行步驟</h2>
-    <div id="jobs"></div>
+    <div id="jobs">__JOBS__</div>
     <p id="note"></p>
   </section>
   <section>
@@ -352,7 +353,7 @@ function answerText() {
     const chosen = block.querySelector("input:checked");
     lines.push(block.dataset.prompt + " " + (chosen ? chosen.value : "未選"));
   });
-  return lines.join("\n");
+  return lines.join("\\n");
 }
 async function copyAnswers() {
   const text = answerText();
@@ -500,11 +501,6 @@ async function runJob(id) {
   note.textContent = response.ok ? "已開始，輸出會顯示在下方" : (data.error || "無法啟動");
   refresh();
 }
-try {
-  applyStatus(__STATUS__);
-} catch (error) {
-  document.getElementById("revision").textContent = "內嵌狀態失敗：" + error;
-}
 refresh();
 setInterval(refresh, 2000);
 </script>
@@ -514,8 +510,111 @@ setInterval(refresh, 2000);
 
 
 def page_html():
-    blob = json.dumps(status_payload(), ensure_ascii=False).replace("<", "\\u003c")
-    return PAGE.replace("__STATUS__", blob)
+    data = status_payload()
+    if data.get("error"):
+        revision = data["error"]
+    else:
+        revision = f'{data["branch"]} @ {data["head"]}，未提交 {data["dirty_count"]} 個路徑'
+    pieces = {
+        "__REVISION__": html.escape(revision),
+        "__PLAYERS__": render_players(data.get("artifacts") or []),
+        "__QUESTION_INTRO__": html.escape((data.get("questions") or {}).get("intro") or ""),
+        "__QUESTIONS__": render_questions(data.get("questions") or {}),
+        "__FLOWS__": render_flows(data.get("flow") or {}),
+        "__CODE__": render_code(data.get("artifacts") or []),
+        "__PROGRESS__": render_items((data.get("narrative") or {}).get("progress") or []),
+        "__NEXT__": render_items((data.get("flow") or {}).get("current_next") or (data.get("narrative") or {}).get("next") or []),
+        "__JOBS__": render_jobs(data.get("jobs") or []),
+    }
+    page = PAGE
+    for key, value in pieces.items():
+        page = page.replace(key, value)
+    return page
+
+
+def render_items(items):
+    return "".join(f"<li>{html.escape(str(item))}</li>" for item in items)
+
+
+def render_code(artifacts):
+    parts = []
+    for row in artifacts:
+        state = f'{row["bytes"]} bytes' if row.get("exists") else "不存在"
+        klass = "ok" if row.get("exists") else "miss"
+        parts.append(
+            f'<p><strong>{html.escape(row["label"])}</strong> '
+            f'<span class="{klass}">{html.escape(state)}</span><br>'
+            f'<code>{html.escape(row["path"])}</code></p>'
+        )
+    return "".join(parts)
+
+
+def render_players(artifacts):
+    parts = []
+    for row in artifacts:
+        audio = ""
+        if row.get("exists"):
+            audio = f'<audio controls preload="none" src="/audio/{html.escape(row["id"])}"></audio>'
+        state = f'{row["bytes"]} bytes' if row.get("exists") else "不存在"
+        klass = "ok" if row.get("exists") else "miss"
+        parts.append(
+            f'<div class="player"><h3>{html.escape(row["label"])} '
+            f'<span class="{klass}">{html.escape(state)}</span></h3>{audio}'
+            f'<code>{html.escape(row["path"])}</code></div>'
+        )
+    return "".join(parts)
+
+
+def render_questions(payload):
+    blocks = []
+    for index, question in enumerate(payload.get("questions") or [], 1):
+        options = "".join(
+            '<label><input type="radio" name="{name}" value="{label}">{label}</label>'.format(
+                name=html.escape(question["id"]),
+                label=html.escape(option["label"]),
+            )
+            for option in question.get("options") or []
+        )
+        blocks.append(
+            f'<div class="q" data-question="{html.escape(question["id"])}" '
+            f'data-prompt="{html.escape(question["prompt"])}">'
+            f'<strong>{index}. {html.escape(question["prompt"])}</strong>'
+            f'<div class="choice">{options}</div></div>'
+        )
+    return "".join(blocks)
+
+
+def render_flows(payload):
+    labels = {"done": "已完成", "current": "目前", "later": "之後", "blocked": "受阻"}
+    sections = []
+    for flow in payload.get("flows") or []:
+        meter = ""
+        if flow.get("total"):
+            meter = f'已完成 {flow["done"]} / {flow["total"]}。目前：{flow.get("current_title") or "未標明"}。'
+        stages = []
+        for index, stage in enumerate(flow.get("stages") or [], 1):
+            status = stage.get("status") or ""
+            row = " current-row" if status == "current" else ""
+            stages.append(
+                f'<div class="stage{row}"><div class="badge {html.escape(status)}">'
+                f'{html.escape(labels.get(status, status))}</div><div>'
+                f'<strong>{index}. {html.escape(stage.get("title") or "")}</strong>'
+                f'<p>{html.escape(stage.get("detail") or "")}</p></div></div>'
+            )
+        sections.append(
+            f'<section><h2>{html.escape(flow.get("title") or "")}</h2>'
+            f'<p class="meter">{html.escape(meter)}</p>{"".join(stages)}</section>'
+        )
+    return "".join(sections)
+
+
+def render_jobs(jobs):
+    return "".join(
+        f'<div class="job"><div><strong>{html.escape(job["title"])}</strong>'
+        f'<p>{html.escape(job["detail"])}</p></div>'
+        f'<button data-job="{html.escape(job["id"])}" type="button">執行</button></div>'
+        for job in jobs
+    )
 
 
 class Handler(BaseHTTPRequestHandler):
