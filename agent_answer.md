@@ -1,3 +1,9 @@
+### [2026-11-27 17:35] 對聽第 004 首，並調整同步與側欄
+
+- **修改的文件**：`public/v100_panel.py`、`public/panel_flow.json`、`public/panel_state.json`、`public/panel_questions.json`、`sync_to_linux.ps1`
+- **核心邏輯**：004 已生成 217.1 秒且未截斷，下一步只對聽。頂端標題固定。同步區塊左邊顯示腳本步驟，右邊顯示變更文件，並附代碼樹。任務區可捲動、可拖高。GPU 改為 4×2。
+- **AI 備註**：權重維持基模。請在頁面播放原曲和生成音頻，複製選擇題答案貼回來。
+
 ### [2026-11-27 17:10] 同步狀態、固定側欄和回答翻頁
 
 - **修改的文件**：`public/v100_panel.py`、`public/panel_replies.jsonl`、`public/panel_state.json`、`sync_to_linux.ps1`

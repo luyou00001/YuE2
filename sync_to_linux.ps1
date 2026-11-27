@@ -49,11 +49,21 @@ function Get-RemoteHead {
     return ("$output").Trim()
 }
 
-function Write-RemoteSyncStatus([string]$State) {
+function Write-RemoteSyncStatus([string]$State, [string]$Step, [string[]]$Files) {
     $head = "unknown"
     try { $head = (git rev-parse --short HEAD).Trim() } catch { $head = "unknown" }
     $stamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    $payload = '{"state":"' + $State + '","sha":"' + $head + '","time":"' + $stamp + '"}'
+    $parts = @()
+    if ($Files) {
+        foreach ($file in $Files) {
+            $text = "$file".Trim()
+            if (-not $text) { continue }
+            $text = $text.Replace('\','\\').Replace('"','\"')
+            $parts += '"' + $text + '"'
+        }
+    }
+    $fileJson = '[' + ($parts -join ',') + ']'
+    $payload = '{"state":"' + $State + '","step":"' + $Step + '","sha":"' + $head + '","time":"' + $stamp + '","files":' + $fileJson + '}'
     $b64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($payload))
     ssh -i $SshKey -p $SshPort -o StrictHostKeyChecking=no $SshUserHost "mkdir -p /cache/yue2_panel && printf '%s' '$b64' | base64 -d > /cache/yue2_panel/sync_status.json"
 }
@@ -65,7 +75,7 @@ function Show-UpdatedFiles([string]$Before, [string]$After) {
     Write-Host "-> Server update: $fromLabel -> $toLabel" -ForegroundColor Cyan
     if ($Before -eq $After) {
         Write-Host "   No files changed in this sync." -ForegroundColor Yellow
-        return
+        return @()
     }
     if ($Before) { $base = $Before } else { $base = $emptyTree }
     $changed = @(git --no-pager diff --name-status --find-renames $base $After)
@@ -76,18 +86,20 @@ function Show-UpdatedFiles([string]$Before, [string]$After) {
     $changed = @($changed | Where-Object { $_ -and $_.ToString().Trim() })
     if ($changed.Count -eq 0) {
         Write-Host "   No files changed in this sync." -ForegroundColor Yellow
-        return
+        return @()
     }
     Write-Host "   Files changed in this sync ($($changed.Count)):" -ForegroundColor Green
     $changed | ForEach-Object { Write-Host "   $_" }
+    return ,$changed
 }
 
 Set-Location $RepoDir
 
 Write-Host "-> (1/5) Testing SSH connectivity..." -ForegroundColor Cyan
+Write-RemoteSyncStatus "syncing" "ssh"
 Invoke-Ssh "echo ok > /dev/null"
 Write-Host "   SSH OK" -ForegroundColor Green
-Write-RemoteSyncStatus "syncing"
+Write-RemoteSyncStatus "syncing" "pull"
 
 Write-Host "-> (2/5) Pulling latest from origin (GitHub)..." -ForegroundColor Cyan
 git pull
@@ -96,6 +108,7 @@ if ($LASTEXITCODE -ne 0) {
     throw "git pull failed"
 }
 Write-Host "   pull OK" -ForegroundColor Green
+Write-RemoteSyncStatus "syncing" "dirty"
 
 Write-Host "-> (3/5) Checking uncommitted local changes..." -ForegroundColor Cyan
 $Dirty = @(git status --porcelain)
@@ -121,9 +134,11 @@ if ($Dirty.Count -gt 0) {
 } else {
     Write-Host "   Working tree clean." -ForegroundColor Green
 }
+Write-RemoteSyncStatus "syncing" "repo"
 
 Write-Host "-> (4/5) Ensuring server repo exists at $RemoteDir ..." -ForegroundColor Cyan
 Invoke-Ssh "if [ ! -d '$RemoteDir/.git' ]; then mkdir -p '$RemoteDir' && git -C '$RemoteDir' init -q && git -C '$RemoteDir' symbolic-ref HEAD refs/heads/main && git -C '$RemoteDir' config receive.denyCurrentBranch updateInstead && echo created; else echo exists; fi"
+Write-RemoteSyncStatus "syncing" "remote"
 
 Write-Host "-> (5/5) Setting git remote '$RemoteName' ..." -ForegroundColor Cyan
 if (-not (git remote | Select-String "^$RemoteName$")) {
@@ -133,6 +148,7 @@ if (-not (git remote | Select-String "^$RemoteName$")) {
 }
 
 $RemoteBefore = Get-RemoteHead
+Write-RemoteSyncStatus "syncing" "push"
 
 Write-Host "-> Pushing to server (branch: main) ..." -ForegroundColor Cyan
 if ($Confirm) {
@@ -154,9 +170,10 @@ if ($LASTEXITCODE -ne 0) {
     throw "git push failed"
 }
 
+Write-RemoteSyncStatus "syncing" "verify"
 Write-Host "-> Verifying server side..." -ForegroundColor Cyan
 Invoke-Ssh "cd '$RemoteDir' && git status --short --branch && echo '---' && ls -1"
 $LocalHead = (git rev-parse HEAD).Trim()
-Show-UpdatedFiles $RemoteBefore $LocalHead
-Write-RemoteSyncStatus "synced"
+$changedFiles = @(Show-UpdatedFiles $RemoteBefore $LocalHead)
+Write-RemoteSyncStatus "synced" "done" $changedFiles
 Write-Host "Done." -ForegroundColor Green

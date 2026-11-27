@@ -69,10 +69,10 @@ def git_text(args):
 
 
 def listen_targets():
-    pointer = Path("/cache/yue2_outputs/suno_prep/000/audio.path")
+    pointer = Path("/cache/yue2_outputs/suno_prep/004/audio.path")
     original = Path(pointer.read_text(encoding="utf-8").strip()) if pointer.is_file() else pointer
-    generated = Path("/cache/yue2_outputs/suno_free/suno_013117_free/audio.mp3")
-    return (("original", "原曲", original), ("generated", "無譜生成", generated))
+    generated = Path("/cache/yue2_outputs/suno_free/suno_004_free/audio.mp3")
+    return (("original", "004 原曲", original), ("generated", "004 無譜生成", generated))
 
 
 def artifact_rows():
@@ -160,6 +160,8 @@ def status_payload():
             }
         dirty = [line for line in git_text(["status", "--porcelain"]).splitlines() if line.strip()]
         task_html, visible_jobs = pipeline_view()
+        sync_head, sync_steps, sync_files = sync_parts()
+        tree_html, tree_mark, tree_count = code_tree()
         return {
             "branch": git_text(["rev-parse", "--abbrev-ref", "HEAD"]) or "unknown",
             "head": git_text(["rev-parse", "--short", "HEAD"]) or "unknown",
@@ -175,7 +177,12 @@ def status_payload():
             "task_html": task_html,
             "gpu_html": render_gpus(gpu_rows()),
             "jobs_html": render_jobs(visible_jobs),
-            "sync_text": sync_text(),
+            "sync_head": sync_head,
+            "sync_steps": sync_steps,
+            "sync_files": sync_files,
+            "tree_html": tree_html,
+            "tree_mark": tree_mark,
+            "tree_count": tree_count,
         }
     except Exception as exc:
         return {
@@ -193,7 +200,12 @@ def status_payload():
             "task_html": "",
             "gpu_html": "",
             "jobs_html": "",
-            "sync_text": "",
+            "sync_head": "",
+            "sync_steps": "",
+            "sync_files": "",
+            "tree_html": "",
+            "tree_mark": "",
+            "tree_count": "",
             "live": "",
             "error": f"{type(exc).__name__}: {exc}",
         }
@@ -341,9 +353,13 @@ PAGE = """<!DOCTYPE html>
   :root { color-scheme: light; --ink:#1c1915; --muted:#5c564c; --line:#e4ddd2; --paper:#f7f4ee; --card:#fffdf9; --accent:#0f6e56; }
   * { box-sizing: border-box; }
   body { margin:0; font:16px/1.5 "Iowan Old Style", Palatino, "Songti SC", serif; color:var(--ink); background:var(--paper); }
-  main { max-width:none; width:100%; margin:0; padding:16px 20px 40px; }
-  .layout { display:grid; grid-template-columns:minmax(0, 1fr) minmax(300px, 440px); gap:16px; align-items:start; }
-  .side { position:sticky; top:12px; max-height:calc(100vh - 24px); overflow:auto; }
+  main { max-width:none; width:100%; margin:0; padding:0 20px 40px; }
+  .topbar { position:sticky; top:0; z-index:40; background:var(--paper); margin:0 -20px 16px; padding:14px 20px 10px; border-bottom:1px solid var(--line); }
+  .topbar h1 { margin:0; }
+  .topbar .sub { margin:2px 0 0; }
+  .layout { display:grid; grid-template-columns:minmax(0, 1fr) minmax(420px, 600px); gap:16px; align-items:start; width:100%; }
+  .main-col, .side { min-width:0; }
+  .side { position:sticky; top:calc(var(--topbar-h, 96px) + 8px); max-height:calc(100vh - var(--topbar-h, 96px) - 20px); overflow:auto; padding-right:2px; }
   .pager { display:flex; gap:8px; align-items:center; margin-bottom:8px; }
   @media (max-width: 900px) {
     .layout { grid-template-columns:1fr; }
@@ -392,15 +408,20 @@ PAGE = """<!DOCTYPE html>
   .q { padding:12px 0; border-top:1px solid var(--line); }
   .choice { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
   .choice label { display:flex; gap:6px; align-items:center; background:#f7f4ee; border-radius:999px; padding:6px 12px; }
-  .gpus { display:grid; grid-template-columns:repeat(8, minmax(0, 1fr)); gap:10px; }
+  .gpus { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:10px; }
   .gpu { background:#f7f4ee; border-radius:12px; padding:10px; display:grid; gap:6px; min-width:0; }
   .gpu strong { font-size:14px; }
-  .gpu span, .gpu small { color:var(--muted); font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .gpu span, .gpu small { color:var(--muted); font-size:12px; line-height:1.35; }
+  .gpu span { display:block; max-height:2.7em; overflow:hidden; }
   .bar { height:8px; background:#e4ddd2; border-radius:99px; overflow:hidden; }
   .bar > div { height:100%; background:#0f6e56; }
   .bar.mem > div { background:#1d4e89; }
-  .task-card { border:1px solid; border-radius:14px; padding:14px 16px; display:grid; gap:6px; margin-top:10px; }
-  .task-label { font:700 12px/1 sans-serif; letter-spacing:.04em; }
+  #task-board { display:flex; flex-direction:column; gap:12px; max-height:320px; overflow:auto; resize:vertical; padding:2px 6px 8px 0; margin:4px 0 12px; }
+  .task-card { border:1px solid; border-radius:14px; padding:0; margin:0; display:block; }
+  .task-card > summary { cursor:pointer; padding:12px 14px; }
+  .task-card > p { margin:0; padding:0 14px 14px; color:var(--muted); }
+  .task-card > button { margin:0 14px 14px; }
+  .task-label { font:700 12px/1 sans-serif; letter-spacing:.04em; margin-right:6px; }
   .task-ready { background:#e7f6ef; border-color:#0f6e56; }
   .task-running { background:#e8f1fb; border-color:#1d4e89; }
   .task-done { background:#f3efe8; border-color:#cfc6ba; }
@@ -408,19 +429,44 @@ PAGE = """<!DOCTYPE html>
   .task-later { background:#f7f4ee; border-color:#e4ddd2; }
   .task-group { display:grid; gap:10px; margin-top:12px; }
   .task-group h3 { margin:0; font-size:14px; }
-  @media (max-width: 1100px) { .gpus { grid-template-columns:repeat(4, minmax(0, 1fr)); } }
+  .sync-split { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); gap:16px; align-items:start; }
+  .sync-steps { list-style:none; margin:0; padding:0; display:grid; gap:8px; }
+  .sync-step { display:flex; gap:10px; align-items:baseline; padding:8px 10px; border-radius:10px; background:#f7f4ee; }
+  .sync-step .mark { font:700 12px/1 sans-serif; min-width:48px; }
+  .sync-step.done { background:#e7f6ef; }
+  .sync-step.current { background:#e8f1fb; }
+  .sync-step.wait { color:var(--muted); }
+  pre.sync-pre { max-height:280px; margin:0; background:#fffdf9; color:var(--ink); border:1px solid var(--line); }
+  .tree-fold { margin-top:14px; }
+  .tree-fold > summary { cursor:pointer; font-weight:700; }
+  .tree-count { color:var(--muted); font-weight:500; margin-left:8px; }
+  .tree { max-height:320px; overflow:auto; margin-top:8px; border:1px solid var(--line); border-radius:12px; padding:8px 12px; background:#fffdf9; font:13px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .tree-dir { margin-left:12px; }
+  .tree-dir > summary { cursor:pointer; }
+  .tree-file { margin-left:16px; color:var(--muted); }
+  @media (max-width: 900px) { .sync-split { grid-template-columns:1fr; } }
   .stage.current-row { background:#f3faf7; margin:0 -18px; padding:14px 18px; }
 </style>
 </head>
 <body>
 <main>
-  <h1>YuE2 V100</h1>
-  <p class="sub" id="revision">__REVISION__</p>
+  <div class="topbar">
+    <h1>YuE2 V100</h1>
+    <p class="sub" id="revision">__REVISION__</p>
+  </div>
   <div class="layout">
   <div class="main-col">
   <details class="block" open data-fold="sync">
     <summary>Git 同步</summary>
-    <pre class="reply" id="sync">__SYNC__</pre>
+    <p class="meter" id="sync-head">__SYNCHEAD__</p>
+    <div class="sync-split">
+      <ol class="sync-steps" id="sync-steps">__SYNCSTEPS__</ol>
+      <div id="sync-files">__SYNCFILES__</div>
+    </div>
+    <details class="tree-fold" open>
+      <summary>代碼樹 <span class="tree-count" id="tree-count">__FILECOUNT__</span></summary>
+      <div class="tree" id="code-tree" data-mark="__FILEMARK__">__FILETREE__</div>
+    </details>
   </details>
   <details class="block" open data-fold="reply">
     <summary>本輪回答</summary>
@@ -545,6 +591,7 @@ let last = "";
 let seenHead = "";
 let selectedLog = "";
 let shownLog = "";
+let taskSig = "";
 async function showLog(name, bytes) {
   const mark = name + ":" + bytes;
   if (!name) {
@@ -625,15 +672,30 @@ async function refresh() {
 function applyStatus(data) {
   try {
   document.getElementById("revision").textContent = `${data.branch} @ ${data.head}，未提交 ${data.dirty_count} 個路徑`;
+  pinSide();
   const busy = Boolean(data.running);
   if (note) note.textContent = busy ? `正在跑 ${data.running.id}` : "";
   const board = document.getElementById("task-board");
-  if (board && data.task_html) board.innerHTML = data.task_html;
+  if (board && data.task_html && data.task_html !== taskSig) {
+    taskSig = data.task_html;
+    board.innerHTML = data.task_html;
+  }
   document.querySelectorAll("button[data-job]").forEach(button => { button.disabled = busy; });
   const gpus = document.getElementById("gpus");
   if (gpus && data.gpu_html) gpus.innerHTML = data.gpu_html;
-  const sync = document.getElementById("sync");
-  if (sync && data.sync_text) sync.textContent = data.sync_text;
+  const syncHead = document.getElementById("sync-head");
+  if (syncHead && data.sync_head) syncHead.textContent = data.sync_head;
+  const syncSteps = document.getElementById("sync-steps");
+  if (syncSteps && data.sync_steps) syncSteps.innerHTML = data.sync_steps;
+  const syncFiles = document.getElementById("sync-files");
+  if (syncFiles && data.sync_files) syncFiles.innerHTML = data.sync_files;
+  const tree = document.getElementById("code-tree");
+  if (tree && data.tree_html && tree.dataset.mark !== (data.tree_mark || "")) {
+    tree.innerHTML = data.tree_html;
+    tree.dataset.mark = data.tree_mark || "";
+  }
+  const treeCount = document.getElementById("tree-count");
+  if (treeCount && data.tree_count) treeCount.textContent = data.tree_count;
   if (data.running && data.running.log) selectedLog = data.running.log;
   else if (!selectedLog && data.logs.length) selectedLog = data.logs[0].name;
   document.getElementById("logpick").innerHTML = data.logs.map(row =>
@@ -660,6 +722,13 @@ async function runJob(id) {
   note.textContent = response.ok ? "已開始，輸出會顯示在下方" : (data.error || "無法啟動");
   refresh();
 }
+function pinSide() {
+  const bar = document.querySelector(".topbar");
+  if (!bar) return;
+  document.documentElement.style.setProperty("--topbar-h", Math.ceil(bar.getBoundingClientRect().height) + "px");
+}
+pinSide();
+window.addEventListener("resize", pinSide);
 refresh();
 setInterval(refresh, 2000);
 </script>
@@ -698,27 +767,132 @@ def optional_blocks(data):
     return "".join(blocks)
 
 
-def sync_text():
+SYNC_STEPS = (
+    ("ssh", "(1/5) Testing SSH connectivity"),
+    ("pull", "(2/5) Pulling latest from origin"),
+    ("dirty", "(3/5) Checking uncommitted local changes"),
+    ("repo", "(4/5) Ensuring server repo exists"),
+    ("remote", "(5/5) Setting git remote"),
+    ("push", "Pushing to server"),
+    ("verify", "Verifying server side"),
+    ("done", "Done"),
+)
+TREE_CACHE = {"head": None, "html": "", "count": ""}
+
+
+def sync_record():
     path = Path("/cache/yue2_panel/sync_status.json")
-    state, sha, when = "unknown", "", ""
-    if path.is_file():
-        try:
-            info = json.loads(path.read_text(encoding="utf-8"))
-            state = str(info.get("state") or "unknown")
-            sha = str(info.get("sha") or "")
-            when = str(info.get("time") or "")
-        except (OSError, json.JSONDecodeError):
-            pass
+    if not path.is_file():
+        return {}
+    try:
+        info = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return info if isinstance(info, dict) else {}
+
+
+def sync_parts():
+    info = sync_record()
+    state = str(info.get("state") or "unknown")
+    step = str(info.get("step") or "")
+    sha = str(info.get("sha") or "")
+    when = str(info.get("time") or "")
     labels = {"syncing": "正在同步", "synced": "已同步", "unknown": "尚無同步記錄"}
-    head = git_text(["log", "-1", "--format=%h %ci %s"]) or "unknown"
-    dirty = git_text(["status", "--porcelain"])
-    dirty_n = len([line for line in dirty.splitlines() if line.strip()]) if dirty else 0
-    return "\n".join([
-        f"同步：{labels.get(state, state)}",
-        f"上次同步：{when or '無'}  {sha}",
-        f"伺服器：{head}",
-        f"未提交：{dirty_n}",
-    ])
+    head = f"{labels.get(state, state)}    {when or '無'}    {sha}".strip()
+    order = [key for key, _title in SYNC_STEPS]
+    if state == "synced" or step == "done":
+        cursor = len(order)
+    elif step in order:
+        cursor = order.index(step)
+    else:
+        cursor = -1
+    rows = []
+    for index, (_key, title) in enumerate(SYNC_STEPS):
+        if index < cursor:
+            mark, klass = "完成", "done"
+        elif index == cursor:
+            mark, klass = "進行中", "current"
+        else:
+            mark, klass = "等待", "wait"
+        rows.append(
+            f'<li class="sync-step {klass}"><span class="mark">{mark}</span>'
+            f"<span>{html.escape(title)}</span></li>"
+        )
+    files = info.get("files") if isinstance(info.get("files"), list) else None
+    if files:
+        body = "\n".join(str(item) for item in files)
+        caption = f"Files changed in this sync ({len(files)})"
+    elif state == "synced":
+        shown = git_text(["show", "--name-status", "--pretty=format:", "-1"])
+        lines = [line for line in shown.splitlines() if line.strip()]
+        if lines:
+            body = "\n".join(lines)
+            caption = f"Files changed in this sync ({len(lines)})"
+        else:
+            body = "No files changed in this sync."
+            caption = "Files changed in this sync"
+    elif state == "syncing":
+        body = ""
+        caption = "Files changed in this sync"
+    else:
+        body = "No files changed in this sync."
+        caption = "Files changed in this sync"
+    files_html = (
+        f'<p class="meter">{html.escape(caption)}</p>'
+        f'<pre class="sync-pre">{html.escape(body)}</pre>'
+    )
+    return head, "".join(rows), files_html
+
+
+def render_file_tree(listing):
+    files = [line.strip() for line in listing.splitlines() if line.strip()]
+    if not files:
+        return "<p>沒有讀到代碼樹</p>", "0"
+    root = {}
+    for path in files:
+        node = root
+        parts = path.split("/")
+        for part in parts[:-1]:
+            child = node.get(part)
+            if not isinstance(child, dict):
+                child = {}
+                node[part] = child
+            node = child
+        node[parts[-1]] = None
+
+    def count(node):
+        total = 0
+        for value in node.values():
+            total += 1 if value is None else count(value)
+        return total
+
+    def walk(node):
+        names = sorted(node, key=lambda name: (node[name] is None, name.lower()))
+        chunks = []
+        for name in names:
+            value = node[name]
+            safe = html.escape(name)
+            if value is None:
+                chunks.append(f'<div class="tree-file">{safe}</div>')
+            else:
+                chunks.append(
+                    f'<details class="tree-dir"><summary>{safe} {count(value)}</summary>'
+                    f"{walk(value)}</details>"
+                )
+        return "".join(chunks)
+
+    return walk(root), str(len(files))
+
+
+def code_tree():
+    head = git_text(["rev-parse", "HEAD"]) or ""
+    if TREE_CACHE["head"] == head and TREE_CACHE["html"]:
+        return TREE_CACHE["html"], head, TREE_CACHE["count"]
+    html_tree, count = render_file_tree(git_text(["ls-files"]))
+    TREE_CACHE["head"] = head
+    TREE_CACHE["html"] = html_tree
+    TREE_CACHE["count"] = count
+    return html_tree, head, count
 
 
 def reply_history():
@@ -759,7 +933,12 @@ def page_html():
         "__JOBS_ATTR__": "open" if pipeline_view()[1] else "hidden",
         "__REPLY__": html.escape(reply_text()),
         "__REPLIES__": json.dumps(reply_history(), ensure_ascii=False).replace("<", "\\u003c"),
-        "__SYNC__": html.escape(sync_text()),
+        "__SYNCHEAD__": html.escape(data.get("sync_head") or ""),
+        "__SYNCSTEPS__": data.get("sync_steps") or "",
+        "__SYNCFILES__": data.get("sync_files") or "",
+        "__FILETREE__": data.get("tree_html") or "",
+        "__FILEMARK__": html.escape(data.get("tree_mark") or ""),
+        "__FILECOUNT__": html.escape(data.get("tree_count") or ""),
         "__TASKS__": pipeline_view()[0],
         "__GPUS__": render_gpus(gpu_rows()),
         "__OPTIONAL__": optional_blocks(data),
@@ -854,6 +1033,8 @@ def done_detail(task_id):
         return "batch7_done=7，001 到 007 已打包。"
     if task_id == "abc_loss8":
         return "8 首平均 abc_loss=0.4971。000 最低 0.3594，004 最高 0.6875。沒有更新權重。"
+    if task_id == "free004":
+        return "已生成 217.1 秒，耗時 501.5 秒。樂譜和語義都沒有截斷。"
     return JOBS[task_id]["detail"]
 
 
@@ -902,14 +1083,16 @@ def render_gpus(rows):
         try:
             util = max(0, min(100, int(float(gpu["util"]))))
             mem_pct = max(0, min(100, int(100 * float(gpu["memory_used"]) / max(float(gpu["memory_total"]), 1))))
-        except ValueError:
+            mem_text = f'{float(gpu["memory_used"]) / 1024:.1f}/{float(gpu["memory_total"]) / 1024:.0f} GB'
+        except (TypeError, ValueError):
             util, mem_pct = 0, 0
+            mem_text = f'{gpu["memory_used"]}/{gpu["memory_total"]} MiB'
         cards.append(
             f'<div class="gpu"><strong>GPU {html.escape(gpu["index"])}</strong>'
             f'<span>{html.escape(gpu["name"])}</span>'
             f'<div class="bar"><div style="width:{util}%"></div></div><small>利用率 {util}%</small>'
             f'<div class="bar mem"><div style="width:{mem_pct}%"></div></div>'
-            f'<small>顯存 {html.escape(gpu["memory_used"])}/{html.escape(gpu["memory_total"])} MiB</small></div>'
+            f'<small>顯存 {html.escape(mem_text)}</small></div>'
         )
     return "".join(cards)
 
