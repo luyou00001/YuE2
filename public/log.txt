@@ -1,4 +1,80 @@
-(PyTorch-2.0.0) [ma-user YuE2]$PYTHONPATH=src python public/suno_prepare.py
-jsonl=/cache/yue2_files/datasets/suno_100/train_cn.jsonl jsonl_rows=49516 selected=100 matched=100 missing_meta=0 missing_audio=0 mix_files=200
-wrote=000 id=suno_cn_013117 track=0 audio_sec=174.80 lyric_chars=608 style_chars=133 sections=11
+(PyTorch-2.0.0) [ma-user YuE2]$HF_HUB_OFFLINE=1 PYTHONPATH=src python public/suno_first.py
+stage public/transcribe_one.py
+`torch_dtype` is deprecated! Use `dtype` instead!
+`torch_dtype` is deprecated! Use `dtype` instead!
+score_exists True
+score_chars 2312
+X:1
+T:
+M:4/4
+L:1/16
+Q:1/4=129
+V: Vocal clef=treble name="Vocal Melody" snm="Vocal"
+V: Ins clef=treble name="Ins Melody" snm="Inst."
+K:Eb
+% intro
+V: Vocal
+gzgzfz3gz3bz3|"Cm"cz12z3|"D#"z8g2f2g2b2|"A#"dz12z3|
+V: Ins
+Z4|
+V: Vocal
+"A#"z6C2c2B2c2c2|
+V: Ins
+Z|
+% verse
+V: Vocal
+"Cm"B2G4C2c2B2c2G2|"D#"G4z4c2B2B2B2-|"A#"B2F4F2F4E2G2-|"Cm"G2z8c2c2B2|
+V: Ins
+Z4|
+V: Vocal
+"G#maj7"c4g2g2c6B2|"G#maj7"c2e2f2g2c2c2c2B2|"Cm"c4g2g2c8|"Cm"z2c2c2c2e4c4|
+V: Ins
+Z4|
+% chorus
+V: Vocal
+"Cm"e4G4c2e2f2g2|"D#"e4G4c2e2f2g2|"A#"f2f2f2f2f2g2f2e2|"Cm"e4c4c2B2c2c2|
+V: Ins
+Z4|
+% verse
+V: Vocal
+"Cm"G2G4z2c2B2c2G2|"D#"G4z2C2c2B2B2B2|"A#"B2F2F4F2F2E2G2|"Cm"C4z6c2c2B2|
+V: Ins
+Z4|
+V: Vocal
+"G#maj7"c4g2g2c6B2|"G#maj7"c2e2f2g2c2c2c2B2|"Cm"c4g2g2c8|"Cm"z2c2c2c2e4c4|
+V: Ins
+Z4|
+% chorus
+V: Vocal
+"Cm"e4G4c2e2f2g2|"D#"e4G4c2e2f2g2|"A#"f2f2f2f2f2g2f2e2|"Cm"e4c2c2c2B2c2B2|
+V: Ins
+Z4|
+V: Vocal
+"G#maj7"c4z2c2c2c2c2f2|"D#"g4z6B2B2B2|"A#"f2f2f2f2f4f2g2|"Gm"b2f2g4g8|
+V: Ins
+Z4|
+V: Vocal
+"Gm"z2c2c2c2e4c4|"Cm"e4G4c2e2f2g2|"D#"e4G4c2e2f2g2|"A#"f2f2f2f2f2g2f2e2|
+V: Ins
+Z4|
+V: Vocal
+"Cm"e4c2c2c2e2f2g2|"Cm"c2B2c4c2e2f2g2|"D#"e4G4c2e2f2g2|"A#"f2f2f2f2f2g2f2e2|
+V: Ins
+Z4|
+V: Vocal
+"Cm"e4c2g2f2g2f2e2|
+V: Ins
+Z|
+% bridge
+V: Vocal
+"G#"c6g2f2g2
+abc_error None
+warnings []
+stage public/pack_suno_one.py
+audio_sec=174.80 lyric_chars=608 abc_chars=2312 prefix_len=2262 saved=/cache/yue2_outputs/suno_packed/000
+stage public/train_abc_loss.py
+tokens=2262 supervised_abc=1770
+`torch_dtype` is deprecated! Use `dtype` instead!
+abc_loss=0.3594
+no weights were updated or saved
 (PyTorch-2.0.0) [ma-user YuE2]$
