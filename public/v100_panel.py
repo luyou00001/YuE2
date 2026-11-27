@@ -86,8 +86,13 @@ def git_text(args):
 def listen_targets():
     pointer = Path("/cache/yue2_outputs/suno_prep/004/audio.path")
     original = Path(pointer.read_text(encoding="utf-8").strip()) if pointer.is_file() else pointer
-    generated = Path("/cache/yue2_outputs/suno_free/suno_004_free/audio.mp3")
-    return (("original", "004 原曲", original), ("generated", "004 無譜生成", generated))
+    base = Path("/cache/yue2_outputs/suno_free/suno_004_free/audio.mp3")
+    updated = Path("/cache/yue2_outputs/suno_free/suno_004_fit32/audio.mp3")
+    return (
+        ("original", "004 原曲", original),
+        ("base", "004 基模", base),
+        ("fit32", "004 新權重", updated),
+    )
 
 
 def artifact_rows():
@@ -434,7 +439,7 @@ PAGE = """<!DOCTYPE html>
   p, li { margin:0; }
   .sub { color:var(--muted); margin-bottom:20px; }
   .grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:16px; }
-  .players { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .players { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:16px; }
   .player audio { width:100%; margin:10px 0; height:42px; }
   @media (max-width: 900px) {
     .grid { grid-template-columns:1fr; }
@@ -514,11 +519,14 @@ PAGE = """<!DOCTYPE html>
   .sync-step.current { background:#e8f1fb; }
   .sync-step.wait { color:var(--muted); }
   .tree-pane { position:relative; min-width:0; min-height:100%; }
-  .tree-pane > .meter { display:flex; align-items:center; gap:8px; margin:0 0 6px; min-width:0; white-space:nowrap; overflow:hidden; }
+  .sync-title { display:flex; align-items:center; gap:16px; min-width:0; margin-bottom:8px; }
+  .sync-title .meter { margin:0; }
+  #sync-head { flex:none; }
+  #tree-count { flex:1; min-width:0; display:flex; align-items:center; gap:8px; overflow:hidden; }
   .tree-label { flex:none; }
   .chip-row { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .chip { display:inline-block; margin-right:6px; padding:2px 6px; border-radius:6px; font:700 11px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-  .tree-scroll { position:absolute; left:0; right:0; top:32px; bottom:0; overflow:auto; border:1px solid var(--line); border-radius:12px; background:#fffdf9; }
+  .tree-scroll { position:absolute; left:0; right:0; top:0; bottom:0; overflow:auto; border:1px solid var(--line); border-radius:12px; background:#fffdf9; }
   .tree, .tree ul { list-style:none; margin:0; padding:0; }
   .tree { margin:2px 0 2px 8px; padding-left:10px; border-left:1px solid #d4cbbf; position:relative; font:12px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
   .tree ul { margin-left:6px; padding-left:10px; border-left:1px solid #d4cbbf; position:relative; }
@@ -563,11 +571,13 @@ PAGE = """<!DOCTYPE html>
   <div class="main-col">
   <details class="block" open data-fold="sync">
     <summary>Git 同步</summary>
-    <p class="meter" id="sync-head">__SYNCHEAD__</p>
+    <div class="sync-title">
+      <p class="meter" id="sync-head">__SYNCHEAD__</p>
+      <p class="meter" id="tree-count">__FILECOUNT__</p>
+    </div>
     <div class="sync-split">
       <ol class="sync-steps" id="sync-steps">__SYNCSTEPS__</ol>
       <div class="tree-pane">
-        <p class="meter" id="tree-count">__FILECOUNT__</p>
         <div class="tree-scroll" id="code-tree" data-mark="__FILEMARK__">__FILETREE__</div>
       </div>
     </div>
@@ -951,7 +961,7 @@ def optional_blocks(data):
     if narrative_data.get("show_listen"):
         blocks.append(
             '<details class="block" open data-fold="listen"><summary>對聽</summary>'
-            '<p class="meter">直接播放伺服器上的檔案。只比較旋律和段落。</p>'
+            '<p class="meter">三份都在伺服器上：原曲、基模無譜生成、新權重無譜生成。</p>'
             f'<div class="players" id="players">{render_players(data.get("artifacts") or [])}</div>'
             "</details>"
         )
@@ -1424,7 +1434,11 @@ def pipeline_view():
                 if running == "free004_fit32":
                     cards.append(task_card("running", "正在進行", listen_new, listen_detail))
                 elif Path("/cache/yue2_outputs/suno_free/suno_004_fit32/audio.mp3").is_file():
-                    cards.append(task_card("done", "已完成", listen_new, "新權重的第 004 首已生成。請對聽。"))
+                    cards.append(task_card("done", "已完成", listen_new, "已生成 224.0 秒，耗時 517.2 秒。樂譜和語義都沒有截斷。"))
+                    cards.append(task_card(
+                        "next", "請對聽", f"{len(PIPELINE) + 5}. 三份對聽",
+                        "播放原曲、基模生成和新權重生成。選完選擇題後按複製答案。",
+                    ))
                 else:
                     record = job_record("free004_fit32")
                     cards.append(task_card("next", "下一步", listen_new, listen_detail, record))

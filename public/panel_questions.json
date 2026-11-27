@@ -1,58 +1,58 @@
 {
-  "intro": "這次聽的是第 004 首 suno_cn_011286。選完後按複製答案，把文字貼回來。",
+  "intro": "比較三份：原曲、基模無譜生成、新權重無譜生成。選完後按複製答案，把文字貼回來。",
   "questions": [
     {
       "id": "overall",
-      "prompt": "原曲和無譜生成，整體像不像？",
+      "prompt": "新權重和原曲，比基模那次更近還是更遠？",
       "options": [
-        {"id": "very", "label": "很像"},
-        {"id": "some", "label": "有點像"},
-        {"id": "no", "label": "不像"}
+        {"id": "closer", "label": "更近"},
+        {"id": "same", "label": "差不多"},
+        {"id": "farther", "label": "更遠"}
       ]
     },
     {
       "id": "melody",
-      "prompt": "旋律接近嗎？",
+      "prompt": "旋律呢？",
       "options": [
-        {"id": "close", "label": "旋律接近"},
-        {"id": "part", "label": "只有部分段落接近"},
-        {"id": "diff", "label": "旋律不同"}
+        {"id": "closer", "label": "新權重更接近"},
+        {"id": "same", "label": "和基模差不多"},
+        {"id": "worse", "label": "新權重更偏"}
       ]
     },
     {
       "id": "section",
-      "prompt": "前奏、主歌、副歌的順序對得上嗎？",
+      "prompt": "前奏、主歌、副歌呢？",
       "options": [
-        {"id": "yes", "label": "對得上"},
-        {"id": "part", "label": "大致對，有一段錯"},
-        {"id": "no", "label": "對不上"}
+        {"id": "better", "label": "新權重更對"},
+        {"id": "same", "label": "和基模一樣"},
+        {"id": "worse", "label": "新權重更亂"}
       ]
     },
     {
       "id": "arrange",
-      "prompt": "伴奏厚度怎麼樣？",
+      "prompt": "伴奏厚度呢？",
       "options": [
-        {"id": "close", "label": "接近原曲"},
-        {"id": "thin", "label": "仍然偏少"},
-        {"id": "full", "label": "比原曲更滿"}
+        {"id": "closer", "label": "新權重更接近"},
+        {"id": "same", "label": "和基模差不多"},
+        {"id": "thinner", "label": "新權重更少"}
       ]
     },
     {
       "id": "vocal",
-      "prompt": "人聲聽起來怎麼樣？",
+      "prompt": "人聲呢？",
       "options": [
-        {"id": "ok", "label": "自然"},
-        {"id": "odd", "label": "有點怪，但能聽"},
-        {"id": "bad", "label": "明顯怪"}
+        {"id": "better", "label": "新權重更自然"},
+        {"id": "same", "label": "和基模差不多"},
+        {"id": "worse", "label": "新權重更怪"}
       ]
     },
     {
       "id": "next",
       "prompt": "下一步先做哪一件？",
       "options": [
-        {"id": "fit", "label": "先做放得進 32GB 的小更新"},
-        {"id": "another", "label": "再無譜生成另一首高損失的歌"},
-        {"id": "wait", "label": "先不要更新權重"}
+        {"id": "more", "label": "再多做幾步同樣的小更新"},
+        {"id": "another", "label": "換一首高損失的歌再聽"},
+        {"id": "stop", "label": "先停在這裡"}
       ]
     }
   ]

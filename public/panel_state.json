@@ -1,15 +1,14 @@
 {
-  "show_listen": false,
-  "show_questions": false,
+  "show_listen": true,
+  "show_questions": true,
   "listen_done": true,
-  "updated": "2026-11-27 18:43",
+  "updated": "2026-11-27 19:01",
   "progress": [
-    "小更新完成：8 首各一步，峰值 9.85 GiB。",
-    "新權重在 /cache/yue2_ckpts/fit32-suno8。基模目錄沒有改。",
-    "印出的 abc_loss 是每一步更新前的數值，004 仍是 0.6875。"
+    "新權重已生成 224.0 秒，耗時 517.2 秒。",
+    "樂譜和語義都沒有截斷。mp3 在 suno_004_fit32。"
   ],
   "next": [
-    "用新權重無譜生成第 004 首",
-    "和基模那次、以及原曲對聽"
+    "播放原曲、基模生成和新權重生成",
+    "選完選擇題後按複製答案"
   ]
 }
