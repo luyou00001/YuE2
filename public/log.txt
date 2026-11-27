@@ -1,26 +1,73 @@
-(PyTorch-2.0.0) [ma-user YuE2]$HF_HUB_OFFLINE=1 PYTHONPATH=src python public/transcribe_one.py
+(PyTorch-2.0.0) [ma-user YuE2]$PYTHONPATH=src python public/fetch_one_full_mix.py
+INFO:root:Using MoXing-v2.2.3.2c7f2141-2c7f2141
+INFO:root:Using OBS-Python-SDK-3.20.9.1
+INFO:root:Using OBS-C-SDK-2.23.1
+duration_sec=235.96 mp3=True saved=/cache/yue2_outputs/full_mix/000/mix.wav
+(PyTorch-2.0.0) [ma-user YuE2]$HF_HUB_OFFLINE=1 PYTHONPATH=src python public/transcribe_one.py --audio /cache/yue2_outputs/full_mix/000/mix.wav --output /cache/yue2_outputs/full_mix/000/score
 `torch_dtype` is deprecated! Use `dtype` instead!
 `torch_dtype` is deprecated! Use `dtype` instead!
 score_exists True
-score_chars 275
+score_chars 2917
 X:1
 T:
-M:4/4
-L:1/16
-Q:1/4=101
+M:6/8
+L:1/32
+Q:1/4=90
 V: Vocal clef=treble name="Vocal Melody" snm="Vocal"
 V: Ins clef=treble name="Ins Melody" snm="Inst."
-K:Cm
+K:Eb
 % intro
 V: Vocal
-z12"Fm7"z4|"Fm7"z16|"Fm7"z16|"D#maj7"z16|
+Z|"Fm7"z24|"Fm7"z24|"D#maj7"z24|
 V: Ins
-Z|F2G2e2G2e8-|e16|E2G2d2G2d8-|
+Z|F2G2A2e2G2A2e12-|e16-e4z4|E2G2A2d2G2A2d12-|
 V: Vocal
-"D#maj7"z12z3z|
+"D#maj7"z24|"Fm7"z24|"Fm7"z24|"D#maj7"z24|
 V: Ins
-d12-d3z|
-
+d16-d4z4|F2G2A2e2G2A2e12-|e16-e4z4|E2G2A2d2G2A2d12-|
+V: Vocal
+"D#maj7"z24|
+V: Ins
+d16-d4z4|
+% verse
+V: Vocal
+"Fm7"z12c4e4g4|"D#maj7"d8z4B8G4|"G#maj7"c8z16|"G#maj7"z24|
+V: Ins
+Z2|z12z2d2e2g2d2e2|g2d2e2g2d2e2g2d2e2g2z4|
+V: Vocal
+"Fm7"z12c4e4g4|"D#maj7"d8e4f8b4|"G#maj7"g24|"G#maj7"z16g4g4|
+V: Ins
+Z3|c2d2e2g2d2e2g2d2z8|
+V: Vocal
+"Fm7"f8z8e4g4|"A#"g4g4f8z4B4|"Gm7"b12a4g4f4|"Gm7"f4"C"=e8c'8g4|
+V: Ins
+Z4|
+V: Vocal
+"C"a4-"Fm7"a8z4g4f4|"Gm7"g8z4f4e4d4|"C"d4c16z4|"C"z24|
+V: Ins
+Z4|
+V: Vocal
+"C"z12c4"G#maj7"c'8-|
+V: Ins
+Z|
+% chorus
+V: Vocal
+"G#maj7"c'4z8c'4c'4"A#"b4-|"A#"b4z8g8f4|"A#"f4"C"g16-g4-|"C"g12z12|
+V: Ins
+Z4|
+V: Vocal
+"C"z12c4"G#maj7"c'8-|"G#maj7"c'8c'4c'4d'4"A#"b4-|"A#"b4z8g8f4|"C"g24-|
+V: Ins
+Z4|
+V: Vocal
+"C"g8z16|"C"z8c4"C#maj7"c'12-|"C#maj7"c'4z4c'4d'4"D#"b8-|"D#"b8z8g4a4|
+V: Ins
+Z4|
+V: Vocal
+"C7"b16z8|"C7"g4g4g4"F7"f6e2c4-|"F7"c4z12"G#maj7"g4e4|"G#maj7"c4g4e4c4"Gm7"d2z6|
+V: Ins
+Z4|
+V: V
 abc_error None
 warnings []
 (PyTorch-2.0.0) [ma-user YuE2]$
