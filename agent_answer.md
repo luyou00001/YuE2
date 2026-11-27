@@ -1,3 +1,9 @@
+### [2026-11-27 11:08] 10 秒轉譜成功，改測一首完整原音
+
+- **修改的文件**：`public/fetch_one_full_mix.py`、`public/transcribe_one.py`
+- **核心邏輯**：10 秒已寫出帶和弦的 ABC。不再轉其餘短片段。下一首用同一首歌的完整人聲加伴奏原音，不經過 VAE，再交給本地 SheetSage2。
+- **AI 備註**：輸出在 `/cache/yue2_outputs/full_mix/000/`。顯存不夠時用 `--seconds 180`。
+
 ### [2026-11-27 10:51] 權重與缺包已齊，開始轉第一首
 
 - **修改的文件**：`public/transcribe_one.py`

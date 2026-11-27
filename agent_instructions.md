@@ -1,13 +1,14 @@
-# 環境已齊，轉第一首 10 秒
+# 10 秒已成功，下一首改完整原音
 
-`mir_eval 0.8.2` 和 `pretty_midi 0.2.10` 已裝上，import 成功。兩個權重字節數也正確：SheetSage2 `model.safetensors` 是 228738564，MERT-v2-FullSong `model.safetensors` 是 2529812848。pip 提示升級可以忽略，torch 維持 2.3.1+cu121。
+10 秒轉譜成功：`score.abc` 有 275 字，`abc_error` 是空的，沒有 warnings。`torch_dtype` 那兩行只是提示，可以忽略。譜面是 C 小調、4/4、每分鐘 101 拍，人聲全是休止，伴奏有旋律和 `Fm7`、`D#maj7`。這符合一段前奏，還看不出整首歌的結構。
 
-自帶的 `infer.py` 會按設定去找 Hub 上的 `m-a-p/MERT-v2-FullSong`。這次改走已經放在 `/cache/yue2_files/MERT-v2-FullSong` 的本地目錄，並做完整轉譜（旋律、和弦、段落），輸出到這首 10 秒音頻旁邊。V100 上用 fp32。
+另外 7 首 10 秒先停著。下一步只做同一首歌的完整原音：人聲和伴奏相加，不經過 VAE。聽的檔是同目錄的 `mix.mp3`。
 
 ```bash
-HF_HUB_OFFLINE=1 PYTHONPATH=src python public/transcribe_one.py
+PYTHONPATH=src python public/fetch_one_full_mix.py
+HF_HUB_OFFLINE=1 PYTHONPATH=src python public/transcribe_one.py --audio /cache/yue2_outputs/full_mix/000/mix.wav --output /cache/yue2_outputs/full_mix/000/score
 ```
 
-成功時會印出 `score_exists True`，以及 `/cache/yue2_outputs/vae_batch/000/score/score.abc` 的開頭。把完整輸出貼回來。若中途報缺模組或 CUDA 錯誤，也原樣貼回來，先不要改 torch。
+第一行會印 `duration_sec`。第二行會印完整譜的開頭。把兩段輸出都貼回來。若第二行出現 CUDA 顯存不足，再改跑前 180 秒：把第一行換成 `PYTHONPATH=src python public/fetch_one_full_mix.py --seconds 180`。
 
-本次更新的文件：`public/transcribe_one.py`
+本次更新的文件：`public/fetch_one_full_mix.py`、`public/transcribe_one.py`
