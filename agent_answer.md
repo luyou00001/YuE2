@@ -1,3 +1,9 @@
+### [2026-11-27 15:05] 修好同步腳本並加上 V100 控制台
+
+- **修改的文件**：`sync_to_linux.ps1`、`public/v100_panel.py`、`public/panel_state.json`、`public/panel_export_listen.py`
+- **核心邏輯**：PowerShell 5.1 讀中文 UTF-8 會解析失敗，提示改成英文。控制台只綁本機，用固定腳本清單執行，日誌寫到 `/cache/yue2_panel/logs` 並可下載。
+- **AI 備註**：無譜生成已完成，185.9 秒，沒有截斷。下一步是對聽。公司電腦要先拿到新的 ps1 再跑同步。
+
 ### [2026-11-27 14:56] 同步結束時列出更新的文件
 
 - **修改的文件**：`sync_to_linux.ps1`

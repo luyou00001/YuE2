@@ -51,25 +51,25 @@ function Get-RemoteHead {
 
 function Show-UpdatedFiles([string]$Before, [string]$After) {
     $emptyTree = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
-    $fromLabel = $(if ($Before) { $Before.Substring(0, [Math]::Min(7, $Before.Length)) } else { "none" })
+    if ($Before) { $fromLabel = $Before.Substring(0, [Math]::Min(7, $Before.Length)) } else { $fromLabel = "none" }
     $toLabel = $After.Substring(0, [Math]::Min(7, $After.Length))
-    Write-Host "-> 此次伺服器更新：$fromLabel -> $toLabel" -ForegroundColor Cyan
+    Write-Host "-> Server update: $fromLabel -> $toLabel" -ForegroundColor Cyan
     if ($Before -eq $After) {
-        Write-Host "   此次沒有更新任何文件" -ForegroundColor Yellow
+        Write-Host "   No files changed in this sync." -ForegroundColor Yellow
         return
     }
-    $base = $(if ($Before) { $Before } else { $emptyTree })
+    if ($Before) { $base = $Before } else { $base = $emptyTree }
     $changed = @(git --no-pager diff --name-status --find-renames $base $After)
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "   無法和伺服器舊版本比較，改列最新一次提交的文件：" -ForegroundColor Yellow
+        Write-Host "   Could not compare with the previous server commit. Listing the latest commit:" -ForegroundColor Yellow
         $changed = @(git --no-pager show --name-status --pretty=format: -1 $After)
     }
     $changed = @($changed | Where-Object { $_ -and $_.ToString().Trim() })
     if ($changed.Count -eq 0) {
-        Write-Host "   此次沒有更新任何文件" -ForegroundColor Yellow
+        Write-Host "   No files changed in this sync." -ForegroundColor Yellow
         return
     }
-    Write-Host "   此次更新的文件 ($($changed.Count))：" -ForegroundColor Green
+    Write-Host "   Files changed in this sync ($($changed.Count)):" -ForegroundColor Green
     $changed | ForEach-Object { Write-Host "   $_" }
 }
 
