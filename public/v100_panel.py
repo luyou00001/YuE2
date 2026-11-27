@@ -30,6 +30,11 @@ JOBS = {
         "detail": "只轉接下來 7 首並打成前綴，用來確認批量轉譜。不更新權重。",
         "script": "suno_batch7.py",
     },
+    "abc_loss8": {
+        "title": "計算 8 首樂譜損失",
+        "detail": "載入一次 YuE2-3B，計算 000 到 007 的樂譜損失。不更新權重。",
+        "script": "suno_abc_loss8.py",
+    },
     "export_listen": {
         "title": "匯出對聽路徑",
         "detail": "只讀原曲和生成 mp3 的路徑與大小，不載入模型。",
@@ -680,6 +685,19 @@ def render_items(items):
     return "".join(f"<li>{html.escape(str(item))}</li>" for item in items)
 
 
+def loss8_is_done():
+    summary = Path("/cache/yue2_outputs/suno_loss8/summary.txt")
+    try:
+        if summary.is_file() and summary.read_text(encoding="utf-8").count("abc_loss=") >= 8:
+            return True
+    except OSError:
+        return False
+    logs = log_rows()
+    if not logs:
+        return False
+    return "abc_loss8_done=8" in (read_log(logs[0]["name"]) or "")
+
+
 def batch7_is_done():
     packed = Path("/cache/yue2_outputs/suno_packed")
     if all((packed / f"{index:03d}" / "prefix.npy").is_file() for index in range(1, 8)):
@@ -712,12 +730,14 @@ def task_card(state, label, title, detail):
     )
 
 
-PIPELINE = ["transcribe7"]
+PIPELINE = ["transcribe7", "abc_loss8"]
 
 
 def task_done(task_id):
     if task_id == "transcribe7":
         return batch7_is_done()
+    if task_id == "abc_loss8":
+        return loss8_is_done()
     return False
 
 

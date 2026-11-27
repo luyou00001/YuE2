@@ -1,3 +1,9 @@
+### [2026-11-27 16:56] 7 首轉完後先量 8 首樂譜損失
+
+- **修改的文件**：`public/suno_abc_loss8.py`、`public/v100_panel.py`、`public/panel_flow.json`、`public/panel_state.json`、`docs/training-flow.md`
+- **核心邏輯**：批量轉譜已完成。下一任務只計算 000 到 007 的樂譜損失，模型只載入一次，不更新權重。頁面只顯示這一個按鈕。
+- **AI 備註**：損失低不代表旋律已經學會。數字回來後再決定要不要改權重。
+
 ### [2026-11-27 16:49] 任務與八張 GPU 分開顯示
 
 - **修改的文件**：`public/v100_panel.py`、`public/panel_state.json`
