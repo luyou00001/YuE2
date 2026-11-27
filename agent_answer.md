@@ -1,3 +1,9 @@
+### [2026-11-27 14:16] Suno 100 首先對檔，訓練目標是 ABC
+
+- **修改的文件**：`public/suno_prepare.py`、`public/train_abc_loss.py`
+- **核心邏輯**：100 首有歌詞和 style。初步訓練只監督樂譜 token。先把 selected_song_ids 對上 suno_wav 和 train_cn.jsonl，寫出第 1 首的歌詞檔。不更新權重。
+- **AI 備註**：倉庫 jsonl 只有 4 行。完整檔在資料目錄。語義 tokenizer 仍缺，不做音頻微調。
+
 ### [2026-11-27 11:42] 聽感可用，先打包一首前綴
 
 - **修改的文件**：`public/pack_suno_one.py`、`public/full_mix_000_lyrics.txt`
