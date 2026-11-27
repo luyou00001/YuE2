@@ -160,7 +160,7 @@ def status_payload():
             }
         dirty = [line for line in git_text(["status", "--porcelain"]).splitlines() if line.strip()]
         task_html, visible_jobs = pipeline_view()
-        sync_head, sync_steps, sync_files = sync_parts()
+        sync_head, sync_steps = sync_parts()
         tree_html, tree_mark, tree_count = code_tree()
         return {
             "branch": git_text(["rev-parse", "--abbrev-ref", "HEAD"]) or "unknown",
@@ -179,10 +179,10 @@ def status_payload():
             "jobs_html": render_jobs(visible_jobs),
             "sync_head": sync_head,
             "sync_steps": sync_steps,
-            "sync_files": sync_files,
             "tree_html": tree_html,
             "tree_mark": tree_mark,
             "tree_count": tree_count,
+            "show_copy_log": copy_log_visible(),
         }
     except Exception as exc:
         return {
@@ -202,10 +202,10 @@ def status_payload():
             "jobs_html": "",
             "sync_head": "",
             "sync_steps": "",
-            "sync_files": "",
             "tree_html": "",
             "tree_mark": "",
             "tree_count": "",
+            "show_copy_log": False,
             "live": "",
             "error": f"{type(exc).__name__}: {exc}",
         }
@@ -429,21 +429,30 @@ PAGE = """<!DOCTYPE html>
   .task-later { background:#f7f4ee; border-color:#e4ddd2; }
   .task-group { display:grid; gap:10px; margin-top:12px; }
   .task-group h3 { margin:0; font-size:14px; }
-  .sync-split { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); gap:16px; align-items:start; }
+  .sync-split { display:grid; grid-template-columns:minmax(240px, 0.85fr) minmax(0, 1.15fr); gap:16px; align-items:start; }
   .sync-steps { list-style:none; margin:0; padding:0; display:grid; gap:8px; }
   .sync-step { display:flex; gap:10px; align-items:baseline; padding:8px 10px; border-radius:10px; background:#f7f4ee; }
   .sync-step .mark { font:700 12px/1 sans-serif; min-width:48px; }
   .sync-step.done { background:#e7f6ef; }
   .sync-step.current { background:#e8f1fb; }
   .sync-step.wait { color:var(--muted); }
-  pre.sync-pre { max-height:280px; margin:0; background:#fffdf9; color:var(--ink); border:1px solid var(--line); }
-  .tree-fold { margin-top:14px; }
-  .tree-fold > summary { cursor:pointer; font-weight:700; }
-  .tree-count { color:var(--muted); font-weight:500; margin-left:8px; }
-  .tree { max-height:320px; overflow:auto; margin-top:8px; border:1px solid var(--line); border-radius:12px; padding:8px 12px; background:#fffdf9; font:13px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-  .tree-dir { margin-left:12px; }
-  .tree-dir > summary { cursor:pointer; }
-  .tree-file { margin-left:16px; color:var(--muted); }
+  .tree-pane { min-width:0; }
+  .tree { max-height:460px; overflow:auto; border:1px solid var(--line); border-radius:12px; padding:6px 0; background:#fffdf9; font:13px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .tree summary { display:flex; align-items:center; gap:6px; min-height:28px; margin:1px 6px; padding-right:8px; border-radius:8px; cursor:pointer; list-style:none; }
+  .tree summary::-webkit-details-marker { display:none; }
+  .tree .chev { width:7px; height:7px; border-right:1.5px solid #8a8175; border-bottom:1.5px solid #8a8175; transform:rotate(-45deg); flex:none; }
+  .tree details[open] > summary .chev { transform:rotate(45deg); margin-top:-2px; }
+  .tree .file { display:flex; align-items:center; gap:6px; min-height:26px; margin:1px 6px; padding-right:8px; border-radius:8px; color:#6d675e; }
+  .tree .name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .tree .meta { margin-left:auto; color:#8a8175; font:11px/1 sans-serif; }
+  .tree .file.hit { background:#fff6e0; color:var(--ink); }
+  .tree details.hit > summary { background:#f7f4ee; }
+  .tree .tag { font:700 10px/1 sans-serif; border-radius:4px; padding:3px 4px; min-width:14px; text-align:center; }
+  .tree .tag-A { background:#e5f4ef; color:#0f6e56; }
+  .tree .tag-M { background:#fff1d6; color:#9a6700; }
+  .tree .tag-D { background:#f8e8e2; color:#9a3412; }
+  .tree .tag-R { background:#e8f1fb; color:#1d4e89; }
+  button[hidden] { display:none; }
   @media (max-width: 900px) { .sync-split { grid-template-columns:1fr; } }
   .stage.current-row { background:#f3faf7; margin:0 -18px; padding:14px 18px; }
 </style>
@@ -461,12 +470,11 @@ PAGE = """<!DOCTYPE html>
     <p class="meter" id="sync-head">__SYNCHEAD__</p>
     <div class="sync-split">
       <ol class="sync-steps" id="sync-steps">__SYNCSTEPS__</ol>
-      <div id="sync-files">__SYNCFILES__</div>
+      <div class="tree-pane">
+        <p class="meter" id="tree-count">__FILECOUNT__</p>
+        <div class="tree" id="code-tree" data-mark="__FILEMARK__">__FILETREE__</div>
+      </div>
     </div>
-    <details class="tree-fold" open>
-      <summary>代碼樹 <span class="tree-count" id="tree-count">__FILECOUNT__</span></summary>
-      <div class="tree" id="code-tree" data-mark="__FILEMARK__">__FILETREE__</div>
-    </details>
   </details>
   <details class="block" open data-fold="reply">
     <summary>本輪回答</summary>
@@ -496,7 +504,7 @@ PAGE = """<!DOCTYPE html>
   <details class="block" open data-fold="task">
     <summary>任務</summary>
     <div id="task-board">__TASKS__</div>
-    <button id="copy-task-log" type="button">複製目前日誌</button>
+    <button id="copy-task-log" type="button" __COPYLOG__>複製目前日誌</button>
     <p id="note"></p>
   </details>
   <details class="block" open data-fold="gpu">
@@ -687,8 +695,8 @@ function applyStatus(data) {
   if (syncHead && data.sync_head) syncHead.textContent = data.sync_head;
   const syncSteps = document.getElementById("sync-steps");
   if (syncSteps && data.sync_steps) syncSteps.innerHTML = data.sync_steps;
-  const syncFiles = document.getElementById("sync-files");
-  if (syncFiles && data.sync_files) syncFiles.innerHTML = data.sync_files;
+  const copyTaskLogButton = document.getElementById("copy-task-log");
+  if (copyTaskLogButton) copyTaskLogButton.hidden = !data.show_copy_log;
   const tree = document.getElementById("code-tree");
   if (tree && data.tree_html && tree.dataset.mark !== (data.tree_mark || "")) {
     tree.innerHTML = data.tree_html;
@@ -818,38 +826,38 @@ def sync_parts():
             f'<li class="sync-step {klass}"><span class="mark">{mark}</span>'
             f"<span>{html.escape(title)}</span></li>"
         )
-    files = info.get("files") if isinstance(info.get("files"), list) else None
-    if files:
-        body = "\n".join(str(item) for item in files)
-        caption = f"Files changed in this sync ({len(files)})"
-    elif state == "synced":
+    return head, "".join(rows)
+
+
+def change_map():
+    info = sync_record()
+    state = str(info.get("state") or "unknown")
+    raw = info.get("files") if isinstance(info.get("files"), list) else None
+    lines = [str(item) for item in raw if str(item).strip()] if raw else []
+    if not lines and state != "syncing":
         shown = git_text(["show", "--name-status", "--pretty=format:", "-1"])
         lines = [line for line in shown.splitlines() if line.strip()]
-        if lines:
-            body = "\n".join(lines)
-            caption = f"Files changed in this sync ({len(lines)})"
+    marks = {}
+    for line in lines:
+        parts = [part.strip() for part in line.split("\t") if part.strip()]
+        if len(parts) < 2:
+            continue
+        letter = parts[0][0]
+        if letter == "R" and len(parts) >= 3:
+            marks[parts[2]] = "R"
+            marks.setdefault(parts[1], "D")
+        elif letter in {"A", "M", "D", "R", "C"}:
+            marks[parts[-1]] = letter
         else:
-            body = "No files changed in this sync."
-            caption = "Files changed in this sync"
-    elif state == "syncing":
-        body = ""
-        caption = "Files changed in this sync"
-    else:
-        body = "No files changed in this sync."
-        caption = "Files changed in this sync"
-    files_html = (
-        f'<p class="meter">{html.escape(caption)}</p>'
-        f'<pre class="sync-pre">{html.escape(body)}</pre>'
-    )
-    return head, "".join(rows), files_html
+            marks[parts[-1]] = "M"
+    return marks
 
 
-def render_file_tree(listing):
+def render_file_tree(listing, marks):
     files = [line.strip() for line in listing.splitlines() if line.strip()]
-    if not files:
-        return "<p>沒有讀到代碼樹</p>", "0"
     root = {}
-    for path in files:
+
+    def ensure(path, letter):
         node = root
         parts = path.split("/")
         for part in parts[:-1]:
@@ -858,41 +866,85 @@ def render_file_tree(listing):
                 child = {}
                 node[part] = child
             node = child
-        node[parts[-1]] = None
+        node[parts[-1]] = letter
 
-    def count(node):
+    seen = set(files)
+    for path in files:
+        ensure(path, marks.get(path, ""))
+    for path, letter in marks.items():
+        if path not in seen:
+            ensure(path, letter)
+    if not root:
+        return "<p class='meter'>沒有讀到代碼樹</p>", "沒有讀到代碼樹"
+
+    def tally(node):
+        counts = {}
+        for value in node.values():
+            if isinstance(value, dict):
+                for key, count in tally(value).items():
+                    counts[key] = counts.get(key, 0) + count
+            elif value:
+                counts[value] = counts.get(value, 0) + 1
+        return counts
+
+    def file_count(node):
         total = 0
         for value in node.values():
-            total += 1 if value is None else count(value)
+            total += file_count(value) if isinstance(value, dict) else 1
         return total
 
-    def walk(node):
-        names = sorted(node, key=lambda name: (node[name] is None, name.lower()))
-        chunks = []
-        for name in names:
+    def tags(counts):
+        return "".join(
+            f'<span class="tag tag-{html.escape(letter)}">{html.escape(letter)} {counts[letter]}</span>'
+            for letter in ("A", "M", "D", "R", "C")
+            if counts.get(letter)
+        )
+
+    def walk(node, depth):
+        def sort_key(name):
             value = node[name]
+            changed = bool(tally(value)) if isinstance(value, dict) else bool(value)
+            return (not isinstance(value, dict), not changed, name.lower())
+
+        chunks = []
+        for name in sorted(node, key=sort_key):
+            value = node[name]
+            pad = 8 + depth * 14
             safe = html.escape(name)
-            if value is None:
-                chunks.append(f'<div class="tree-file">{safe}</div>')
-            else:
+            if isinstance(value, dict):
+                counts = tally(value)
+                hit = " hit" if counts else ""
+                opened = " open" if counts else ""
                 chunks.append(
-                    f'<details class="tree-dir"><summary>{safe} {count(value)}</summary>'
-                    f"{walk(value)}</details>"
+                    f'<details class="dir{hit}"{opened}><summary style="padding-left:{pad}px">'
+                    f'<i class="chev"></i><span class="name">{safe}</span>{tags(counts)}'
+                    f'<span class="meta">{file_count(value)}</span></summary>{walk(value, depth + 1)}</details>'
+                )
+            else:
+                hit = " hit" if value else ""
+                tag = f'<span class="tag tag-{html.escape(value)}">{html.escape(value)}</span>' if value else ""
+                chunks.append(
+                    f'<div class="file{hit}" style="padding-left:{pad + 16}px">{tag}'
+                    f'<span class="name">{safe}</span></div>'
                 )
         return "".join(chunks)
 
-    return walk(root), str(len(files))
+    changed = sum(tally(root).values())
+    caption = f"代碼樹 {file_count(root)} 個文件，本次變更 {changed}"
+    return walk(root, 0), caption
 
 
 def code_tree():
+    marks = change_map()
     head = git_text(["rev-parse", "HEAD"]) or ""
-    if TREE_CACHE["head"] == head and TREE_CACHE["html"]:
-        return TREE_CACHE["html"], head, TREE_CACHE["count"]
-    html_tree, count = render_file_tree(git_text(["ls-files"]))
-    TREE_CACHE["head"] = head
+    signature = head + "|" + ",".join(f"{path}:{marks[path]}" for path in sorted(marks))
+    if TREE_CACHE["head"] == signature and TREE_CACHE["html"]:
+        return TREE_CACHE["html"], signature, TREE_CACHE["count"]
+    html_tree, count = render_file_tree(git_text(["ls-files"]), marks)
+    TREE_CACHE["head"] = signature
     TREE_CACHE["html"] = html_tree
     TREE_CACHE["count"] = count
-    return html_tree, head, count
+    return html_tree, signature, count
 
 
 def reply_history():
@@ -935,10 +987,10 @@ def page_html():
         "__REPLIES__": json.dumps(reply_history(), ensure_ascii=False).replace("<", "\\u003c"),
         "__SYNCHEAD__": html.escape(data.get("sync_head") or ""),
         "__SYNCSTEPS__": data.get("sync_steps") or "",
-        "__SYNCFILES__": data.get("sync_files") or "",
         "__FILETREE__": data.get("tree_html") or "",
         "__FILEMARK__": html.escape(data.get("tree_mark") or ""),
         "__FILECOUNT__": html.escape(data.get("tree_count") or ""),
+        "__COPYLOG__": "" if data.get("show_copy_log") else "hidden",
         "__TASKS__": pipeline_view()[0],
         "__GPUS__": render_gpus(gpu_rows()),
         "__OPTIONAL__": optional_blocks(data),
@@ -1072,7 +1124,31 @@ def pipeline_view():
             started = True
         else:
             cards.append(task_card("later", "之後", title, task["detail"]))
+    listen_title = f"{len(PIPELINE) + 1}. 對聽第 004 首"
+    listen_detail = "播放原曲和這次生成。選完選擇題後按複製答案。"
+    if listen_is_current():
+        cards.append(task_card("next", "請對聽", listen_title, listen_detail))
+    else:
+        cards.append(task_card("later", "之後", listen_title, listen_detail))
     return "".join(cards), visible
+
+
+def listen_is_current():
+    with LOCK:
+        if CURRENT["job"] is not None:
+            return False
+    return all(task_done(task_id) for task_id in PIPELINE)
+
+
+def copy_log_visible():
+    with LOCK:
+        running = CURRENT["job"]
+        exit_code = CURRENT["exit"]
+    if running:
+        return True
+    if exit_code not in (None, 0) and not listen_is_current():
+        return True
+    return False
 
 
 def render_gpus(rows):

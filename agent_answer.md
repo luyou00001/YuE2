@@ -1,3 +1,9 @@
+### [2026-11-27 17:50] 代碼樹標注變更，任務加入對聽
+
+- **修改的文件**：`public/v100_panel.py`
+- **核心邏輯**：同步步驟右側改為代碼樹，變更文件用 A/M/D/R 和顏色標出。任務第 4 步是對聽第 004 首。對聽時隱藏複製日誌按鈕。
+- **AI 備註**：先同步再對聽。權重維持基模。選完選擇題後複製答案貼回來。
+
 ### [2026-11-27 17:35] 對聽第 004 首，並調整同步與側欄
 
 - **修改的文件**：`public/v100_panel.py`、`public/panel_flow.json`、`public/panel_state.json`、`public/panel_questions.json`、`sync_to_linux.ps1`
