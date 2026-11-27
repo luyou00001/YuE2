@@ -1,3 +1,9 @@
+### [2026-11-27 16:05] 頁面自帶狀態，SSH 只做端口轉發
+
+- **修改的文件**：`public/v100_panel.py`、`open_panel_tunnel.ps1`
+- **核心邏輯**：首頁直接嵌入狀態，避免停在讀取中。Windows 用 Start-Process 跑 `ssh -N`，不開啟遠端 shell。
+- **AI 備註**：已連上伺服器的視窗要先 exit。通道腳本印出 pid，之後用 Stop-Process 關掉。
+
 ### [2026-11-27 15:59] 修掉頁面一直停在讀取中
 
 - **修改的文件**：`public/v100_panel.py`

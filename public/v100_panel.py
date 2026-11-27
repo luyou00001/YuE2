@@ -454,6 +454,9 @@ async function refresh() {
   const key = JSON.stringify(data);
   if (key === last) return;
   last = key;
+  applyStatus(data);
+}
+function applyStatus(data) {
   try {
   document.getElementById("revision").textContent = `${data.branch} @ ${data.head}，未提交 ${data.dirty_count} 個路徑`;
   renderPlayers(data.artifacts);
@@ -497,12 +500,22 @@ async function runJob(id) {
   note.textContent = response.ok ? "已開始，輸出會顯示在下方" : (data.error || "無法啟動");
   refresh();
 }
+try {
+  applyStatus(__STATUS__);
+} catch (error) {
+  document.getElementById("revision").textContent = "內嵌狀態失敗：" + error;
+}
 refresh();
 setInterval(refresh, 2000);
 </script>
 </body>
 </html>
 """
+
+
+def page_html():
+    blob = json.dumps(status_payload(), ensure_ascii=False).replace("<", "\\u003c")
+    return PAGE.replace("__STATUS__", blob)
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -559,9 +572,10 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         path = unquote(urlparse(self.path).path)
         if path in ("/", "/index.html"):
-            body = PAGE.encode("utf-8")
+            body = page_html().encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Cache-Control", "no-store")
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
             self.wfile.write(body)
