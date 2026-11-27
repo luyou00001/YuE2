@@ -161,6 +161,7 @@ def status_payload():
             "jobs": [{"id": key, **{name: value[name] for name in ("title", "detail")}} for key, value in JOBS.items()],
             "running": running,
             "logs": log_rows(),
+            "live": live_text(),
         }
     except Exception as exc:
         return {
@@ -175,15 +176,88 @@ def status_payload():
             "jobs": [],
             "running": None,
             "logs": [],
+            "live": "",
             "error": f"{type(exc).__name__}: {exc}",
         }
 
 
 def read_log(name):
+    if not name:
+        return None
     target = LOG_DIR / Path(name).name
     if target.suffix != ".log" or not target.is_file():
         return None
     return target.read_text(encoding="utf-8", errors="replace")
+
+
+def gpu_rows():
+    try:
+        completed = subprocess.run(
+            ["nvidia-smi", "--query-gpu=index,name,memory.used,memory.total,utilization.gpu",
+             "--format=csv,noheader,nounits"],
+            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, timeout=2, check=False)
+    except (OSError, subprocess.TimeoutExpired):
+        return []
+    if completed.returncode != 0:
+        return []
+    rows = []
+    for line in completed.stdout.splitlines():
+        parts = [item.strip() for item in line.split(",")]
+        if len(parts) < 5:
+            continue
+        rows.append({
+            "index": parts[0], "name": parts[1],
+            "memory_used": parts[2], "memory_total": parts[3], "util": parts[4],
+        })
+    return rows
+
+
+def task_summary():
+    with LOCK:
+        job = CURRENT["job"]
+        log_name = CURRENT["log"]
+        started = CURRENT["started"]
+        exit_code = CURRENT["exit"]
+    logs = log_rows()
+    if not log_name and logs:
+        log_name = logs[0]["name"]
+    text = read_log(log_name) or ""
+    lines = text.splitlines()
+    ready = [line for line in lines if line.startswith("ready=")]
+    stage = next((line for line in reversed(lines) if line.startswith("stage ")), "")
+    done_line = next((line for line in reversed(lines) if line.startswith("batch7_done=")), "")
+    if job:
+        head = f"狀態：進行中 {job}"
+        if started:
+            head += f"，開始於 {started}"
+    elif done_line:
+        head = f"狀態：已完成 {done_line}。請立刻按「複製完整日誌」。"
+    elif exit_code not in (None, 0):
+        head = f"狀態：失敗 exit={exit_code}。請複製下方日誌。"
+    elif log_name:
+        head = "狀態：閒置。最近一次日誌在下方。"
+    else:
+        head = "狀態：閒置"
+    parts = [head]
+    if ready:
+        parts.append(f"已打包 {len(ready)} 首，最後 {ready[-1]}")
+    if stage and job:
+        parts.append(f"最新步驟 {stage}")
+    if log_name:
+        parts.append(f"日誌 {log_name}")
+    return "\n".join(parts)
+
+
+def live_text():
+    lines = [task_summary(), ""]
+    gpus = gpu_rows()
+    if not gpus:
+        lines.append("GPU：沒有讀到 nvidia-smi")
+    for gpu in gpus:
+        lines.append(
+            f"GPU {gpu['index']} {gpu['name']}  顯存 {gpu['memory_used']}/{gpu['memory_total']} MiB  利用率 {gpu['util']}%"
+        )
+    return "\n".join(lines)
 
 
 def watch_git():
@@ -305,7 +379,10 @@ PAGE = """<!DOCTYPE html>
     <summary>本輪回答</summary>
     <pre class="reply">__REPLY__</pre>
   </details>
-  __OPTIONAL__
+  <details class="block" open data-fold="live">
+    <summary>任務與 GPU</summary>
+    <pre class="reply" id="live">__LIVE__</pre>
+  </details>
   <div id="flows">__FLOWS__</div>
   <div class="grid">
     <details class="block" data-fold="code"><summary>代碼狀態</summary><div id="code">__CODE__</div></details>
@@ -476,6 +553,8 @@ function applyStatus(data) {
   const busy = Boolean(data.running);
   document.querySelectorAll("button[data-job]").forEach(button => { button.disabled = busy; });
   if (note) note.textContent = busy ? `正在跑 ${data.running.id}` : "";
+  const live = document.getElementById("live");
+  if (live && data.live) live.textContent = data.live;
   if (data.running && data.running.log) selectedLog = data.running.log;
   else if (!selectedLog && data.logs.length) selectedLog = data.logs[0].name;
   document.getElementById("logpick").innerHTML = data.logs.map(row =>
@@ -557,6 +636,7 @@ def page_html():
         "__NEXT__": render_items((data.get("flow") or {}).get("current_next") or (data.get("narrative") or {}).get("next") or []),
         "__JOBS__": render_jobs(data.get("jobs") or []),
         "__REPLY__": html.escape(reply_text()),
+        "__LIVE__": html.escape(live_text()),
         "__OPTIONAL__": optional_blocks(data),
     }
     page = PAGE

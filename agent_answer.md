@@ -1,3 +1,9 @@
+### [2026-11-27 16:41] 頁面即時顯示任務進度和 GPU
+
+- **修改的文件**：`public/v100_panel.py`、`public/panel_flow.json`、`public/panel_state.json`
+- **核心邏輯**：7 首轉譜已完成。狀態接口每 2 秒解析任務日誌和 nvidia-smi，頁面直接寫進行中、已完成或失敗。
+- **AI 備註**：001 到 007 已打包。完成提示出現後即可複製日誌，不必再等。
+
 ### [2026-11-27 16:32] 隱藏對聽與選擇題，區塊改為可折疊
 
 - **修改的文件**：`public/v100_panel.py`、`public/panel_state.json`
