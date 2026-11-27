@@ -1,3 +1,9 @@
+### [2026-11-27 16:59] 執行按鈕併入任務進度小塊
+
+- **修改的文件**：`public/v100_panel.py`
+- **核心邏輯**：去掉單獨的可執行步驟欄。按鈕放在任務區對應的進度小塊裡，已完成和正在進行的步驟不顯示按鈕。
+- **AI 備註**：7 首轉完後，頁面應只在黃色小塊留下計算 8 首樂譜損失。
+
 ### [2026-11-27 16:56] 7 首轉完後先量 8 首樂譜損失
 
 - **修改的文件**：`public/suno_abc_loss8.py`、`public/v100_panel.py`、`public/panel_flow.json`、`public/panel_state.json`、`docs/training-flow.md`

@@ -390,7 +390,8 @@ PAGE = """<!DOCTYPE html>
   .task-ready { background:#e7f6ef; border-color:#0f6e56; }
   .task-running { background:#e8f1fb; border-color:#1d4e89; }
   .task-done { background:#f3efe8; border-color:#cfc6ba; }
-  .task-next { background:#fff6e0; border-color:#b7791f; }
+  .task-group { display:grid; gap:10px; margin-top:12px; }
+  .task-group h3 { margin:0; font-size:14px; }
   @media (max-width: 1100px) { .gpus { grid-template-columns:repeat(4, minmax(0, 1fr)); } }
   .stage.current-row { background:#f3faf7; margin:0 -18px; padding:14px 18px; }
 </style>
@@ -406,6 +407,7 @@ PAGE = """<!DOCTYPE html>
   <details class="block" open data-fold="task">
     <summary>任務</summary>
     <div id="task-board">__TASKS__</div>
+    <p id="note"></p>
   </details>
   <details class="block" open data-fold="gpu">
     <summary>GPU</summary>
@@ -417,11 +419,6 @@ PAGE = """<!DOCTYPE html>
     <details class="block" open data-fold="progress"><summary>目前進度</summary><ul id="progress">__PROGRESS__</ul></details>
     <details class="block" open data-fold="next"><summary>下一步</summary><ul id="next">__NEXT__</ul></details>
   </div>
-  <details class="block" id="jobs-block" __JOBS_ATTR__ data-fold="jobs">
-    <summary>可執行步驟</summary>
-    <div id="jobs">__JOBS__</div>
-    <p id="note"></p>
-  </details>
   <details class="block" open data-fold="logs">
     <summary>日誌</summary>
     <div class="logpick" id="logpick"></div>
@@ -546,7 +543,7 @@ async function copyLog() {
   }
 }
 document.getElementById("copy").onclick = copyLog;
-document.getElementById("jobs").addEventListener("click", event => {
+document.getElementById("task-board").addEventListener("click", event => {
   const button = event.target.closest("button[data-job]");
   if (button && !button.disabled) runJob(button.dataset.job);
 });
@@ -579,16 +576,12 @@ function applyStatus(data) {
   try {
   document.getElementById("revision").textContent = `${data.branch} @ ${data.head}，未提交 ${data.dirty_count} 個路徑`;
   const busy = Boolean(data.running);
-  document.querySelectorAll("button[data-job]").forEach(button => { button.disabled = busy; });
   if (note) note.textContent = busy ? `正在跑 ${data.running.id}` : "";
   const board = document.getElementById("task-board");
   if (board && data.task_html) board.innerHTML = data.task_html;
+  document.querySelectorAll("button[data-job]").forEach(button => { button.disabled = busy; });
   const gpus = document.getElementById("gpus");
   if (gpus && data.gpu_html) gpus.innerHTML = data.gpu_html;
-  const jobs = document.getElementById("jobs");
-  const jobsBlock = document.getElementById("jobs-block");
-  if (jobs && data.jobs_html != null) jobs.innerHTML = data.jobs_html;
-  if (jobsBlock) jobsBlock.hidden = !data.jobs_html;
   if (data.running && data.running.log) selectedLog = data.running.log;
   else if (!selectedLog && data.logs.length) selectedLog = data.logs[0].name;
   document.getElementById("logpick").innerHTML = data.logs.map(row =>
@@ -723,10 +716,19 @@ def batch7_progress():
     return "；".join(parts)
 
 
-def task_card(state, label, title, detail):
+def task_card(state, label, title, detail, button=None):
+    action = ""
+    if button:
+        action = f'<button data-job="{html.escape(button["id"])}" type="button">執行</button>'
     return (
         f'<div class="task-card task-{state}"><span class="task-label">{html.escape(label)}</span>'
-        f'<strong>{html.escape(title)}</strong><p>{html.escape(detail)}</p></div>'
+        f'<strong>{html.escape(title)}</strong><p>{html.escape(detail)}</p>{action}</div>'
+    )
+
+
+def task_group(state, label, cards):
+    return (
+        f'<div class="task-group task-{state}"><h3>{html.escape(label)}</h3>{"".join(cards)}</div>'
     )
 
 
@@ -753,20 +755,24 @@ def pipeline_view():
     if running and running in JOBS:
         task = JOBS[running]
         detail = batch7_progress() if running == "transcribe7" else task["detail"]
-        return task_card("running", "正在進行", task["title"], detail or task["detail"]), []
+        card = task_card("running", "正在進行", task["title"], detail or task["detail"])
+        return task_group("running", "正在進行", [card]), []
     pending = [task_id for task_id in PIPELINE if not task_done(task_id)]
     finished = [task_id for task_id in PIPELINE if task_done(task_id)]
+    groups = []
+    if finished:
+        cards = [task_card("done", "已完成", JOBS[task_id]["title"], JOBS[task_id]["detail"]) for task_id in finished]
+        groups.append(task_group("done", "已完成", cards))
     if not pending:
-        if not finished:
-            return "", []
-        task = JOBS[finished[-1]]
-        return task_card("done", "已完成", task["title"], "這一步已經跑完，按鈕已隱藏。"), []
+        return "".join(groups), []
     nxt = job_record(pending[0])
     if finished:
-        prev = JOBS[finished[-1]]
-        detail = f'{prev["title"]} 已完成。下一步只保留：{nxt["title"]}。{nxt["detail"]}'
-        return task_card("next", "已完成，可以開始下一步", nxt["title"], detail), [nxt]
-    return task_card("ready", "可以開始", nxt["title"], nxt["detail"]), [nxt]
+        card = task_card("next", "可以開始下一步", nxt["title"], nxt["detail"], nxt)
+        groups.append(task_group("next", "已完成，可以開始下一步", [card]))
+    else:
+        card = task_card("ready", "可以開始", nxt["title"], nxt["detail"], nxt)
+        groups.append(task_group("ready", "可以開始", [card]))
+    return "".join(groups), [nxt]
 
 
 def render_gpus(rows):
