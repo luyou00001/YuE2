@@ -45,6 +45,11 @@ JOBS = {
         "detail": "只對最後一層做一次反向，印出峰值顯存。不更新權重，不寫進基模。",
         "script": "train_fit32_probe.py",
     },
+    "fit32_update": {
+        "title": "32GB 小更新",
+        "detail": "對 000 到 007 各做一步，只更新最後一層。新權重存到 /cache/yue2_ckpts/fit32-suno8。",
+        "script": "train_fit32.py",
+    },
     "export_listen": {
         "title": "匯出對聽路徑",
         "detail": "只讀原曲和生成 mp3 的路徑與大小，不載入模型。",
@@ -410,7 +415,9 @@ PAGE = """<!DOCTYPE html>
   table { width:100%; border-collapse:collapse; }
   td { padding:8px 0; border-top:1px solid var(--line); vertical-align:top; }
   .ok { color:var(--accent); } .miss { color:#9a3412; }
-  #note { min-height:1.4em; color:var(--muted); margin-top:8px; }
+  #note { min-height:0; margin:0; color:var(--muted); }
+  #note:not(:empty) { margin-top:8px; }
+  #task-board { margin-bottom:0; }
   .meter { color:var(--muted); margin-bottom:8px; }
   .stage { display:grid; grid-template-columns:88px 1fr; gap:12px; padding:14px 0; border-top:1px solid var(--line); }
   .badge { font:600 12px/1 sans-serif; border-radius:999px; padding:6px 0; text-align:center; height:fit-content; }
@@ -477,12 +484,17 @@ PAGE = """<!DOCTYPE html>
   .tree .tag-M { background:#fff1d6; color:#9a6700; }
   .tree .tag-D { background:#f8e8e2; color:#9a3412; }
   .tree .tag-R { background:#e8f1fb; color:#1d4e89; }
+  #git-notice[hidden] { display:none; }
   button[hidden] { display:none; }
+  #git-notice { position:fixed; inset:0; z-index:80; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(28,25,21,.35); }
+  .notice-card { width:min(420px, 100%); background:#fffdf9; border-radius:16px; padding:22px 24px; box-shadow:0 12px 40px rgba(28,25,21,.18); }
+  .notice-card h2 { margin:0 0 8px; }
+  .notice-card p { margin:0 0 16px; }
   @media (max-width: 900px) { .sync-split { grid-template-columns:1fr; } }
   .stage.current-row { background:#f3faf7; margin:0 -18px; padding:14px 18px; }
 </style>
 </head>
-<body>
+<body data-head="__HEADFULL__">
 <main>
   <div class="topbar">
     <h1>YuE2 V100 <span class="sub" id="revision">__REVISION__</span></h1>
@@ -511,11 +523,6 @@ PAGE = """<!DOCTYPE html>
   </details>
   __OPTIONAL__
   <div id="flows">__FLOWS__</div>
-  <div class="grid">
-    <details class="block" data-fold="code"><summary>代碼狀態</summary><div id="code">__CODE__</div></details>
-    <details class="block" open data-fold="progress"><summary>目前進度</summary><ul id="progress">__PROGRESS__</ul></details>
-    <details class="block" open data-fold="next"><summary>下一步</summary><ul id="next">__NEXT__</ul></details>
-  </div>
   <details class="block" open data-fold="logs">
     <summary>日誌</summary>
     <div class="logpick" id="logpick"></div>
@@ -538,6 +545,13 @@ PAGE = """<!DOCTYPE html>
   </aside>
   </div>
 </main>
+<div id="git-notice" hidden>
+  <div class="notice-card">
+    <h2>Git 已更新</h2>
+    <p>伺服器上的代碼已經換到新版本。重整後才會看到新介面。</p>
+    <button id="reload-page" type="button">重整畫面</button>
+  </div>
+</div>
 <script>
 const note = document.getElementById("note");
 function esc(value) {
@@ -620,7 +634,7 @@ function renderPlayers(artifacts) {
   ).join("");
 }
 let last = "";
-let seenHead = "";
+let seenHead = document.body.getAttribute("data-head") || "";
 let selectedLog = "";
 let shownLog = "";
 let taskSig = "";
@@ -695,7 +709,13 @@ async function refresh() {
     document.getElementById("revision").textContent = data.error;
     return;
   }
-  seenHead = data.head_full || seenHead;
+  if (data.head_full && seenHead && data.head_full !== seenHead) {
+    seenHead = data.head_full;
+    const gitNotice = document.getElementById("git-notice");
+    if (gitNotice) gitNotice.hidden = false;
+  } else if (data.head_full) {
+    seenHead = data.head_full;
+  }
   const key = JSON.stringify(data);
   if (key === last) return;
   last = key;
@@ -761,6 +781,8 @@ function pinSide() {
   const gap = Math.ceil(bar.offsetHeight + parseFloat(getComputedStyle(bar).marginBottom));
   document.documentElement.style.setProperty("--side-top", gap + "px");
 }
+const reloadPage = document.getElementById("reload-page");
+if (reloadPage) reloadPage.onclick = function () { location.reload(); };
 pinSide();
 window.addEventListener("resize", pinSide);
 const taskBoard = document.getElementById("task-board");
@@ -1085,10 +1107,11 @@ def page_html():
         "__PLAYERS__": render_players(data.get("artifacts") or []),
         "__QUESTION_INTRO__": html.escape((data.get("questions") or {}).get("intro") or ""),
         "__QUESTIONS__": render_questions(data.get("questions") or {}),
-        "__FLOWS__": render_flows(data.get("flow") or {}),
-        "__CODE__": render_code(data.get("artifacts") or []),
-        "__PROGRESS__": render_items((data.get("narrative") or {}).get("progress") or []),
-        "__NEXT__": render_items((data.get("flow") or {}).get("current_next") or (data.get("narrative") or {}).get("next") or []),
+        "__FLOWS__": render_flows(
+            data.get("flow") or {},
+            (data.get("narrative") or {}).get("progress") or [],
+        ),
+        "__HEADFULL__": html.escape(data.get("head_full") or ""),
         "__JOBS__": render_jobs(pipeline_view()[1]),
         "__JOBS_ATTR__": "open" if pipeline_view()[1] else "hidden",
         "__REPLY__": render_markdown(reply_text()),
@@ -1243,7 +1266,17 @@ def pipeline_view():
         if running == "fit32_probe":
             cards.append(task_card("running", "正在進行", probe_title, probe_detail))
         elif probe_is_done():
-            cards.append(task_card("done", "已完成", probe_title, "已印出峰值顯存。把 peak_gib 和 abc_loss 貼回來。"))
+            cards.append(task_card("done", "已完成", probe_title, "峰值 9.54 GiB，abc_loss=0.3594。沒有更新權重。"))
+            update_title = f"{len(PIPELINE) + 3}. 32GB 小更新"
+            update_detail = JOBS["fit32_update"]["detail"]
+            if running == "fit32_update":
+                cards.append(task_card("running", "正在進行", update_title, update_detail))
+            elif update_is_done():
+                cards.append(task_card("done", "已完成", update_title, "新權重已另存。把 saved= 那一行貼回來。"))
+            else:
+                record = job_record("fit32_update")
+                cards.append(task_card("next", "下一步", update_title, update_detail, record))
+                visible.append(record)
         else:
             record = job_record("fit32_probe")
             cards.append(task_card("next", "下一步", probe_title, probe_detail, record))
@@ -1253,6 +1286,14 @@ def pipeline_view():
     else:
         cards.append(task_card("later", "之後", listen_title, "播放原曲和這次生成。選完選擇題後按複製答案。"))
     return "".join(cards), visible
+
+
+def update_is_done():
+    for row in log_rows():
+        text = read_log(row["name"]) or ""
+        if "saved=/cache/yue2_ckpts/fit32-suno8" in text and "base_unchanged=" in text:
+            return True
+    return False
 
 
 def probe_is_done():
@@ -1351,7 +1392,7 @@ def render_questions(payload):
     return "".join(blocks)
 
 
-def render_flows(payload):
+def render_flows(payload, progress=None):
     labels = {"done": "已完成", "current": "目前", "later": "之後", "blocked": "受阻"}
     sections = []
     for flow in payload.get("flows") or []:
@@ -1364,11 +1405,19 @@ def render_flows(payload):
         for index, stage in enumerate(stages, 1):
             status = stage.get("status") or ""
             open_stage = " open" if status == "current" else ""
+            extra = ""
+            if stage.get("id") == "fit32":
+                extra = (
+                    '<p class="meter">目前進度</p>'
+                    + render_items(progress or [])
+                    + '<p class="meter">下一步</p>'
+                    + render_items(stage.get("next") or [])
+                )
             stage_html.append(
                 f'<details class="stage-fold"{open_stage}><summary>'
                 f'<span class="badge {html.escape(status)}">{html.escape(labels.get(status, status))}</span>'
                 f'{index}. {html.escape(stage.get("title") or "")}</summary>'
-                f'<p>{html.escape(stage.get("detail") or "")}</p></details>'
+                f'<p>{html.escape(stage.get("detail") or "")}</p>{extra}</details>'
             )
         sections.append(
             f'<details class="block"{open_flow}><summary>{html.escape(flow.get("title") or "")}</summary>'

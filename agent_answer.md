@@ -1,3 +1,9 @@
+### [2026-11-27 18:29] 探針峰值 9.54 GiB，並整理訓練第 6 步
+
+- **修改的文件**：`public/v100_panel.py`、`public/train_fit32.py`、`public/panel_flow.json`、`public/panel_state.json`
+- **核心邏輯**：探針峰值 9.54 GiB，沒有改權重。Git 更新時彈出重整視窗。進度和下一步收進訓練流程第 6 步。小更新只動最後一層，另存 fit32-suno8。
+- **AI 備註**：同步後按第 6 步執行。把 saved= 和 fit32_done=8 貼回來。
+
 ### [2026-11-27 18:17] 探針執行按鈕和 Markdown 回答
 
 - **修改的文件**：`public/v100_panel.py`

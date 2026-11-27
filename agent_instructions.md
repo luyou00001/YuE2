@@ -1,22 +1,22 @@
-# 探針按鈕已放進任務欄
+# 顯存探針通過，峰值 9.54 GiB
 
-## 這輪介面
+最後一層有 100672000 個參數。一次反向的峰值是 **9.54 GiB**，`abc_loss=0.3594`。沒有更新權重，`/cache/yue2_files/YuE2-3B` 沒有改。這個損失和之前第 000 首一樣，因為這一步沒有做 optimizer step。
 
-- 第 5 步「32GB 顯存探針」有執行按鈕。
-- 本輪回答用標題、段落和程式碼區塊顯示。
-- 任務和 GPU 都在自己的區塊裡捲動。
-- 頁面滾到最底時，右下空隙保持 12px。
+## 介面
+
+- Git 有新版本時會彈出視窗，裡面有重整畫面按鈕。
+- 任務底部的空白收到和 GPU 一樣。
+- 代碼狀態欄已刪掉。
+- 目前進度和下一步放在訓練流程第 6 步底下。
 
 ## 下一步
 
-同步後重新整理。在右上角任務按第 5 步的執行。跑完把 `peak_gib` 和 `abc_loss` 貼回來。這一步不更新權重，也不寫進基模。
-
-同一條指令是：
+同步後重新整理。右上角任務會出現第 6 步「32GB 小更新」的執行按鈕。它對 000 到 007 各做一步，只更新最後一層，新權重存到 `/cache/yue2_ckpts/fit32-suno8`。
 
 ```bash
-PYTHONPATH=src HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 python public/train_fit32_probe.py
+PYTHONPATH=src HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 python public/train_fit32.py
 ```
 
-峰值明顯低於 32GB 之後，才對 000 到 007 做小更新，新權重另存。
+跑完把 `saved=` 和 `fit32_done=8` 那兩行貼回來。
 
-本次更新的文件：`public/v100_panel.py`
+本次更新的文件：`public/v100_panel.py`、`public/train_fit32.py`、`public/panel_flow.json`、`public/panel_state.json`
