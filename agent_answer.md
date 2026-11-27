@@ -1,3 +1,9 @@
+### [2026-11-27 14:47] 第 1 首 ABC loss 很低，改聽無譜生成
+
+- **修改的文件**：`public/suno_free.py`
+- **核心邏輯**：轉譜成功，1770 個樂譜 token 的 loss 是 0.3594。教師強制下基模已經會接譜，所以不更新權重。下一步只用歌詞和 style 生成。
+- **AI 備註**：對聽原曲和 `/cache/yue2_outputs/suno_free/suno_013117_free/audio.mp3`。
+
 ### [2026-11-27 14:21] 100 首對上，開始算第 1 首 ABC loss
 
 - **修改的文件**：`public/suno_first.py`、`public/pack_suno_one.py`
