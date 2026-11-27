@@ -1,2 +1,15 @@
-(PyTorch-2.0.0) [ma-user YuE2]$PYTHONPATH=src python -m yue2 generate --model /cache/yue2_files/YuE2-3B --vae /cache/yue2_files/YuE2-Vae --backend torch-eager --budget 30 --offline --request public/full_mix_000.json --abc-file /cache/yue2_outputs/full_mix/000/score/score.abc --output /cache/yue2_outputs/full_mix_000_cover
-/home/ma-user/anaconda3/envs/PyTorch-2.0.0/bin/python: No module named yue2.__main__; 'yue2' is a package and cannot be directly executed
+(PyTorch-2.0.0) [ma-user YuE2]$PYTHONPATH=src python -m yue2.cli generate --model /cache/yue2_files/YuE2-3B --vae /cache/yue2_files/YuE2-Vae --backend torch-eager --budget 30 --offline --request public/full_mix_000.json --abc-file /cache/yue2_outputs/full_mix/000/score/score.abc --output /cache/yue2_outputs/full_mix_000_cover
+[YuE2] Completed Resolving model files: 0.0s
+[YuE2] Completed Verifying model files: 28.4s
+[YuE2] Completed Using provided score: 0.0s
+[YuE2] \ Loading model: 4.8s`torch_dtype` is deprecated! Use `dtype` instead!
+[YuE2] Completed Loading model: 7.9s
+[YuE2] Completed Generating song: 5882 tokens | 28.2 tokens/s | 208.9s
+[YuE2] Completed Synthesizing audio: [########] 32/32 steps (100%) | 251.6s
+[YuE2] / Loading audio decoder: 5.3s/home/ma-user/anaconda3/envs/PyTorch-2.0.0/lib/python3.9/site-packages/torch/nn/utils/weight_norm.py:28: UserWarning: torch.nn.utils.weight_norm is deprecated in favor of torch.nn.utils.parametrizations.weight_norm.
+  warnings.warn("torch.nn.utils.weight_norm is deprecated in favor of torch.nn.utils.parametrizations.weight_norm.")
+[YuE2] Completed Loading audio decoder: 6.3s
+[YuE2] Completed Decoding audio: [########] 6/6 chunks (100%) | 8.5s
+[YuE2] Completed: 235.2s audio in 483.5s
+{"status": "complete", "output": "/cache/yue2_outputs/full_mix_000_cover/full_mix_000", "flac": "/cache/yue2_outputs/full_mix_000_cover/full_mix_000/audio.flac", "mp3": "/cache/yue2_outputs/full_mix_000_cover/full_mix_000/audio.mp3", "truncated": {"abc": false, "semantic": false}, "seconds": 483.49698304384947}
+(PyTorch-2.0.0) [ma-user YuE2]$
