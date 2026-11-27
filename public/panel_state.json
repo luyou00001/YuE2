@@ -1,14 +1,14 @@
 {
-  "show_listen": true,
-  "show_questions": true,
-  "updated": "2026-11-27 17:21",
+  "show_listen": false,
+  "show_questions": false,
+  "listen_done": true,
+  "updated": "2026-11-27 17:56",
   "progress": [
-    "第 004 首無譜生成已完成：217.1 秒音頻，耗時 501.5 秒。",
-    "樂譜和語義都沒有截斷。輸出在 /cache/yue2_outputs/suno_free/suno_004_free/audio.mp3。",
-    "下一步是對聽。先不要更新權重。"
+    "第 004 首對聽：整體很像，旋律只有部分段落接近，段落對得上，伴奏接近原曲，人聲自然。",
+    "下一步是單張 V100 上放得進 32GB 的小更新。基模目錄不改，新權重另存。"
   ],
   "next": [
-    "播放原曲和這次生成",
-    "複製選擇題答案貼回來"
+    "小更新只動放得進 32GB 的部分",
+    "新權重另存，不使用 lmhead-city-lights"
   ]
 }

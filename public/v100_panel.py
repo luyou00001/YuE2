@@ -359,7 +359,7 @@ PAGE = """<!DOCTYPE html>
   .topbar .sub { margin:2px 0 0; }
   .layout { display:grid; grid-template-columns:minmax(0, 1fr) minmax(420px, 600px); gap:16px; align-items:start; width:100%; }
   .main-col, .side { min-width:0; }
-  .side { position:sticky; top:calc(var(--topbar-h, 96px) + 8px); max-height:calc(100vh - var(--topbar-h, 96px) - 20px); overflow:auto; padding-right:2px; }
+  .side { position:sticky; top:var(--side-top, 116px); max-height:calc(100vh - var(--side-top, 116px) - 12px); overflow:auto; padding-right:2px; }
   .pager { display:flex; gap:8px; align-items:center; margin-bottom:8px; }
   @media (max-width: 900px) {
     .layout { grid-template-columns:1fr; }
@@ -429,20 +429,28 @@ PAGE = """<!DOCTYPE html>
   .task-later { background:#f7f4ee; border-color:#e4ddd2; }
   .task-group { display:grid; gap:10px; margin-top:12px; }
   .task-group h3 { margin:0; font-size:14px; }
-  .sync-split { display:grid; grid-template-columns:minmax(240px, 0.85fr) minmax(0, 1.15fr); gap:16px; align-items:start; }
-  .sync-steps { list-style:none; margin:0; padding:0; display:grid; gap:8px; }
-  .sync-step { display:flex; gap:10px; align-items:baseline; padding:8px 10px; border-radius:10px; background:#f7f4ee; }
+  .sync-split { display:grid; grid-template-columns:minmax(240px, 0.85fr) minmax(0, 1.15fr); gap:16px; align-items:stretch; }
+  .sync-steps { list-style:none; margin:0; padding:0; display:grid; gap:4px; }
+  .sync-step { display:flex; gap:8px; align-items:baseline; padding:4px 8px; border-radius:8px; background:#f7f4ee; }
   .sync-step .mark { font:700 12px/1 sans-serif; min-width:48px; }
   .sync-step.done { background:#e7f6ef; }
   .sync-step.current { background:#e8f1fb; }
   .sync-step.wait { color:var(--muted); }
-  .tree-pane { min-width:0; }
-  .tree { max-height:460px; overflow:auto; border:1px solid var(--line); border-radius:12px; padding:6px 0; background:#fffdf9; font:13px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-  .tree summary { display:flex; align-items:center; gap:6px; min-height:28px; margin:1px 6px; padding-right:8px; border-radius:8px; cursor:pointer; list-style:none; }
+  .tree-pane { position:relative; min-width:0; min-height:100%; }
+  .tree-pane > .meter { margin:0 0 6px; }
+  .tree-scroll { position:absolute; left:0; right:0; top:26px; bottom:0; overflow:auto; border:1px solid var(--line); border-radius:12px; background:#fffdf9; }
+  .tree, .tree ul { list-style:none; margin:0; padding:0; }
+  .tree { margin:6px 0 6px 10px; padding-left:12px; border-left:1px solid #d4cbbf; position:relative; font:13px/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .tree ul { margin-left:7px; padding-left:12px; border-left:1px solid #d4cbbf; position:relative; }
+  .tree li { position:relative; }
+  .tree > li::before, .tree ul > li::before { content:""; position:absolute; left:-12px; top:13px; width:12px; border-top:1px solid #d4cbbf; }
+  .tree::before, .tree ul::before { content:""; position:absolute; left:-1px; top:0; width:2px; height:13px; background:#fffdf9; }
+  .tree > li:last-child::after, .tree ul > li:last-child::after { content:""; position:absolute; left:-13px; top:14px; bottom:0; width:3px; background:#fffdf9; }
+  .tree summary { display:flex; align-items:center; gap:6px; min-height:26px; padding-right:8px; border-radius:8px; cursor:pointer; list-style:none; }
   .tree summary::-webkit-details-marker { display:none; }
   .tree .chev { width:7px; height:7px; border-right:1.5px solid #8a8175; border-bottom:1.5px solid #8a8175; transform:rotate(-45deg); flex:none; }
   .tree details[open] > summary .chev { transform:rotate(45deg); margin-top:-2px; }
-  .tree .file { display:flex; align-items:center; gap:6px; min-height:26px; margin:1px 6px; padding-right:8px; border-radius:8px; color:#6d675e; }
+  .tree .file { display:flex; align-items:center; gap:6px; min-height:26px; padding-right:8px; border-radius:8px; color:#6d675e; }
   .tree .name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .tree .meta { margin-left:auto; color:#8a8175; font:11px/1 sans-serif; }
   .tree .file.hit { background:#fff6e0; color:var(--ink); }
@@ -472,7 +480,7 @@ PAGE = """<!DOCTYPE html>
       <ol class="sync-steps" id="sync-steps">__SYNCSTEPS__</ol>
       <div class="tree-pane">
         <p class="meter" id="tree-count">__FILECOUNT__</p>
-        <div class="tree" id="code-tree" data-mark="__FILEMARK__">__FILETREE__</div>
+        <div class="tree-scroll" id="code-tree" data-mark="__FILEMARK__">__FILETREE__</div>
       </div>
     </div>
   </details>
@@ -733,7 +741,8 @@ async function runJob(id) {
 function pinSide() {
   const bar = document.querySelector(".topbar");
   if (!bar) return;
-  document.documentElement.style.setProperty("--topbar-h", Math.ceil(bar.getBoundingClientRect().height) + "px");
+  const gap = Math.ceil(bar.offsetHeight + parseFloat(getComputedStyle(bar).marginBottom));
+  document.documentElement.style.setProperty("--side-top", gap + "px");
 }
 pinSide();
 window.addEventListener("resize", pinSide);
@@ -900,7 +909,7 @@ def render_file_tree(listing, marks):
             if counts.get(letter)
         )
 
-    def walk(node, depth):
+    def walk(node, root=False):
         def sort_key(name):
             value = node[name]
             changed = bool(tally(value)) if isinstance(value, dict) else bool(value)
@@ -909,29 +918,35 @@ def render_file_tree(listing, marks):
         chunks = []
         for name in sorted(node, key=sort_key):
             value = node[name]
-            pad = 8 + depth * 14
             safe = html.escape(name)
             if isinstance(value, dict):
                 counts = tally(value)
                 hit = " hit" if counts else ""
                 opened = " open" if counts else ""
                 chunks.append(
-                    f'<details class="dir{hit}"{opened}><summary style="padding-left:{pad}px">'
-                    f'<i class="chev"></i><span class="name">{safe}</span>{tags(counts)}'
-                    f'<span class="meta">{file_count(value)}</span></summary>{walk(value, depth + 1)}</details>'
+                    "<li><details class=\"dir{hit}\"{opened}>"
+                    "<summary><i class=\"chev\"></i><span class=\"name\">{name}/</span>{tags}"
+                    "<span class=\"meta\">{count}</span></summary>{children}</details></li>".format(
+                        hit=hit,
+                        opened=opened,
+                        name=safe,
+                        tags=tags(counts),
+                        count=file_count(value),
+                        children=walk(value),
+                    )
                 )
             else:
                 hit = " hit" if value else ""
                 tag = f'<span class="tag tag-{html.escape(value)}">{html.escape(value)}</span>' if value else ""
                 chunks.append(
-                    f'<div class="file{hit}" style="padding-left:{pad + 16}px">{tag}'
-                    f'<span class="name">{safe}</span></div>'
+                    f'<li><div class="file{hit}">{tag}<span class="name">{safe}</span></div></li>'
                 )
-        return "".join(chunks)
+        klass = ' class="tree"' if root else ""
+        return f"<ul{klass}>{''.join(chunks)}</ul>"
 
     changed = sum(tally(root).values())
     caption = f"代碼樹 {file_count(root)} 個文件，本次變更 {changed}"
-    return walk(root, 0), caption
+    return walk(root, True), caption
 
 
 def code_tree():
@@ -1125,19 +1140,31 @@ def pipeline_view():
         else:
             cards.append(task_card("later", "之後", title, task["detail"]))
     listen_title = f"{len(PIPELINE) + 1}. 對聽第 004 首"
-    listen_detail = "播放原曲和這次生成。選完選擇題後按複製答案。"
-    if listen_is_current():
-        cards.append(task_card("next", "請對聽", listen_title, listen_detail))
+    if listen_recorded():
+        cards.append(task_card(
+            "done", "已完成", listen_title,
+            "整體很像。旋律只有部分段落接近。段落對得上。伴奏接近原曲。人聲自然。",
+        ))
+        cards.append(task_card(
+            "next", "下一步", f"{len(PIPELINE) + 2}. 32GB 小更新",
+            "單張 V100 上做放得進 32GB 的更新。基模目錄不改，新權重另存。",
+        ))
+    elif listen_is_current():
+        cards.append(task_card("next", "請對聽", listen_title, "播放原曲和這次生成。選完選擇題後按複製答案。"))
     else:
-        cards.append(task_card("later", "之後", listen_title, listen_detail))
+        cards.append(task_card("later", "之後", listen_title, "播放原曲和這次生成。選完選擇題後按複製答案。"))
     return "".join(cards), visible
+
+
+def listen_recorded():
+    return bool(narrative().get("listen_done"))
 
 
 def listen_is_current():
     with LOCK:
         if CURRENT["job"] is not None:
             return False
-    return all(task_done(task_id) for task_id in PIPELINE)
+    return all(task_done(task_id) for task_id in PIPELINE) and not listen_recorded()
 
 
 def copy_log_visible():
