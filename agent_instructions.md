@@ -1,16 +1,7 @@
-# 樂譜損失已經很低，先聽無譜生成
+# 同步結束時列出這次改到的文件
 
-第 1 首轉譜成功：2312 字，`abc_error` 為空。前綴 2262 token，其中 1770 個是樂譜 token。`abc_loss=0.3594`，下一個樂譜 token 的困惑度大約 1.43。基模在看到前面正確音符時，已經很會往下接，所以這首歌先不更新權重。樂器軌在主歌和副歌仍大多是休止，譜上記的是人聲旋律加和弦。
+`sync_to_linux.ps1` 會在推送前記下伺服器上的 commit，推送成功後比較前後差異。有更新時，最後印出 `此次更新的文件`，每一行帶著 git 的狀態字母和路徑。前後 commit 相同時印 `此次沒有更新任何文件`。
 
-下一條不餵這份 ABC，只用這首歌的歌詞和 style 生成。整首大約要數分鐘。對聽這兩個檔：
+正在跑的這一次同步仍使用舊腳本。從下一次有新提交開始，結束處才會出現這份清單。
 
-- 原音：`/cache/yue2_outputs/suno_prep/000/audio.path` 裡的那條 mp3
-- 生成：`/cache/yue2_outputs/suno_free/suno_013117_free/audio.mp3`
-
-```bash
-PYTHONPATH=src python public/suno_free.py
-```
-
-把最後一行 JSON 貼回來，並告訴我旋律和段落像不像同一首歌。
-
-本次更新的文件：`public/suno_free.py`
+本次更新的文件：`sync_to_linux.ps1`

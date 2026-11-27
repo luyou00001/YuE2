@@ -39,6 +39,40 @@ function Invoke-Ssh([string]$Command) {
     if ($LASTEXITCODE -ne 0) { throw "SSH command failed: $Command" }
 }
 
+function Get-RemoteHead {
+    $previous = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    $output = ssh -i $SshKey -p $SshPort -o StrictHostKeyChecking=no $SshUserHost "git -C '$RemoteDir' rev-parse --verify HEAD"
+    $code = $LASTEXITCODE
+    $ErrorActionPreference = $previous
+    if ($code -ne 0) { return "" }
+    return ("$output").Trim()
+}
+
+function Show-UpdatedFiles([string]$Before, [string]$After) {
+    $emptyTree = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
+    $fromLabel = $(if ($Before) { $Before.Substring(0, [Math]::Min(7, $Before.Length)) } else { "none" })
+    $toLabel = $After.Substring(0, [Math]::Min(7, $After.Length))
+    Write-Host "-> 此次伺服器更新：$fromLabel -> $toLabel" -ForegroundColor Cyan
+    if ($Before -eq $After) {
+        Write-Host "   此次沒有更新任何文件" -ForegroundColor Yellow
+        return
+    }
+    $base = $(if ($Before) { $Before } else { $emptyTree })
+    $changed = @(git --no-pager diff --name-status --find-renames $base $After)
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "   無法和伺服器舊版本比較，改列最新一次提交的文件：" -ForegroundColor Yellow
+        $changed = @(git --no-pager show --name-status --pretty=format: -1 $After)
+    }
+    $changed = @($changed | Where-Object { $_ -and $_.ToString().Trim() })
+    if ($changed.Count -eq 0) {
+        Write-Host "   此次沒有更新任何文件" -ForegroundColor Yellow
+        return
+    }
+    Write-Host "   此次更新的文件 ($($changed.Count))：" -ForegroundColor Green
+    $changed | ForEach-Object { Write-Host "   $_" }
+}
+
 Set-Location $RepoDir
 
 Write-Host "-> (1/5) Testing SSH connectivity..." -ForegroundColor Cyan
@@ -88,6 +122,8 @@ if (-not (git remote | Select-String "^$RemoteName$")) {
     git remote set-url $RemoteName $RemoteUrl
 }
 
+$RemoteBefore = Get-RemoteHead
+
 Write-Host "-> Pushing to server (branch: main) ..." -ForegroundColor Cyan
 if ($Confirm) {
     $ans = Read-Host "   Push to server? [y/N]"
@@ -110,4 +146,6 @@ if ($LASTEXITCODE -ne 0) {
 
 Write-Host "-> Verifying server side..." -ForegroundColor Cyan
 Invoke-Ssh "cd '$RemoteDir' && git status --short --branch && echo '---' && ls -1"
+$LocalHead = (git rev-parse HEAD).Trim()
+Show-UpdatedFiles $RemoteBefore $LocalHead
 Write-Host "Done." -ForegroundColor Green
