@@ -1,12 +1,126 @@
-job abc_loss8
+job free004
+free004_start id=suno_cn_011286
+[YuE2] Starting Resolving model files: elapsed 0.0s
+[YuE2] Completed Resolving model files: elapsed 0.0s
+[YuE2] Starting Verifying model files: elapsed 0.0s
+[YuE2] Running Verifying model files: elapsed 5.0s
+[YuE2] Running Verifying model files: elapsed 10.0s
+[YuE2] Running Verifying model files: elapsed 15.0s
+[YuE2] Running Verifying model files: elapsed 20.0s
+[YuE2] Running Verifying model files: elapsed 25.0s
+[YuE2] Completed Verifying model files: elapsed 28.4s
+[YuE2] Starting Loading model: elapsed 0.0s
 `torch_dtype` is deprecated! Use `dtype` instead!
-000 abc_loss=0.3594 tokens=2262 supervised_abc=1770
-001 abc_loss=0.3887 tokens=2352 supervised_abc=1948
-002 abc_loss=0.4473 tokens=2016 supervised_abc=1662
-003 abc_loss=0.3613 tokens=2091 supervised_abc=1779
-004 abc_loss=0.6875 tokens=1724 supervised_abc=1383
-005 abc_loss=0.4082 tokens=1759 supervised_abc=1401
-006 abc_loss=0.6797 tokens=1657 supervised_abc=1285
-007 abc_loss=0.6445 tokens=1619 supervised_abc=1280
-abc_loss8_done=8 mean=0.4971
-no weights were updated or saved
+[YuE2] Running Loading model: elapsed 5.0s
+[YuE2] Completed Loading model: elapsed 8.5s
+[YuE2] Starting Planning score: 0 tokens | 0.0 tokens/s | elapsed 0.0s
+[YuE2] Running Planning score: 99 tokens | 19.8 tokens/s | elapsed 5.0s
+[YuE2] Running Planning score: 241 tokens | 24.1 tokens/s | elapsed 10.0s
+[YuE2] Running Planning score: 382 tokens | 25.5 tokens/s | elapsed 15.0s
+[YuE2] Running Planning score: 524 tokens | 26.2 tokens/s | elapsed 20.0s
+[YuE2] Running Planning score: 665 tokens | 26.6 tokens/s | elapsed 25.0s
+[YuE2] Running Planning score: 806 tokens | 26.9 tokens/s | elapsed 30.0s
+[YuE2] Running Planning score: 947 tokens | 27.1 tokens/s | elapsed 35.0s
+[YuE2] Running Planning score: 1087 tokens | 27.2 tokens/s | elapsed 40.0s
+[YuE2] Running Planning score: 1229 tokens | 27.3 tokens/s | elapsed 45.0s
+[YuE2] Running Planning score: 1370 tokens | 27.4 tokens/s | elapsed 50.0s
+[YuE2] Running Planning score: 1512 tokens | 27.5 tokens/s | elapsed 55.0s
+[YuE2] Running Planning score: 1653 tokens | 27.5 tokens/s | elapsed 60.0s
+[YuE2] Completed Planning score: 1752 tokens | 27.6 tokens/s | elapsed 63.5s
+[YuE2] Starting Generating song: 0 tokens | 0.0 tokens/s | elapsed 0.0s
+[YuE2] Running Generating song: 121 tokens | 24.2 tokens/s | elapsed 5.0s
+[YuE2] Running Generating song: 264 tokens | 26.4 tokens/s | elapsed 10.0s
+[YuE2] Running Generating song: 404 tokens | 26.9 tokens/s | elapsed 15.0s
+[YuE2] Running Generating song: 546 tokens | 27.3 tokens/s | elapsed 20.0s
+[YuE2] Running Generating song: 687 tokens | 27.5 tokens/s | elapsed 25.0s
+[YuE2] Running Generating song: 829 tokens | 27.6 tokens/s | elapsed 30.0s
+[YuE2] Running Generating song: 970 tokens | 27.7 tokens/s | elapsed 35.0s
+[YuE2] Running Generating song: 1112 tokens | 27.8 tokens/s | elapsed 40.0s
+[YuE2] Running Generating song: 1254 tokens | 27.9 tokens/s | elapsed 45.0s
+[YuE2] Running Generating song: 1396 tokens | 27.9 tokens/s | elapsed 50.0s
+[YuE2] Running Generating song: 1538 tokens | 28.0 tokens/s | elapsed 55.0s
+[YuE2] Running Generating song: 1678 tokens | 28.0 tokens/s | elapsed 60.0s
+[YuE2] Running Generating song: 1820 tokens | 28.0 tokens/s | elapsed 65.0s
+[YuE2] Running Generating song: 1961 tokens | 28.0 tokens/s | elapsed 70.0s
+[YuE2] Running Generating song: 2102 tokens | 28.0 tokens/s | elapsed 75.0s
+[YuE2] Running Generating song: 2244 tokens | 28.0 tokens/s | elapsed 80.0s
+[YuE2] Running Generating song: 2384 tokens | 28.0 tokens/s | elapsed 85.0s
+[YuE2] Running Generating song: 2524 tokens | 28.0 tokens/s | elapsed 90.0s
+[YuE2] Running Generating song: 2665 tokens | 28.1 tokens/s | elapsed 95.0s
+[YuE2] Running Generating song: 2804 tokens | 28.0 tokens/s | elapsed 100.0s
+[YuE2] Running Generating song: 2943 tokens | 28.0 tokens/s | elapsed 105.0s
+[YuE2] Running Generating song: 3084 tokens | 28.0 tokens/s | elapsed 110.0s
+[YuE2] Running Generating song: 3223 tokens | 28.0 tokens/s | elapsed 115.0s
+[YuE2] Running Generating song: 3363 tokens | 28.0 tokens/s | elapsed 120.0s
+[YuE2] Running Generating song: 3504 tokens | 28.0 tokens/s | elapsed 125.0s
+[YuE2] Running Generating song: 3644 tokens | 28.0 tokens/s | elapsed 130.0s
+[YuE2] Running Generating song: 3784 tokens | 28.0 tokens/s | elapsed 135.0s
+[YuE2] Running Generating song: 3925 tokens | 28.0 tokens/s | elapsed 140.0s
+[YuE2] Running Generating song: 4064 tokens | 28.0 tokens/s | elapsed 145.0s
+[YuE2] Running Generating song: 4204 tokens | 28.0 tokens/s | elapsed 150.0s
+[YuE2] Running Generating song: 4343 tokens | 28.0 tokens/s | elapsed 155.0s
+[YuE2] Running Generating song: 4483 tokens | 28.0 tokens/s | elapsed 160.0s
+[YuE2] Running Generating song: 4622 tokens | 28.0 tokens/s | elapsed 165.0s
+[YuE2] Running Generating song: 4762 tokens | 28.0 tokens/s | elapsed 170.0s
+[YuE2] Running Generating song: 4900 tokens | 28.0 tokens/s | elapsed 175.0s
+[YuE2] Running Generating song: 5041 tokens | 28.0 tokens/s | elapsed 180.0s
+[YuE2] Running Generating song: 5180 tokens | 28.0 tokens/s | elapsed 185.0s
+[YuE2] Running Generating song: 5321 tokens | 28.0 tokens/s | elapsed 190.0s
+[YuE2] Completed Generating song: 5429 tokens | 28.0 tokens/s | elapsed 193.9s
+[YuE2] Starting Synthesizing audio: 0 steps | elapsed 0.0s
+[YuE2] Running Synthesizing audio: 0 steps | elapsed 5.0s
+[YuE2] Running Synthesizing audio: 1/32 steps (3%) | elapsed 10.0s
+[YuE2] Running Synthesizing audio: 1/32 steps (3%) | elapsed 15.0s
+[YuE2] Running Synthesizing audio: 2/32 steps (6%) | elapsed 20.0s
+[YuE2] Running Synthesizing audio: 3/32 steps (9%) | elapsed 25.0s
+[YuE2] Running Synthesizing audio: 4/32 steps (12%) | elapsed 30.0s
+[YuE2] Running Synthesizing audio: 4/32 steps (12%) | elapsed 35.0s
+[YuE2] Running Synthesizing audio: 5/32 steps (16%) | elapsed 40.0s
+[YuE2] Running Synthesizing audio: 6/32 steps (19%) | elapsed 45.0s
+[YuE2] Running Synthesizing audio: 7/32 steps (22%) | elapsed 50.0s
+[YuE2] Running Synthesizing audio: 7/32 steps (22%) | elapsed 55.0s
+[YuE2] Running Synthesizing audio: 8/32 steps (25%) | elapsed 60.0s
+[YuE2] Running Synthesizing audio: 9/32 steps (28%) | elapsed 65.0s
+[YuE2] Running Synthesizing audio: 10/32 steps (31%) | elapsed 70.0s
+[YuE2] Running Synthesizing audio: 10/32 steps (31%) | elapsed 75.0s
+[YuE2] Running Synthesizing audio: 11/32 steps (34%) | elapsed 80.0s
+[YuE2] Running Synthesizing audio: 12/32 steps (38%) | elapsed 85.0s
+[YuE2] Running Synthesizing audio: 12/32 steps (38%) | elapsed 90.0s
+[YuE2] Running Synthesizing audio: 13/32 steps (41%) | elapsed 95.0s
+[YuE2] Running Synthesizing audio: 14/32 steps (44%) | elapsed 100.0s
+[YuE2] Running Synthesizing audio: 15/32 steps (47%) | elapsed 105.0s
+[YuE2] Running Synthesizing audio: 15/32 steps (47%) | elapsed 110.0s
+[YuE2] Running Synthesizing audio: 16/32 steps (50%) | elapsed 115.0s
+[YuE2] Running Synthesizing audio: 17/32 steps (53%) | elapsed 120.0s
+[YuE2] Running Synthesizing audio: 18/32 steps (56%) | elapsed 125.0s
+[YuE2] Running Synthesizing audio: 18/32 steps (56%) | elapsed 130.0s
+[YuE2] Running Synthesizing audio: 19/32 steps (59%) | elapsed 135.0s
+[YuE2] Running Synthesizing audio: 20/32 steps (62%) | elapsed 140.0s
+[YuE2] Running Synthesizing audio: 21/32 steps (66%) | elapsed 145.0s
+[YuE2] Running Synthesizing audio: 21/32 steps (66%) | elapsed 150.0s
+[YuE2] Running Synthesizing audio: 22/32 steps (69%) | elapsed 155.0s
+[YuE2] Running Synthesizing audio: 23/32 steps (72%) | elapsed 160.0s
+[YuE2] Running Synthesizing audio: 23/32 steps (72%) | elapsed 165.0s
+[YuE2] Running Synthesizing audio: 24/32 steps (75%) | elapsed 170.0s
+[YuE2] Running Synthesizing audio: 25/32 steps (78%) | elapsed 175.0s
+[YuE2] Running Synthesizing audio: 26/32 steps (81%) | elapsed 180.0s
+[YuE2] Running Synthesizing audio: 26/32 steps (81%) | elapsed 185.0s
+[YuE2] Running Synthesizing audio: 27/32 steps (84%) | elapsed 190.0s
+[YuE2] Running Synthesizing audio: 28/32 steps (88%) | elapsed 195.0s
+[YuE2] Running Synthesizing audio: 29/32 steps (91%) | elapsed 200.0s
+[YuE2] Running Synthesizing audio: 29/32 steps (91%) | elapsed 205.0s
+[YuE2] Running Synthesizing audio: 30/32 steps (94%) | elapsed 210.0s
+[YuE2] Running Synthesizing audio: 31/32 steps (97%) | elapsed 215.0s
+[YuE2] Running Synthesizing audio: 32/32 steps (100%) | elapsed 220.0s
+[YuE2] Completed Synthesizing audio: 32/32 steps (100%) | elapsed 221.6s
+[YuE2] Starting Loading audio decoder: elapsed 0.0s
+[YuE2] Running Loading audio decoder: elapsed 5.0s
+/home/ma-user/anaconda3/envs/PyTorch-2.0.0/lib/python3.9/site-packages/torch/nn/utils/weight_norm.py:28: UserWarning: torch.nn.utils.weight_norm is deprecated in favor of torch.nn.utils.parametrizations.weight_norm.
+  warnings.warn("torch.nn.utils.weight_norm is deprecated in favor of torch.nn.utils.parametrizations.weight_norm.")
+[YuE2] Completed Loading audio decoder: elapsed 6.2s
+[YuE2] Starting Decoding audio: 0/6 chunks (0%) | elapsed 0.0s
+[YuE2] Running Decoding audio: 3/6 chunks (50%) | elapsed 5.0s
+[YuE2] Completed Decoding audio: 6/6 chunks (100%) | elapsed 7.6s
+[YuE2] Completed: 217.1s audio in 501.5s
+{"status": "complete", "output": "/cache/yue2_outputs/suno_free/suno_004_free", "flac": "/cache/yue2_outputs/suno_free/suno_004_free/audio.flac", "mp3": "/cache/yue2_outputs/suno_free/suno_004_free/audio.mp3", "truncated": {"abc": false, "semantic": false}, "seconds": 501.5274811349809}
+free004_done
