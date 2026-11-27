@@ -1,3 +1,9 @@
+### [2026-11-27 15:24] 控制台同步後自動換頁，日誌改為複製
+
+- **修改的文件**：`public/v100_panel.py`、`docs/inference-flow.md`
+- **核心邏輯**：沒有任務時偵測到新的 git HEAD 就重啟進程，瀏覽器看到版本變化後重新整理。日誌改成頁內文字，並提供複製完整內容。
+- **AI 備註**：正在跑的舊進程要先 Ctrl+C 再啟動一次，之後的同步才會自動換頁。
+
 ### [2026-11-27 15:19] 網頁列出推理流程，目前停在對聽
 
 - **修改的文件**：`public/v100_panel.py`、`public/panel_flow.json`、`public/panel_state.json`、`docs/inference-flow.md`

@@ -1,6 +1,6 @@
 # YuE2 推理流程
 
-網頁讀 `public/panel_flow.json`。情況變了就改那個檔的 `status`：`done`、`current`、`later`。改完要重新啟動 `public/v100_panel.py`，頁面才會換上新的版面；流程文字每次重新整理都會重讀。
+網頁讀 `public/panel_flow.json`。情況變了就改那個檔的 `status`：`done`、`current`、`later`。控制台在沒有任務時會自己發現新的 git 提交並重啟，瀏覽器會跟著重新整理。正在跑的這一版還沒有這個行為，需要先在那個終端按 Ctrl+C，再執行一次 `PYTHONPATH=src python public/v100_panel.py`。
 
 目前停在第 7 步「對聽原曲和無譜生成」。前 6 步已經跑通。
 

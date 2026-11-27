@@ -9,6 +9,7 @@ import os
 import subprocess
 import sys
 import threading
+import time
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -31,6 +32,9 @@ JOBS = {
 
 LOCK = threading.Lock()
 CURRENT = {"job": None, "log": None, "started": None, "exit": None}
+START_HEAD = ""
+RESTART = False
+SERVER = None
 
 
 def git_text(args):
@@ -100,6 +104,7 @@ def status_payload():
     return {
         "branch": git_text(["rev-parse", "--abbrev-ref", "HEAD"]) or "unknown",
         "head": git_text(["rev-parse", "--short", "HEAD"]) or "unknown",
+        "head_full": git_text(["rev-parse", "HEAD"]),
         "dirty_count": len(dirty),
         "artifacts": artifact_rows(),
         "narrative": narrative(),
@@ -108,6 +113,30 @@ def status_payload():
         "running": running,
         "logs": log_rows(),
     }
+
+
+def read_log(name):
+    target = LOG_DIR / Path(name).name
+    if target.suffix != ".log" or not target.is_file():
+        return None
+    return target.read_text(encoding="utf-8", errors="replace")
+
+
+def watch_git():
+    global RESTART
+    while True:
+        time.sleep(3)
+        with LOCK:
+            busy = CURRENT["job"] is not None
+        if busy or not START_HEAD:
+            continue
+        head = git_text(["rev-parse", "HEAD"])
+        if head and head != START_HEAD:
+            print("git moved, restarting panel", flush=True)
+            RESTART = True
+            if SERVER is not None:
+                SERVER.shutdown()
+            return
 
 
 def run_job(job_id, log_name):
@@ -165,7 +194,10 @@ PAGE = """<!DOCTYPE html>
   section { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; margin-bottom:16px; }
   ul { padding-left:18px; display:grid; gap:8px; }
   code { font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:13px; }
-  button, a.button { appearance:none; border:0; background:var(--accent); color:white; border-radius:999px; padding:10px 16px; font:600 15px/1 sans-serif; cursor:pointer; text-decoration:none; display:inline-block; }
+  button { appearance:none; border:0; background:var(--accent); color:white; border-radius:999px; padding:10px 16px; font:600 15px/1 sans-serif; cursor:pointer; }
+  button.ghost { background:#efeae2; color:var(--ink); }
+  pre { white-space:pre-wrap; word-break:break-word; max-height:520px; overflow:auto; background:#1c1915; color:#f7f4ee; border-radius:12px; padding:14px; font:13px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .logpick { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 12px; }
   button:disabled { background:#b7b1a7; cursor:wait; }
   .job { display:flex; justify-content:space-between; gap:16px; align-items:center; padding:12px 0; border-top:1px solid var(--line); }
   .job p { color:var(--muted); margin-top:4px; }
@@ -204,7 +236,10 @@ PAGE = """<!DOCTYPE html>
   </section>
   <section>
     <h2>日誌</h2>
-    <table id="logs"></table>
+    <div class="logpick" id="logpick"></div>
+    <button id="copy" type="button">複製完整日誌</button>
+    <p id="copy-note" class="meter"></p>
+    <pre id="logtext">還沒有日誌</pre>
   </section>
 </main>
 <script>
@@ -216,9 +251,53 @@ function list(id, items) {
   document.getElementById(id).innerHTML = (items || []).map(item => `<li>${esc(item)}</li>`).join("");
 }
 let last = "";
+let seenHead = "";
+let selectedLog = "";
+let shownLog = "";
+async function showLog(name, bytes) {
+  const mark = name + ":" + bytes;
+  if (!name) {
+    document.getElementById("logtext").textContent = "還沒有日誌";
+    shownLog = "";
+    return;
+  }
+  if (mark === shownLog) return;
+  shownLog = mark;
+  const response = await fetch("/api/log/" + encodeURIComponent(name));
+  const payload = await response.json();
+  document.getElementById("logtext").textContent = payload.text || "";
+}
+async function copyLog() {
+  const text = document.getElementById("logtext").textContent;
+  const copyNote = document.getElementById("copy-note");
+  try {
+    await navigator.clipboard.writeText(text);
+    copyNote.textContent = "已複製 " + text.length + " 字";
+  } catch (error) {
+    const area = document.getElementById("logtext");
+    const range = document.createRange();
+    range.selectNodeContents(area);
+    const selection = getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    document.execCommand("copy");
+    copyNote.textContent = "已複製 " + text.length + " 字";
+  }
+}
+document.getElementById("copy").onclick = copyLog;
 async function refresh() {
-  const response = await fetch("/api/status");
+  let response;
+  try {
+    response = await fetch("/api/status");
+  } catch (error) {
+    return;
+  }
   const data = await response.json();
+  if (seenHead && data.head_full && data.head_full !== seenHead) {
+    location.reload();
+    return;
+  }
+  seenHead = data.head_full || "";
   const key = JSON.stringify(data);
   if (key === last) return;
   last = key;
@@ -246,17 +325,28 @@ async function refresh() {
      <button data-job="${esc(job.id)}" ${busy ? "disabled" : ""}>執行</button></div>`
   ).join("");
   document.querySelectorAll("button[data-job]").forEach(button => button.onclick = () => runJob(button.dataset.job));
-  note.textContent = busy ? `正在跑 ${data.running.id}，日誌 ${data.running.log}` : "";
-  document.getElementById("logs").innerHTML = data.logs.length ? data.logs.map(row =>
-    `<tr><td><code>${esc(row.name)}</code><br>${esc(row.mtime)}，${row.bytes} bytes</td>
-     <td><a class="button" href="/download/${encodeURIComponent(row.name)}">下載</a></td></tr>`
-  ).join("") : "<tr><td>還沒有日誌</td></tr>";
+  note.textContent = busy ? `正在跑 ${data.running.id}` : "";
+  if (data.running && data.running.log) selectedLog = data.running.log;
+  else if (!selectedLog && data.logs.length) selectedLog = data.logs[0].name;
+  document.getElementById("logpick").innerHTML = data.logs.map(row =>
+    `<button type="button" class="ghost" data-log="${esc(row.name)}">${esc(row.mtime)}</button>`
+  ).join("");
+  document.querySelectorAll("button[data-log]").forEach(button => {
+    button.onclick = () => {
+      selectedLog = button.dataset.log;
+      shownLog = "";
+      const row = data.logs.find(item => item.name === selectedLog);
+      showLog(selectedLog, row ? row.bytes : 0);
+    };
+  });
+  const chosen = data.logs.find(row => row.name === selectedLog);
+  showLog(selectedLog, chosen ? chosen.bytes : 0);
 }
 async function runJob(id) {
   note.textContent = "啟動中";
   const response = await fetch("/api/run/" + encodeURIComponent(id), { method: "POST" });
   const data = await response.json();
-  note.textContent = response.ok ? `已開始，完成後下載 ${data.log}` : (data.error || "無法啟動");
+  note.textContent = response.ok ? "已開始，輸出會顯示在下方" : (data.error || "無法啟動");
   refresh();
 }
 refresh();
@@ -289,19 +379,12 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/status":
             self.send_json(200, status_payload())
             return
-        if path.startswith("/download/"):
-            name = Path(path[len("/download/"):]).name
-            target = LOG_DIR / name
-            if not name.endswith(".log") or not target.is_file():
+        if path.startswith("/api/log/"):
+            text = read_log(path[len("/api/log/"):])
+            if text is None:
                 self.send_json(404, {"error": "log not found"})
                 return
-            body = target.read_bytes()
-            self.send_response(200)
-            self.send_header("Content-Type", "text/plain; charset=utf-8")
-            self.send_header("Content-Disposition", f'attachment; filename="{name}"')
-            self.send_header("Content-Length", str(len(body)))
-            self.end_headers()
-            self.wfile.write(body)
+            self.send_json(200, {"text": text})
             return
         self.send_json(404, {"error": "not found"})
 
@@ -318,11 +401,24 @@ class Handler(BaseHTTPRequestHandler):
         print("[panel]", self.address_string(), fmt % args, flush=True)
 
 
+class PanelServer(ThreadingHTTPServer):
+    allow_reuse_address = True
+
+
 def main():
-    server = ThreadingHTTPServer((HOST, PORT), Handler)
+    global START_HEAD, SERVER
+    START_HEAD = git_text(["rev-parse", "HEAD"])
+    SERVER = PanelServer((HOST, PORT), Handler)
+    threading.Thread(target=watch_git, daemon=True).start()
     print(f"panel http://{HOST}:{PORT}", flush=True)
     print(f"logs {LOG_DIR}", flush=True)
-    server.serve_forever()
+    try:
+        SERVER.serve_forever()
+    except KeyboardInterrupt:
+        return
+    SERVER.server_close()
+    if RESTART:
+        os.execv(sys.executable, [sys.executable, *sys.argv])
 
 
 if __name__ == "__main__":
