@@ -1,3 +1,9 @@
+### [2026-11-27 15:59] 修掉頁面一直停在讀取中
+
+- **修改的文件**：`public/v100_panel.py`
+- **核心邏輯**：狀態請求失敗不再被藏起來。git 查詢最多等 2 秒。頁面不再因為提交變化而整頁重載。
+- **AI 備註**：骨架能顯示，代表網頁已載入，是 `/api/status` 沒把內容填上。
+
 ### [2026-11-27 15:54] 收起重複的狀態日誌，補上訓練流程
 
 - **修改的文件**：`public/v100_panel.py`、`public/panel_flow.json`、`public/panel_questions.json`、`public/panel_state.json`、`docs/inference-flow.md`、`docs/training-flow.md`

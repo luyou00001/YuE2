@@ -41,8 +41,12 @@ QUIET = {"key": None, "line": None}
 
 
 def git_text(args):
-    completed = subprocess.run(
-        ["git", *args], cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, check=False)
+    try:
+        completed = subprocess.run(
+            ["git", *args], cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            text=True, check=False, timeout=2)
+    except (OSError, subprocess.TimeoutExpired):
+        return ""
     if completed.returncode != 0:
         return ""
     return completed.stdout.strip()
@@ -57,13 +61,22 @@ def listen_targets():
 
 def artifact_rows():
     rows = []
-    for audio_id, label, path in listen_targets():
+    try:
+        targets = listen_targets()
+    except OSError:
+        targets = ()
+    for audio_id, label, path in targets:
+        try:
+            exists = path.is_file()
+            size = path.stat().st_size if exists else 0
+        except OSError:
+            exists, size = False, 0
         rows.append({
             "id": audio_id,
             "label": label,
             "path": str(path),
-            "exists": path.is_file(),
-            "bytes": path.stat().st_size if path.is_file() else 0,
+            "exists": exists,
+            "bytes": size,
         })
     return rows
 
@@ -121,27 +134,43 @@ def log_rows():
 
 
 def status_payload():
-    with LOCK:
-        running = None if CURRENT["job"] is None else {
-            "id": CURRENT["job"],
-            "log": CURRENT["log"],
-            "started": CURRENT["started"],
-            "exit": CURRENT["exit"],
+    try:
+        with LOCK:
+            running = None if CURRENT["job"] is None else {
+                "id": CURRENT["job"],
+                "log": CURRENT["log"],
+                "started": CURRENT["started"],
+                "exit": CURRENT["exit"],
+            }
+        dirty = [line for line in git_text(["status", "--porcelain"]).splitlines() if line.strip()]
+        return {
+            "branch": git_text(["rev-parse", "--abbrev-ref", "HEAD"]) or "unknown",
+            "head": git_text(["rev-parse", "--short", "HEAD"]) or "unknown",
+            "head_full": git_text(["rev-parse", "HEAD"]),
+            "dirty_count": len(dirty),
+            "artifacts": artifact_rows(),
+            "narrative": narrative(),
+            "flow": flow_payload(),
+            "questions": question_payload(),
+            "jobs": [{"id": key, **{name: value[name] for name in ("title", "detail")}} for key, value in JOBS.items()],
+            "running": running,
+            "logs": log_rows(),
         }
-    dirty = [line for line in git_text(["status", "--porcelain"]).splitlines() if line.strip()]
-    return {
-        "branch": git_text(["rev-parse", "--abbrev-ref", "HEAD"]) or "unknown",
-        "head": git_text(["rev-parse", "--short", "HEAD"]) or "unknown",
-        "head_full": git_text(["rev-parse", "HEAD"]),
-        "dirty_count": len(dirty),
-        "artifacts": artifact_rows(),
-        "narrative": narrative(),
-        "flow": flow_payload(),
-        "questions": question_payload(),
-        "jobs": [{"id": key, **{name: value[name] for name in ("title", "detail")}} for key, value in JOBS.items()],
-        "running": running,
-        "logs": log_rows(),
-    }
+    except Exception as exc:
+        return {
+            "branch": "error",
+            "head": type(exc).__name__,
+            "head_full": "",
+            "dirty_count": 0,
+            "artifacts": [],
+            "narrative": {"progress": [str(exc)], "next": []},
+            "flow": {"flows": [], "current_next": []},
+            "questions": {"intro": "", "questions": []},
+            "jobs": [],
+            "running": None,
+            "logs": [],
+            "error": f"{type(exc).__name__}: {exc}",
+        }
 
 
 def read_log(name):
@@ -407,17 +436,25 @@ async function refresh() {
   try {
     response = await fetch("/api/status");
   } catch (error) {
+    document.getElementById("revision").textContent = "連不上控制台，請確認這個程序還在跑";
     return;
   }
-  const data = await response.json();
-  if (seenHead && data.head_full && data.head_full !== seenHead) {
-    location.reload();
+  let data;
+  try {
+    data = await response.json();
+  } catch (error) {
+    document.getElementById("revision").textContent = "狀態不是有效資料，HTTP " + response.status;
     return;
   }
-  seenHead = data.head_full || "";
+  if (data.error) {
+    document.getElementById("revision").textContent = data.error;
+    return;
+  }
+  seenHead = data.head_full || seenHead;
   const key = JSON.stringify(data);
   if (key === last) return;
   last = key;
+  try {
   document.getElementById("revision").textContent = `${data.branch} @ ${data.head}，未提交 ${data.dirty_count} 個路徑`;
   renderPlayers(data.artifacts);
   renderQuestions(data.questions);
@@ -449,6 +486,9 @@ async function refresh() {
   });
   const chosen = data.logs.find(row => row.name === selectedLog);
   showLog(selectedLog, chosen ? chosen.bytes : 0);
+  } catch (error) {
+    document.getElementById("revision").textContent = "頁面填資料失敗：" + error;
+  }
 }
 async function runJob(id) {
   note.textContent = "啟動中";
