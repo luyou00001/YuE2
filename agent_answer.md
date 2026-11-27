@@ -1,3 +1,9 @@
+### [2026-11-27 16:22] 說明轉譜和 MERT，回答改顯示在頁首
+
+- **修改的文件**：`public/v100_panel.py`、`public/suno_batch7.py`、`public/panel_flow.json`、`public/panel_state.json`、`docs/training-flow.md`
+- **核心邏輯**：聽感是有點像但旋律不同。轉譜提供 ABC 訓練目標。MERT 是連續特徵，不能代替未公開的離散語義 token。頁首顯示每輪完整回答，並加上再轉 7 首的按鈕。
+- **AI 備註**：先不更新權重。7 首轉完後再看批量是否穩定。
+
 ### [2026-11-27 16:12] 頁面內容改由第一次回應直接帶出
 
 - **修改的文件**：`public/v100_panel.py`

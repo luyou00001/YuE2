@@ -25,6 +25,11 @@ HOST = "127.0.0.1"
 PORT = 8765
 
 JOBS = {
+    "transcribe7": {
+        "title": "再轉 7 首",
+        "detail": "只轉接下來 7 首並打成前綴，用來確認批量轉譜。不更新權重。",
+        "script": "suno_batch7.py",
+    },
     "export_listen": {
         "title": "匯出對聽路徑",
         "detail": "只讀原曲和生成 mp3 的路徑與大小，不載入模型。",
@@ -265,6 +270,7 @@ PAGE = """<!DOCTYPE html>
   button { appearance:none; border:0; background:var(--accent); color:white; border-radius:999px; padding:10px 16px; font:600 15px/1 sans-serif; cursor:pointer; }
   button.ghost { background:#efeae2; color:var(--ink); }
   pre { white-space:pre-wrap; word-break:break-word; max-height:520px; overflow:auto; background:#1c1915; color:#f7f4ee; border-radius:12px; padding:14px; font:13px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  pre.reply { max-height:70vh; background:#fffdf9; color:var(--ink); border:1px solid var(--line); font:16px/1.6 "Iowan Old Style", Palatino, "Songti SC", serif; }
   .logpick { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 12px; }
   button:disabled { background:#b7b1a7; cursor:wait; }
   .job { display:flex; justify-content:space-between; gap:16px; align-items:center; padding:12px 0; border-top:1px solid var(--line); }
@@ -291,6 +297,10 @@ PAGE = """<!DOCTYPE html>
 <main>
   <h1>YuE2 V100</h1>
   <p class="sub" id="revision">__REVISION__</p>
+  <section>
+    <h2>本輪回答</h2>
+    <pre class="reply">__REPLY__</pre>
+  </section>
   <section>
     <h2>對聽</h2>
     <p class="meter">直接播放伺服器上的檔案。只比較旋律和段落。</p>
@@ -509,6 +519,14 @@ setInterval(refresh, 2000);
 """
 
 
+def reply_text():
+    path = ROOT / "agent_instructions.md"
+    try:
+        return path.read_text(encoding="utf-8")
+    except OSError:
+        return "尚無回答。"
+
+
 def page_html():
     data = status_payload()
     if data.get("error"):
@@ -525,6 +543,7 @@ def page_html():
         "__PROGRESS__": render_items((data.get("narrative") or {}).get("progress") or []),
         "__NEXT__": render_items((data.get("flow") or {}).get("current_next") or (data.get("narrative") or {}).get("next") or []),
         "__JOBS__": render_jobs(data.get("jobs") or []),
+        "__REPLY__": html.escape(reply_text()),
     }
     page = PAGE
     for key, value in pieces.items():
