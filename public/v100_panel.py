@@ -35,6 +35,11 @@ JOBS = {
         "detail": "載入一次 YuE2-3B，計算 000 到 007 的樂譜損失。不更新權重。",
         "script": "suno_abc_loss8.py",
     },
+    "free004": {
+        "title": "無譜生成第 004 首",
+        "detail": "004 的樂譜損失最高，為 0.6875。只用它的歌詞和 style 生成，不餵 ABC。",
+        "script": "suno_free_004.py",
+    },
     "export_listen": {
         "title": "匯出對聽路徑",
         "detail": "只讀原曲和生成 mp3 的路徑與大小，不載入模型。",
@@ -385,11 +390,13 @@ PAGE = """<!DOCTYPE html>
   .bar { height:8px; background:#e4ddd2; border-radius:99px; overflow:hidden; }
   .bar > div { height:100%; background:#0f6e56; }
   .bar.mem > div { background:#1d4e89; }
-  .task-card { border:1px solid; border-radius:14px; padding:14px 16px; display:grid; gap:6px; }
+  .task-card { border:1px solid; border-radius:14px; padding:14px 16px; display:grid; gap:6px; margin-top:10px; }
   .task-label { font:700 12px/1 sans-serif; letter-spacing:.04em; }
   .task-ready { background:#e7f6ef; border-color:#0f6e56; }
   .task-running { background:#e8f1fb; border-color:#1d4e89; }
   .task-done { background:#f3efe8; border-color:#cfc6ba; }
+  .task-next { background:#fff6e0; border-color:#b7791f; }
+  .task-later { background:#f7f4ee; border-color:#e4ddd2; }
   .task-group { display:grid; gap:10px; margin-top:12px; }
   .task-group h3 { margin:0; font-size:14px; }
   @media (max-width: 1100px) { .gpus { grid-template-columns:repeat(4, minmax(0, 1fr)); } }
@@ -407,6 +414,7 @@ PAGE = """<!DOCTYPE html>
   <details class="block" open data-fold="task">
     <summary>任務</summary>
     <div id="task-board">__TASKS__</div>
+    <button id="copy-task-log" type="button">複製目前日誌</button>
     <p id="note"></p>
   </details>
   <details class="block" open data-fold="gpu">
@@ -543,6 +551,8 @@ async function copyLog() {
   }
 }
 document.getElementById("copy").onclick = copyLog;
+const copyTaskLog = document.getElementById("copy-task-log");
+if (copyTaskLog) copyTaskLog.onclick = copyLog;
 document.getElementById("task-board").addEventListener("click", event => {
   const button = event.target.closest("button[data-job]");
   if (button && !button.disabled) runJob(button.dataset.job);
@@ -732,7 +742,7 @@ def task_group(state, label, cards):
     )
 
 
-PIPELINE = ["transcribe7", "abc_loss8"]
+PIPELINE = ["transcribe7", "abc_loss8", "free004"]
 
 
 def task_done(task_id):
@@ -740,6 +750,8 @@ def task_done(task_id):
         return batch7_is_done()
     if task_id == "abc_loss8":
         return loss8_is_done()
+    if task_id == "free004":
+        return Path("/cache/yue2_outputs/suno_free/suno_004_free/audio.mp3").is_file()
     return False
 
 
@@ -749,30 +761,49 @@ def job_record(task_id):
     return job
 
 
+def done_detail(task_id):
+    if task_id == "transcribe7":
+        return "batch7_done=7，001 到 007 已打包。"
+    if task_id == "abc_loss8":
+        return "8 首平均 abc_loss=0.4971。000 最低 0.3594，004 最高 0.6875。沒有更新權重。"
+    return JOBS[task_id]["detail"]
+
+
+def running_detail(task_id):
+    if task_id == "transcribe7":
+        return batch7_progress()
+    logs = log_rows()
+    if not logs:
+        return ""
+    lines = [line for line in (read_log(logs[0]["name"]) or "").splitlines() if " abc_loss=" in line]
+    return lines[-1] if lines else ""
+
+
 def pipeline_view():
     with LOCK:
         running = CURRENT["job"]
-    if running and running in JOBS:
-        task = JOBS[running]
-        detail = batch7_progress() if running == "transcribe7" else task["detail"]
-        card = task_card("running", "正在進行", task["title"], detail or task["detail"])
-        return task_group("running", "正在進行", [card]), []
-    pending = [task_id for task_id in PIPELINE if not task_done(task_id)]
-    finished = [task_id for task_id in PIPELINE if task_done(task_id)]
-    groups = []
-    if finished:
-        cards = [task_card("done", "已完成", JOBS[task_id]["title"], JOBS[task_id]["detail"]) for task_id in finished]
-        groups.append(task_group("done", "已完成", cards))
-    if not pending:
-        return "".join(groups), []
-    nxt = job_record(pending[0])
-    if finished:
-        card = task_card("next", "可以開始下一步", nxt["title"], nxt["detail"], nxt)
-        groups.append(task_group("next", "已完成，可以開始下一步", [card]))
-    else:
-        card = task_card("ready", "可以開始", nxt["title"], nxt["detail"], nxt)
-        groups.append(task_group("ready", "可以開始", [card]))
-    return "".join(groups), [nxt]
+    cards = []
+    visible = []
+    started = False
+    for number, task_id in enumerate(PIPELINE, 1):
+        task = JOBS[task_id]
+        title = f"{number}. {task['title']}"
+        if running == task_id:
+            detail = running_detail(task_id) or task["detail"]
+            cards.append(task_card("running", "正在進行", title, detail))
+            started = True
+        elif task_done(task_id):
+            cards.append(task_card("done", "已完成", title, done_detail(task_id)))
+        elif not visible and not running:
+            record = job_record(task_id)
+            state = "next" if number > 1 else "ready"
+            label = "可以開始下一步" if number > 1 else "可以開始"
+            cards.append(task_card(state, label, title, task["detail"], record))
+            visible.append(record)
+            started = True
+        else:
+            cards.append(task_card("later", "之後", title, task["detail"]))
+    return "".join(cards), visible
 
 
 def render_gpus(rows):
